@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import { areaValidador, tipoRegistroValidador } from "./lib/validadores";
 import { comparaSegura, limpiarMultilinea, limpiarTexto, normalizarCorreo, normalizarTelefono, sha256Hex } from "./lib/texto";
 import { CUOTAS, consumirLimite } from "./lib/limites";
+import { enviarConfirmacionRegistro } from "./correo";
 
 /**
  * Ingesta del formulario publico.
@@ -46,7 +47,27 @@ export const registrar = action({
       throw new Error("No autorizado.");
     }
 
-    return await ctx.runMutation(internal.ingesta.guardar, { datos: args.datos });
+    const resultado = await ctx.runMutation(internal.ingesta.guardar, { datos: args.datos });
+    const debeRecibirCorreo =
+      resultado.ok && (args.datos.tipo === "aliado" || args.datos.canales.correo);
+
+    if (debeRecibirCorreo) {
+      try {
+        const encolado = await enviarConfirmacionRegistro(ctx, args.datos);
+        if (!encolado) {
+          console.error("No se encoló la confirmación de registro: correo automático no configurado.");
+        }
+      } catch (error) {
+        // El registro ya quedó guardado. Una falla externa de correo no debe
+        // convertirlo en un error ambiguo ni provocar registros repetidos.
+        console.error(
+          "No se pudo encolar la confirmación de registro.",
+          error instanceof Error ? error.message : "Error desconocido",
+        );
+      }
+    }
+
+    return resultado;
   },
 });
 

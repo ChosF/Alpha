@@ -7,6 +7,7 @@ import {
   internalQuery,
   mutation,
   query,
+  type ActionCtx,
   type MutationCtx,
 } from "./_generated/server";
 import { registrarEnBitacora } from "./lib/auditoria";
@@ -23,6 +24,7 @@ const MAX_HILOS = 160;
 const MAX_MENSAJES = 300;
 const VENTANA_HILO_MS = 180 * 24 * 60 * 60 * 1000;
 const CORREO_VALIDO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const ENLACE_COMUNIDAD = "https://chat.whatsapp.com/CDRLe4FEHZN0jrdf2WkH8n";
 
 export const resend: Resend = new Resend(components.resend, {
   testMode: process.env.RESEND_TEST_MODE !== "false",
@@ -75,6 +77,198 @@ function cuerpoHtml(texto: string): string {
     .join("");
 
   return `<!doctype html><html><body style="margin:0;background:#f2f4f7;color:#0d2140;font-family:Montserrat,sans-serif"><div style="max-width:640px;margin:0 auto;padding:44px 24px"><div style="background:#e6eaf0;padding:7px"><div style="background:#f2f4f7;padding:36px">${parrafos}<div style="margin-top:34px;padding-top:18px;border-top:1px solid rgba(13,33,64,.12);font-size:12px;line-height:1.6;color:#5c6371">Sociedad Estudiantil Alpha<br>Tecnologico de Monterrey, Campus Ciudad de Mexico</div></div></div></div></body></html>`;
+}
+
+type ConfirmacionRegistro = {
+  tipo: "miembro" | "aliado";
+  nombre: string;
+  correo: string;
+  canales: { correo: boolean; whatsapp: boolean };
+};
+
+function primerNombre(nombre: string): string {
+  return limpiarTexto(nombre, 80).split(/\s+/)[0] || "";
+}
+
+function contenidoConfirmacionRegistro(args: ConfirmacionRegistro): {
+  asunto: string;
+  preencabezado: string;
+  etiqueta: string;
+  titulo: string;
+  introduccion: string;
+  comunidad: string;
+} {
+  if (args.tipo === "aliado") {
+    return {
+      asunto: "Recibimos tu registro como aliado de Alpha",
+      preencabezado: "Revisaremos tu registro y nos pondremos en contacto contigo.",
+      etiqueta: "REGISTRO DE ALIADO",
+      titulo: "Gracias por sumarte.",
+      introduccion:
+        "Recibimos tus datos y las áreas en las que te interesa colaborar. La mesa directiva revisará tu registro y se pondrá en contacto contigo para conversar sobre los siguientes pasos.",
+      comunidad:
+        "Mientras tanto, únete a nuestra comunidad. Ahí compartimos actividades, oportunidades y noticias de Alpha.",
+    };
+  }
+
+  return {
+    asunto: "Tu registro en Alpha está listo",
+    preencabezado: "Ya recibimos tus datos. Te escribiremos cuando haya nuevas actividades.",
+    etiqueta: "REGISTRO DE MIEMBRO",
+    titulo: "Ya eres parte.",
+    introduccion:
+      "Recibimos tu registro como miembro de Alpha. Elegiste el correo electrónico como medio de contacto, así que por aquí te compartiremos convocatorias, talleres y próximas actividades.",
+    comunidad: args.canales.whatsapp
+      ? "También elegiste WhatsApp. Si todavía no estás dentro, entra al grupo para mantenerte cerca de la comunidad."
+      : "También puedes entrar a nuestro grupo de WhatsApp para mantenerte cerca de la comunidad.",
+  };
+}
+
+function textoConfirmacionRegistro(args: ConfirmacionRegistro): string {
+  const contenido = contenidoConfirmacionRegistro(args);
+  const nombre = primerNombre(args.nombre);
+  return [
+    `Hola${nombre ? ` ${nombre}` : ""},`,
+    "",
+    contenido.titulo,
+    "",
+    contenido.introduccion,
+    "",
+    contenido.comunidad,
+    ENLACE_COMUNIDAD,
+    "",
+    "Si tienes alguna pregunta, responde a este correo o escríbenos a contacto@alphaccm.org.",
+    "",
+    "Sociedad Estudiantil Alpha",
+    "Tecnológico de Monterrey, Campus Ciudad de México",
+  ].join("\n");
+}
+
+function cuerpoConfirmacionRegistro(args: ConfirmacionRegistro, sitio: string): string {
+  const contenido = contenidoConfirmacionRegistro(args);
+  const nombre = escaparHtml(primerNombre(args.nombre));
+  const saludo = nombre ? `Hola, ${nombre}.` : "Hola.";
+  const logo = `${sitio}/alpha-mark-white.png`;
+
+  return `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light only">
+  <title>${escaparHtml(contenido.asunto)}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme: light only; }
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; display: block; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    table { border-collapse: collapse !important; }
+    body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+    a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; }
+    @media only screen and (max-width: 600px) {
+      .page-pad { padding: 0 !important; }
+      .shell { width: 100% !important; max-width: 100% !important; }
+      .hero-pad { padding: 26px 22px 34px !important; }
+      .content-pad { padding: 34px 22px 28px !important; }
+      .title { font-size: 38px !important; line-height: 1.03 !important; letter-spacing: -1.4px !important; }
+      .lead { font-size: 16px !important; line-height: 1.68 !important; }
+      .community-pad { padding: 24px 20px !important; }
+      .button { display: block !important; padding: 16px 18px !important; text-align: center !important; }
+      .footer-pad { padding: 24px 22px 32px !important; }
+      .footer-col { display: block !important; width: 100% !important; }
+      .footer-mark { padding-top: 18px !important; text-align: left !important; white-space: normal !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#DDE3EA;color:#0D2140;font-family:'Montserrat',Arial,sans-serif;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">${escaparHtml(contenido.preencabezado)}&#847; &zwnj; &nbsp; &#847; &zwnj; &nbsp;</div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background-color:#DDE3EA;">
+    <tr>
+      <td class="page-pad" align="center" style="padding:32px 18px;">
+        <table role="presentation" class="shell" width="640" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:640px;background-color:#F4F6F8;">
+          <tr>
+            <td class="hero-pad" style="padding:30px 42px 46px;background-color:#0D2140;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td valign="middle" style="width:54px;">
+                    <img src="${escaparHtml(logo)}" width="48" alt="Alpha" style="width:48px;max-width:48px;height:auto;">
+                  </td>
+                  <td valign="middle" style="padding-left:12px;color:#FFFFFF;font-family:'Poppins',Arial,sans-serif;font-size:22px;font-weight:700;letter-spacing:-0.5px;">Alpha</td>
+                  <td valign="middle" align="right" style="color:#AFCFFF;font-size:10px;font-weight:600;letter-spacing:2px;white-space:nowrap;">2026 — 2027</td>
+                </tr>
+              </table>
+              <div style="margin-top:42px;color:#79AFFF;font-size:10px;font-weight:600;letter-spacing:2.2px;line-height:1.4;">${contenido.etiqueta}</div>
+              <h1 class="title" style="margin:14px 0 0;color:#FFFFFF;font-family:'Poppins',Arial,sans-serif;font-size:52px;font-weight:700;letter-spacing:-2.2px;line-height:1.02;">${escaparHtml(contenido.titulo)}</h1>
+            </td>
+          </tr>
+          <tr>
+            <td class="content-pad" style="padding:46px 42px 38px;background-color:#F4F6F8;">
+              <p style="margin:0 0 18px;color:#0066FF;font-family:'Poppins',Arial,sans-serif;font-size:13px;font-weight:600;line-height:1.5;">${saludo}</p>
+              <p class="lead" style="margin:0;color:#33445D;font-size:17px;font-weight:400;line-height:1.72;">${escaparHtml(contenido.introduccion)}</p>
+
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:34px;background-color:#AFCFFF;border-left:5px solid #0066FF;">
+                <tr>
+                  <td class="community-pad" style="padding:28px 28px 30px;">
+                    <div style="color:#194270;font-size:10px;font-weight:600;letter-spacing:2px;line-height:1.4;">COMUNIDAD ALPHA</div>
+                    <h2 style="margin:10px 0 10px;color:#0D2140;font-family:'Poppins',Arial,sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.6px;line-height:1.18;">La conversación sigue.</h2>
+                    <p style="margin:0 0 22px;color:#233A59;font-size:14px;line-height:1.65;">${escaparHtml(contenido.comunidad)}</p>
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td bgcolor="#0066FF" style="background-color:#0066FF;">
+                          <a class="button" href="${ENLACE_COMUNIDAD}" target="_blank" style="display:inline-block;padding:15px 22px;color:#FFFFFF;font-family:'Montserrat',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:0.2px;line-height:1;text-decoration:none;">Entrar a WhatsApp&nbsp;&nbsp;→</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:30px 0 0;color:#6B7482;font-size:12px;line-height:1.7;">Si tienes alguna pregunta, responde a este correo o escríbenos a <a href="mailto:contacto@alphaccm.org" style="color:#194270;font-weight:600;text-decoration:underline;">contacto@alphaccm.org</a>.</p>
+              <p style="margin:12px 0 0;color:#7A8492;font-size:10px;line-height:1.7;">Recibes este mensaje porque completaste el registro de Alpha. Puedes pedir que te demos de baja en cualquier momento escribiendo a contacto@alphaccm.org.</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="footer-pad" style="padding:25px 42px 34px;background-color:#E6EAF0;border-top:1px solid #CCD3DC;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td class="footer-col" style="color:#596577;font-size:11px;line-height:1.65;">Sociedad Estudiantil Alpha<br>Tecnológico de Monterrey, Campus Ciudad de México</td>
+                  <td class="footer-col footer-mark" align="right" valign="bottom" style="color:#194270;font-size:10px;font-weight:600;letter-spacing:1.7px;white-space:nowrap;">MÁS ALLÁ DEL MERCADO</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function enviarConfirmacionRegistro(
+  ctx: ActionCtx,
+  args: ConfirmacionRegistro,
+): Promise<boolean> {
+  const sitio = process.env.SITE_URL?.replace(/\/$/, "");
+  if (!sitio || !process.env.RESEND_API_KEY || process.env.RESEND_TEST_MODE !== "false") {
+    return false;
+  }
+
+  const contenido = contenidoConfirmacionRegistro(args);
+  const auto = normalizarCorreo(process.env.ALPHA_AUTO_EMAIL ?? "auto@alphaccm.org");
+  await resend.sendEmail(ctx, {
+    from: nombreDireccion(auto, "Alpha CCM"),
+    to: normalizarCorreo(args.correo),
+    subject: contenido.asunto,
+    text: textoConfirmacionRegistro(args),
+    html: cuerpoConfirmacionRegistro(args, sitio),
+    replyTo: [correoContacto()],
+  });
+  return true;
 }
 
 const hiloValidador = v.object({

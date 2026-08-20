@@ -42,6 +42,18 @@ Convex.
 Mantén `RESEND_TEST_MODE=true` hasta que el dominio aparezca como verificado en Resend. En ese modo,
 las invitaciones conservan el enlace manual y el compositor muestra un aviso de configuracion.
 
+## Confirmaciones de registro
+
+La landing encola una confirmacion automatica despues de guardar un registro valido:
+
+- `Aliado`: siempre recibe correo.
+- `Miembro`: recibe correo unicamente si eligio `Correo Electronico` como medio de contacto.
+- Si el miembro eligio solamente `WhatsApp`, no se genera ningun correo.
+
+La plantilla usa `SITE_URL/alpha-mark-white.png` para la marca, sale desde `ALPHA_AUTO_EMAIL` y
+dirige las respuestas a `ALPHA_CONTACT_EMAIL`. Una falla del proveedor se registra en los logs,
+pero no revierte un registro que ya fue guardado.
+
 ## 3. Webhook unico
 
 Obtén la URL HTTP del despliegue de Convex y registra este endpoint en Resend:
