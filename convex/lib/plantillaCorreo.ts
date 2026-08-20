@@ -1,8 +1,29 @@
 type OpcionesCorreoDashboard = {
   asunto: string;
   texto: string;
+  remitente?: string;
   sitio?: string;
 };
+
+function firmaPara(remitente?: string): string[] {
+  const correo = remitente?.trim().toLowerCase();
+  const institucion = [
+    "Sociedad Estudiantil Alpha",
+    "Tecnológico de Monterrey, Campus Ciudad de México",
+  ];
+
+  if (correo === "finanzas@alphaccm.org") {
+    return ["Coordinación de Finanzas,", ...institucion];
+  }
+  if (correo === "direccion@alphaccm.org") {
+    return ["Presidencia y Vicepresidencia,", ...institucion];
+  }
+  return institucion;
+}
+
+export function textoConFirma(texto: string, remitente?: string): string {
+  return `${texto.trimEnd()}\n\n${firmaPara(remitente).join("\n")}`;
+}
 
 function escaparHtml(valor: string): string {
   return valor
@@ -21,6 +42,7 @@ function resumen(valor: string, maximo: number): string {
 export function renderizarCorreoDashboard({
   asunto,
   texto,
+  remitente,
   sitio,
 }: OpcionesCorreoDashboard): string {
   const asuntoSeguro = escaparHtml(asunto);
@@ -33,6 +55,7 @@ export function renderizarCorreoDashboard({
     )
     .join("");
   const raiz = sitio?.replace(/\/$/, "");
+  const firma = firmaPara(remitente).map(escaparHtml).join("<br>");
   const marca = raiz
     ? `<td valign="middle" style="width:54px;"><img src="${escaparHtml(`${raiz}/alpha-mark-white.png`)}" width="48" alt="Alpha" style="width:48px;max-width:48px;height:auto;border:0;display:block;"></td>`
     : "";
@@ -65,7 +88,6 @@ export function renderizarCorreoDashboard({
       .message-copy { font-size: 15px !important; line-height: 1.72 !important; }
       .footer-pad { padding: 24px 22px 32px !important; }
       .footer-col { display: block !important; width: 100% !important; }
-      .footer-mark { padding-top: 18px !important; text-align: left !important; white-space: normal !important; }
     }
   </style>
 </head>
@@ -84,23 +106,21 @@ export function renderizarCorreoDashboard({
                   <td valign="middle" align="right" style="color:#AFCFFF;font-size:10px;font-weight:600;letter-spacing:2px;white-space:nowrap;">2026 — 2027</td>
                 </tr>
               </table>
-              <div style="margin-top:38px;color:#79AFFF;font-size:10px;font-weight:600;letter-spacing:2.2px;line-height:1.4;">MENSAJE DE ALPHA</div>
-              <h1 class="subject" style="margin:13px 0 0;color:#FFFFFF;font-family:'Poppins',sans-serif;font-size:40px;font-weight:700;letter-spacing:-1.5px;line-height:1.08;">${asuntoSeguro}</h1>
+              <h1 class="subject" style="margin:38px 0 0;color:#FFFFFF;font-family:'Poppins',sans-serif;font-size:40px;font-weight:700;letter-spacing:-1.5px;line-height:1.08;">${asuntoSeguro}</h1>
             </td>
           </tr>
           <tr>
             <td class="content-pad" style="padding:44px 42px 34px;background-color:#F4F6F8;">
               <div style="width:42px;height:5px;margin:0 0 28px;background-color:#0066FF;font-size:0;line-height:0;">&nbsp;</div>
               ${parrafos}
-              <p style="margin:30px 0 0;padding-top:22px;border-top:1px solid #D4DAE2;color:#6B7482;font-size:11px;line-height:1.7;">Puedes responder directamente a este correo. También puedes escribirnos a <a href="mailto:contacto@alphaccm.org" style="color:#194270;font-weight:600;text-decoration:underline;">contacto@alphaccm.org</a>.</p>
+              <p style="margin:30px 0 0;padding-top:22px;border-top:1px solid #D4DAE2;color:#6B7482;font-size:11px;line-height:1.7;">Puedes responder directamente a este correo.</p>
             </td>
           </tr>
           <tr>
             <td class="footer-pad" style="padding:25px 42px 34px;background-color:#E6EAF0;border-top:1px solid #CCD3DC;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
-                  <td class="footer-col" style="color:#596577;font-size:11px;line-height:1.65;">Sociedad Estudiantil Alpha<br>Tecnológico de Monterrey, Campus Ciudad de México</td>
-                  <td class="footer-col footer-mark" align="right" valign="bottom" style="color:#194270;font-size:10px;font-weight:600;letter-spacing:1.7px;white-space:nowrap;">MÁS ALLÁ DEL MERCADO</td>
+                  <td class="footer-col" style="color:#596577;font-size:11px;line-height:1.65;">${firma}</td>
                 </tr>
               </table>
             </td>

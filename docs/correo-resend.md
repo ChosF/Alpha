@@ -83,6 +83,10 @@ saliente. `email.received` acepta `contacto@`, `direccion@` y `finanzas@`, crea 
 idempotente, obtiene el cuerpo mediante la API de Resend, copia los adjuntos permitidos a Convex
 Storage y coloca el mensaje en la misma bandeja.
 
+Los mensajes manuales usan la direccion elegida como `From` y `Reply-To`. Finanzas firma como
+`Coordinación de Finanzas`; Direccion firma como `Presidencia y Vicepresidencia`. Las respuestas a
+ambas direcciones entran directamente en la bandeja compartida.
+
 ## 4. Comprobacion final
 
 1. Envia un mensaje externo a cada una de las tres direcciones compartidas.

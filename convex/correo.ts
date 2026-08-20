@@ -13,7 +13,7 @@ import {
 import { registrarEnBitacora } from "./lib/auditoria";
 import { correoContacto, esRemitenteManual, remitentesManuales } from "./lib/direccionesCorreo";
 import { CUOTAS, consumirLimite } from "./lib/limites";
-import { renderizarCorreoDashboard } from "./lib/plantillaCorreo";
+import { renderizarCorreoDashboard, textoConFirma } from "./lib/plantillaCorreo";
 import { requiereRol } from "./lib/rbac";
 import { limpiarMultilinea, limpiarTexto, normalizarCorreo } from "./lib/texto";
 import {
@@ -126,7 +126,7 @@ function textoConfirmacionRegistro(args: ConfirmacionRegistro): string {
     contenido.comunidad,
     ENLACE_COMUNIDAD,
     "",
-    "Si tienes alguna pregunta, responde a este correo o escríbenos a contacto@alphaccm.org.",
+    "Si tienes alguna pregunta, responde a este correo.",
     "",
     "Sociedad Estudiantil Alpha",
     "Tecnológico de Monterrey, Campus Ciudad de México",
@@ -169,7 +169,6 @@ function cuerpoConfirmacionRegistro(args: ConfirmacionRegistro, sitio: string): 
       .button { display: block !important; padding: 16px 18px !important; text-align: center !important; }
       .footer-pad { padding: 24px 22px 32px !important; }
       .footer-col { display: block !important; width: 100% !important; }
-      .footer-mark { padding-top: 18px !important; text-align: left !important; white-space: normal !important; }
     }
   </style>
 </head>
@@ -216,7 +215,7 @@ function cuerpoConfirmacionRegistro(args: ConfirmacionRegistro, sitio: string): 
                 </tr>
               </table>
 
-              <p style="margin:30px 0 0;color:#6B7482;font-size:12px;line-height:1.7;">Si tienes alguna pregunta, responde a este correo o escríbenos a <a href="mailto:contacto@alphaccm.org" style="color:#194270;font-weight:600;text-decoration:underline;">contacto@alphaccm.org</a>.</p>
+              <p style="margin:30px 0 0;color:#6B7482;font-size:12px;line-height:1.7;">Si tienes alguna pregunta, responde a este correo.</p>
               <p style="margin:12px 0 0;color:#7A8492;font-size:10px;line-height:1.7;">Recibes este mensaje porque completaste el registro de Alpha. Puedes pedir que te demos de baja en cualquier momento escribiendo a contacto@alphaccm.org.</p>
             </td>
           </tr>
@@ -225,7 +224,6 @@ function cuerpoConfirmacionRegistro(args: ConfirmacionRegistro, sitio: string): 
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   <td class="footer-col" style="color:#596577;font-size:11px;line-height:1.65;">Sociedad Estudiantil Alpha<br>Tecnológico de Monterrey, Campus Ciudad de México</td>
-                  <td class="footer-col footer-mark" align="right" valign="bottom" style="color:#194270;font-size:10px;font-weight:600;letter-spacing:1.7px;white-space:nowrap;">MÁS ALLÁ DEL MERCADO</td>
                 </tr>
               </table>
             </td>
@@ -570,10 +568,11 @@ export const enviar = mutation({
       from: nombreDireccion(remitente, "Alpha CCM"),
       to: para,
       subject: asuntoEnvio,
-      text: texto,
+      text: textoConFirma(texto, remitente),
       html: renderizarCorreoDashboard({
         asunto: asuntoEnvio,
         texto,
+        remitente,
         sitio: process.env.SITE_URL,
       }),
       replyTo: [remitente],
@@ -1016,8 +1015,8 @@ export async function enviarInvitacionPorCorreo(
     from: nombreDireccion(auto, "Alpha CCM"),
     to: args.correo,
     subject: asunto,
-    text: texto,
-    html: renderizarCorreoDashboard({ asunto, texto, sitio }),
+    text: textoConFirma(texto, auto),
+    html: renderizarCorreoDashboard({ asunto, texto, remitente: auto, sitio }),
     replyTo: [correoContacto()],
   });
   await ctx.db.insert("mailMessages", {

@@ -3,7 +3,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 import schema from "@/convex/schema";
 import { internal } from "@/convex/_generated/api";
-import { renderizarCorreoDashboard } from "@/convex/lib/plantillaCorreo";
+import { renderizarCorreoDashboard, textoConFirma } from "@/convex/lib/plantillaCorreo";
 
 const modulos = import.meta.glob("../convex/**/*.ts");
 
@@ -12,11 +12,15 @@ describe("plantilla de correo del dashboard", () => {
     const html = renderizarCorreoDashboard({
       asunto: "Invitación a Networking Night",
       texto: "Hola,\n\nTe compartimos los detalles de la sesión.",
+      remitente: "finanzas@alphaccm.org",
       sitio: "https://alphaccm.org/",
     });
 
     expect(html).toContain("https://alphaccm.org/alpha-mark-white.png");
-    expect(html).toContain("MENSAJE DE ALPHA");
+    expect(html).toContain("Coordinación de Finanzas,");
+    expect(html).toContain("Puedes responder directamente a este correo.");
+    expect(html).not.toContain("MENSAJE DE ALPHA");
+    expect(html).not.toContain("MÁS ALLÁ DEL MERCADO");
     expect(html).toContain("#0D2140");
     expect(html).toContain("#0066FF");
     expect(html).toContain("Poppins");
@@ -29,11 +33,19 @@ describe("plantilla de correo del dashboard", () => {
     const html = renderizarCorreoDashboard({
       asunto: "Seguimiento <interno>",
       texto: '<script>alert("x")</script>',
+      remitente: "direccion@alphaccm.org",
     });
 
     expect(html).not.toContain("<script>alert");
     expect(html).toContain("&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;");
     expect(html).toContain("Seguimiento &lt;interno&gt;");
+    expect(html).toContain("Presidencia y Vicepresidencia,");
+  });
+
+  it("agrega la firma del remitente al texto plano", () => {
+    expect(textoConFirma("Gracias por escribirnos.", "finanzas@alphaccm.org")).toBe(
+      "Gracias por escribirnos.\n\nCoordinación de Finanzas,\nSociedad Estudiantil Alpha\nTecnológico de Monterrey, Campus Ciudad de México",
+    );
   });
 });
 
