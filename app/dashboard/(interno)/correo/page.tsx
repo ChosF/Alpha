@@ -261,6 +261,7 @@ function Conversacion({
   const [error, setError] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const [respondiendo, setRespondiendo] = useState(false);
   const hilo = detalle.hilo;
 
   const aplicar = async (accion: () => Promise<unknown>) => {
@@ -418,12 +419,27 @@ function Conversacion({
               ) : null}
             </li>
           ))}
+          <li className="correo-responder-final">
+            <button
+              type="button"
+              className="boton boton-linea group"
+              onClick={() => setRespondiendo(true)}
+            >
+              <IconoResponder />
+              Responder
+            </button>
+          </li>
         </ol>
-
-        <div className="flex-none">
-          <Responder threadId={hilo._id} para={hilo.contactoCorreo} asunto={hilo.asunto} />
-        </div>
       </section>
+
+      {respondiendo ? (
+        <Responder
+          threadId={hilo._id}
+          para={hilo.contactoCorreo}
+          asunto={hilo.asunto}
+          cerrar={() => setRespondiendo(false)}
+        />
+      ) : null}
 
       {confirmando ? (
         <ConfirmarEliminacion
@@ -441,10 +457,12 @@ function Responder({
   threadId,
   para,
   asunto,
+  cerrar,
 }: {
   threadId: Id<"mailThreads">;
   para: string;
   asunto: string;
+  cerrar: () => void;
 }) {
   const enviar = useMutation(api.correo.enviar);
   const [texto, setTexto] = useState("");
@@ -460,7 +478,7 @@ function Responder({
       await enviar({ clientRequestId: requestId.current, threadId, asunto, texto });
       setTexto("");
       requestId.current = null;
-      setAviso({ tono: "exito", texto: "Respuesta en cola para envio." });
+      cerrar();
     } catch (error) {
       setAviso({ tono: "error", texto: limpiarError(error) });
     } finally {
@@ -469,30 +487,60 @@ function Responder({
   };
 
   return (
-    <div className="correo-respuesta m-3 mt-0 p-[7px] sm:m-5 sm:mt-0">
-      <div className="correo-respuesta-nucleo p-5 sm:p-6">
-        <div className="flex items-center justify-between gap-4">
-          <label htmlFor={`respuesta-${threadId}`} className="rotulo">Responder a {para}</label>
-          <span className="cifra text-[9px] text-[var(--color-n500)]">contacto@alphaccm.org</span>
-        </div>
-        <textarea
-          id={`respuesta-${threadId}`}
-          className="entrada mt-3 min-h-[118px] max-h-[220px] resize-y"
-          value={texto}
-          maxLength={20_000}
-          onChange={(event) => setTexto(event.target.value)}
-          placeholder="Escribe una respuesta clara y directa."
-        />
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-          {aviso ? <Aviso tono={aviso.tono}>{aviso.texto}</Aviso> : <span />}
-          <button
-            type="button"
-            className="boton"
-            disabled={ocupado || texto.trim() === ""}
-            onClick={() => void responder()}
-          >
-            {ocupado ? "Enviando…" : "Enviar respuesta"}
-          </button>
+    <div className="correo-dialogo-fondo" role="presentation">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`respuesta-titulo-${threadId}`}
+        className="correo-respuesta-modal correo-compositor"
+      >
+        <div className="correo-respuesta-modal-nucleo">
+          <div className="flex items-start justify-between gap-6">
+            <div className="min-w-0">
+              <p className="cejilla">Desde contacto@alphaccm.org</p>
+              <h3
+                id={`respuesta-titulo-${threadId}`}
+                className="mt-3 text-[clamp(1.7rem,4vw,2.6rem)] font-semibold tracking-[-.05em] leading-none"
+              >
+                Responder
+              </h3>
+              <p className="mt-3 truncate text-[11px] text-[var(--color-n600)]">Para {para}</p>
+            </div>
+            <button
+              type="button"
+              className="correo-icono-boton bg-[var(--color-surface)] text-[20px]"
+              aria-label="Cerrar respuesta"
+              onClick={cerrar}
+            >
+              ×
+            </button>
+          </div>
+          <label htmlFor={`respuesta-${threadId}`} className="sr-only">Respuesta</label>
+          <textarea
+            id={`respuesta-${threadId}`}
+            className="entrada correo-respuesta-texto mt-7 resize-y"
+            value={texto}
+            maxLength={20_000}
+            onChange={(event) => setTexto(event.target.value)}
+            placeholder="Escribe una respuesta clara y directa."
+            autoFocus
+          />
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+            {aviso ? <Aviso tono={aviso.tono}>{aviso.texto}</Aviso> : <span />}
+            <div className="ml-auto flex gap-2">
+              <button type="button" className="boton boton-linea" disabled={ocupado} onClick={cerrar}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="boton"
+                disabled={ocupado || texto.trim() === ""}
+                onClick={() => void responder()}
+              >
+                {ocupado ? "Enviando…" : "Enviar respuesta"}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -688,6 +736,14 @@ function IconoPapelera() {
   return (
     <svg viewBox="0 0 20 20" aria-hidden="true" className="size-[17px] fill-none stroke-current stroke-[1.35]" strokeLinecap="round" strokeLinejoin="round">
       <path d="M4.5 6h11M8 3.5h4M6 6l.6 10.5h6.8L14 6M8.25 9v4.5M11.75 9v4.5" />
+    </svg>
+  );
+}
+
+function IconoResponder() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="size-[16px] fill-none stroke-current stroke-[1.35]" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m8.25 5-5 5 5 5M3.5 10h7.25c3.25 0 5.25 1.5 5.75 4.5" />
     </svg>
   );
 }

@@ -35,11 +35,10 @@ export function Navegacion() {
   );
 
   return (
-    <nav className="panel-nav bg-[var(--color-ink)] text-[var(--color-ground)] flex flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-10 lg:h-dvh lg:w-[248px] lg:overflow-hidden">
+    <nav className="panel-nav bg-[var(--color-ink)] text-[var(--color-ground)] flex flex-col lg:sticky lg:top-0 lg:z-10 lg:h-dvh lg:self-start lg:overflow-hidden">
       <div className="panel-nav-marca px-5 py-6 lg:px-6 lg:py-7">
-        <Link href="/dashboard" className="group flex items-center justify-between gap-4">
+        <Link href="/dashboard" className="group flex items-center">
           <MarcaAlpha className="h-auto w-[112px]" tono="blanco" />
-          <span className="panel-nav-monograma" aria-hidden="true">A</span>
         </Link>
         <p className="mt-5 hidden lg:block text-[9px] font-semibold tracking-[.28em] uppercase text-white/36">
           Panel interno
