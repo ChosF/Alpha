@@ -12,6 +12,7 @@ import {
   type TipoRegistro,
 } from "@/convex/lib/validadores";
 import { construirCsv } from "@/lib/csv";
+import { construirXlsx } from "@/lib/xlsx";
 import { Aviso, Bandeja, Cargando, Marca, Titulo, Vacio, fecha } from "@/components/panel/piezas";
 
 /**
@@ -368,79 +369,127 @@ function Dato({ titulo, valor, mono = false }: { titulo: string; valor: string; 
   );
 }
 
-/** Exportacion a CSV. Solo admin, y queda anotada en la bitacora. */
+type FormatoExportacion = "xlsx" | "csv";
+
+const ENCABEZADOS_EXPORTACION = [
+  "Tipo",
+  "Nombre",
+  "Correo",
+  "Carrera",
+  "Semestre",
+  "Matricula",
+  "Avisos correo",
+  "WhatsApp",
+  "Telefono",
+  "Areas",
+  "Aporte",
+  "Estado",
+  "Notas",
+  "Registrado",
+] as const;
+
+/** Exportacion a Excel o CSV. Solo admin, y queda anotada en la bitacora. */
 function BotonExportar({ tipo, estado }: { tipo: TipoRegistro | ""; estado: EstadoRegistro | "" }) {
-  const [pedido, setPedido] = useState(false);
+  const [abierto, setAbierto] = useState(false);
+  const [pedido, setPedido] = useState<{ formato: FormatoExportacion; id: number } | null>(null);
   const filas = useQuery(
     api.registros.paraExportar,
     pedido ? { ...(tipo ? { tipo } : {}), ...(estado ? { estado } : {}) } : "skip",
   );
   const anotar = useMutation(api.registros.registrarExportacion);
-  const yaDescargado = useRef(false);
+  const secuencia = useRef(0);
+  const procesado = useRef(0);
+  const excelRef = useRef<HTMLButtonElement>(null);
 
   // La descarga es un efecto, no algo que ocurra al renderizar: en modo
   // estricto React renderiza dos veces y si no se bajaria el archivo dos veces.
   useEffect(() => {
-    if (!pedido || filas === undefined || yaDescargado.current) return;
-    yaDescargado.current = true;
+    if (!pedido || filas === undefined || procesado.current === pedido.id) return;
+    procesado.current = pedido.id;
 
-    const csv = construirCsv(
-      [
-        "Tipo",
-        "Nombre",
-        "Correo",
-        "Carrera",
-        "Semestre",
-        "Matricula",
-        "Avisos correo",
-        "WhatsApp",
-        "Telefono",
-        "Areas",
-        "Aporte",
-        "Estado",
-        "Notas",
-        "Registrado",
-      ],
-      filas.map((r) => [
-        ETIQUETAS[r.tipo] ?? r.tipo,
-        r.nombre,
-        r.correo,
-        r.carrera,
-        r.semestre ?? "",
-        r.matricula ?? "",
-        r.canales.correo ? "Si" : "No",
-        r.canales.whatsapp ? "Si" : "No",
-        r.telefono ?? "",
-        r.areas.map((a) => ETIQUETAS[a] ?? a).join(" / "),
-        r.aporte ?? "",
-        ETIQUETAS[r.estado] ?? r.estado,
-        r.notas ?? "",
-        new Date(r.creadoEn).toISOString(),
-      ]),
-    );
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const datos = filas.map((r) => [
+      ETIQUETAS[r.tipo] ?? r.tipo,
+      r.nombre,
+      r.correo,
+      r.carrera,
+      r.semestre ?? "",
+      r.matricula ?? "",
+      r.canales.correo ? "Si" : "No",
+      r.canales.whatsapp ? "Si" : "No",
+      r.telefono ?? "",
+      r.areas.map((a) => ETIQUETAS[a] ?? a).join(" / "),
+      r.aporte ?? "",
+      ETIQUETAS[r.estado] ?? r.estado,
+      r.notas ?? "",
+      new Date(r.creadoEn).toISOString(),
+    ]);
+    const blob =
+      pedido.formato === "xlsx"
+        ? construirXlsx(ENCABEZADOS_EXPORTACION, datos)
+        : new Blob([construirCsv(ENCABEZADOS_EXPORTACION, datos)], {
+            type: "text/csv;charset=utf-8",
+          });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `alpha-registros-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `alpha-registros-${new Date().toISOString().slice(0, 10)}.${pedido.formato}`;
     a.click();
     URL.revokeObjectURL(url);
 
     void anotar({ cantidad: filas.length });
   }, [pedido, filas, anotar]);
 
+  const exportar = (formato: FormatoExportacion) => {
+    secuencia.current += 1;
+    setPedido({ formato, id: secuencia.current });
+  };
+
+  const cargando = pedido !== null && filas === undefined;
+
   return (
-    <button
-      type="button"
-      className="boton boton-linea mb-8"
-      onClick={() => {
-        yaDescargado.current = false;
-        setPedido(true);
-      }}
-      disabled={pedido && filas === undefined}
+    <div
+      className={`relative mb-8 h-10 overflow-hidden border border-[var(--hair)] bg-transparent transition-[width,background-color] duration-300 ease-[var(--E)] motion-reduce:transition-none ${
+        abierto ? "w-[152px] bg-[var(--color-surface)]" : "w-[108px]"
+      }`}
     >
-      {pedido && filas === undefined ? "Preparando…" : "Exportar CSV"}
-    </button>
+      <button
+        type="button"
+        className={`absolute inset-0 grid place-items-center text-[13px] font-medium transition-[opacity,transform] duration-200 ease-[var(--E)] motion-reduce:transition-none ${
+          abierto ? "pointer-events-none -translate-y-1 opacity-0" : "translate-y-0 opacity-100"
+        }`}
+        aria-expanded={abierto}
+        onClick={() => {
+          setAbierto(true);
+          requestAnimationFrame(() => excelRef.current?.focus());
+        }}
+      >
+        Exportar
+      </button>
+      <div
+        className={`absolute inset-0 grid grid-cols-2 transition-[opacity,transform] duration-200 ease-[var(--E)] motion-reduce:transition-none ${
+          abierto ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0"
+        }`}
+        role="group"
+        aria-label="Formato de exportacion"
+      >
+        <button
+          ref={excelRef}
+          type="button"
+          className="border-r border-[var(--hair)] text-[11px] font-medium transition-colors duration-200 hover:bg-white disabled:opacity-45"
+          disabled={cargando}
+          onClick={() => exportar("xlsx")}
+        >
+          {cargando && pedido?.formato === "xlsx" ? "···" : "Excel"}
+        </button>
+        <button
+          type="button"
+          className="text-[11px] font-medium uppercase tracking-[.04em] transition-colors duration-200 hover:bg-white disabled:opacity-45"
+          disabled={cargando}
+          onClick={() => exportar("csv")}
+        >
+          {cargando && pedido?.formato === "csv" ? "···" : "CSV"}
+        </button>
+      </div>
+    </div>
   );
 }
