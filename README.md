@@ -18,6 +18,8 @@ Ciudad de Mexico. Next.js + Convex + TypeScript, para desplegar en Vercel.
 POST /api/registro     -> valida, limita y llama a Convex con un secreto de servidor
 GET  /api/registro/token -> token firmado que la ventana de registro adjunta al enviar
 /dashboard/*           -> dashboard interno, exige sesion
+/dashboard/correo      -> bandeja compartida y compositor de contacto@alphaccm.org
+POST *.convex.site/resend-webhook -> correo entrante y estados de entrega de Resend
 ```
 
 La landing **no** habla con Convex directamente. Su formulario hace `fetch` al mismo origen y el
@@ -84,6 +86,9 @@ npx convex run admin:sembrarAdmin '{"correo":"tucorreo@tec.mx","nombre":"Tu Nomb
 Devuelve un enlace de un solo uso. Abrelo, elige contrasena y ya tienes acceso de administrador.
 Desde ahi puedes invitar al resto del equipo en **Dashboard -> Usuarios**.
 
+Si Resend esta configurado, la invitacion se manda desde `auto@alphaccm.org`. El panel conserva el
+enlace de un solo uso como respaldo durante la creacion.
+
 Para cargar el plan de trabajo 2026 — 2027 en la base:
 
 ```bash
@@ -127,6 +132,16 @@ npx convex run admin:sembrarProgramas
    npx convex run admin:sembrarAdmin '{"correo":"...","nombre":"...","sitio":"https://tu-dominio"}' --prod
    ```
 
+### Correo de dominio
+
+El modulo `Dashboard -> Correo` usa el componente oficial de Resend para Convex. Guarda los hilos,
+mensajes, responsables, adjuntos y estados en Convex. Resend transporta los mensajes y entrega los
+eventos mediante un webhook firmado.
+
+La configuracion de DNS, variables y webhook esta en
+[`docs/correo-resend.md`](docs/correo-resend.md). Los secretos de Resend viven en Convex, no en
+variables publicas ni en el navegador.
+
 ---
 
 ## 5. Comandos
@@ -158,6 +173,8 @@ Lo que ya esta puesto, y donde vive:
 | Escalada de permisos | `requiereRol` en cada query y mutation del panel | `convex/lib/rbac.ts` |
 | Cuentas no autorizadas | Alta solo con invitacion vigente, de un uso, guardada como hash | `convex/auth.ts` |
 | Rastreo de la IP | Nunca se guarda en claro, solo SHA-256 con sal | `lib/seguridad.ts` |
+| Webhook falso | Firma Svix verificada antes de registrar o actualizar correo | `convex/correoWebhook.ts` |
+| HTML malicioso por correo | Solo se muestra el cuerpo de texto; el HTML recibido no se renderiza | `convex/correoActions.ts` |
 
 Roles: `lector` consulta; `editor` cambia estados, notas y programa; `admin` ademas invita, cambia
 roles y exporta.
@@ -175,9 +192,9 @@ Dos cosas que conviene saber:
 
 ## 7. Lo que todavia no hace
 
-- No manda correos. Las invitaciones son un enlace que el administrador copia y hace llegar.
 - No hay recuperacion de contrasena: si alguien la pierde, un administrador revoca su acceso y lo
   vuelve a invitar.
+- El compositor no envia adjuntos salientes. Los adjuntos recibidos si se copian a Convex Storage.
 - La landing no lee todavia el programa desde Convex: la consulta publica (`programas:publicos`)
   ya existe y devuelve solo campos publicables, pero el HTML sigue con la lista escrita a mano.
 

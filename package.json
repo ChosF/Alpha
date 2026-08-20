@@ -18,12 +18,14 @@
     "check": "npm run typecheck && npm run lint && npm run test"
   },
   "dependencies": {
-    "@auth/core": "0.41.1",
+    "@auth/core": "^0.41.3",
     "@convex-dev/auth": "^0.0.95",
+    "@convex-dev/resend": "^0.2.6",
     "convex": "^1.44.0",
     "next": "^16.3.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "resend": "^6.20.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

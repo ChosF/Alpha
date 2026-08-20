@@ -17,17 +17,20 @@ import { ETIQUETAS } from "@/convex/lib/validadores";
 const APARTADOS = [
   { href: "/dashboard", texto: "Inicio", minimo: "lector" },
   { href: "/dashboard/registros", texto: "Registros", minimo: "lector" },
+  { href: "/dashboard/correo", texto: "Correo", minimo: "editor" },
   { href: "/dashboard/programa", texto: "Programa", minimo: "lector" },
   { href: "/dashboard/usuarios", texto: "Usuarios", minimo: "admin" },
 ] as const;
+
+const NIVEL = { lector: 1, editor: 2, admin: 3 } as const;
 
 export function Navegacion() {
   const ruta = usePathname();
   const yo = useQuery(api.usuarios.yo, {});
   const { signOut } = useAuthActions();
 
-  const visibles = APARTADOS.filter(
-    (a) => a.minimo !== "admin" || yo?.rol === "admin",
+  const visibles = APARTADOS.filter((a) =>
+    yo ? NIVEL[yo.rol] >= NIVEL[a.minimo] : a.minimo === "lector",
   );
 
   return (

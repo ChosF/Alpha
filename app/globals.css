@@ -222,3 +222,71 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+@keyframes correo-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes correo-compositor {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.correo-entrada {
+  animation: correo-entrada 0.75s var(--E) both;
+}
+
+.correo-compositor {
+  animation: correo-compositor 0.62s var(--E) both;
+  box-shadow: 0 42px 110px -52px rgba(13, 33, 64, 0.74);
+}
+
+.correo-lista {
+  content-visibility: auto;
+}
+
+.correo-fila {
+  border-bottom: 1px solid var(--hair);
+  transition:
+    background 0.5s var(--E),
+    transform 0.5s var(--E);
+}
+
+.correo-fila:hover {
+  background: var(--color-surface);
+  transform: translateX(3px);
+}
+
+.correo-fila-activa {
+  background: var(--color-surface);
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
+
+.correo-mensaje {
+  border-bottom: 1px solid var(--hair);
+}
+
+.correo-mensaje-saliente {
+  margin-left: clamp(0px, 4vw, 52px);
+  padding-left: clamp(14px, 2vw, 26px);
+  box-shadow: inset 2px 0 0 rgba(31, 95, 208, 0.34);
+}
+
+@media (max-width: 767px) {
+  .correo-mensaje-saliente {
+    margin-left: 0;
+  }
+}

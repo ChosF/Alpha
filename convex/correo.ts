@@ -1,0 +1,800 @@
+import { ConvexError, v } from "convex/values";
+import { Resend, vOnEmailEventArgs, type EmailEvent } from "@convex-dev/resend";
+import { components, internal } from "./_generated/api";
+import type { Doc, Id } from "./_generated/dataModel";
+import {
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+  type MutationCtx,
+} from "./_generated/server";
+import { registrarEnBitacora } from "./lib/auditoria";
+import { CUOTAS, consumirLimite } from "./lib/limites";
+import { requiereRol } from "./lib/rbac";
+import { limpiarMultilinea, limpiarTexto, normalizarCorreo } from "./lib/texto";
+import {
+  estadoHiloCorreoValidador,
+  estadoIngestaCorreoValidador,
+  estadoMensajeCorreoValidador,
+} from "./lib/validadores";
+
+const MAX_HILOS = 160;
+const MAX_MENSAJES = 300;
+const VENTANA_HILO_MS = 180 * 24 * 60 * 60 * 1000;
+const CORREO_VALIDO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+export const resend: Resend = new Resend(components.resend, {
+  testMode: process.env.RESEND_TEST_MODE !== "false",
+  onEmailEvent: internal.correo.actualizarEstadoEnvio,
+});
+
+function correoContacto(): string {
+  return normalizarCorreo(process.env.ALPHA_CONTACT_EMAIL ?? "contacto@alphaccm.org");
+}
+
+function nombreDireccion(correo: string, nombre: string): string {
+  return `${limpiarTexto(nombre, 80)} <${normalizarCorreo(correo)}>`;
+}
+
+function extraerDireccion(valor: string): { nombre?: string; correo: string } {
+  const coincidencia = valor.match(/^\s*(.*?)\s*<([^<>\s]+@[^<>\s]+)>\s*$/);
+  if (coincidencia) {
+    const nombre = limpiarTexto(coincidencia[1] ?? "", 100).replace(/^['"]|['"]$/g, "");
+    return {
+      ...(nombre ? { nombre } : {}),
+      correo: normalizarCorreo(coincidencia[2] ?? ""),
+    };
+  }
+  return { correo: normalizarCorreo(valor) };
+}
+
+function claveAsunto(asunto: string): string {
+  return limpiarTexto(asunto, 180)
+    .replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, "")
+    .toLowerCase();
+}
+
+function resumenTexto(texto: string): string {
+  return limpiarTexto(texto, 180);
+}
+
+function escaparHtml(valor: string): string {
+  return valor
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function cuerpoHtml(texto: string): string {
+  const parrafos = escaparHtml(texto)
+    .split(/\n{2,}/)
+    .map((parrafo) => `<p style="margin:0 0 18px;line-height:1.7">${parrafo.replaceAll("\n", "<br>")}</p>`)
+    .join("");
+
+  return `<!doctype html><html><body style="margin:0;background:#f2f4f7;color:#0d2140;font-family:Montserrat,sans-serif"><div style="max-width:640px;margin:0 auto;padding:44px 24px"><div style="background:#e6eaf0;padding:7px"><div style="background:#f2f4f7;padding:36px">${parrafos}<div style="margin-top:34px;padding-top:18px;border-top:1px solid rgba(13,33,64,.12);font-size:12px;line-height:1.6;color:#5c6371">Sociedad Estudiantil Alpha<br>Tecnologico de Monterrey, Campus Ciudad de Mexico</div></div></div></div></body></html>`;
+}
+
+const hiloValidador = v.object({
+  _id: v.id("mailThreads"),
+  _creationTime: v.number(),
+  asunto: v.string(),
+  asuntoClave: v.string(),
+  contactoCorreo: v.string(),
+  contactoNombre: v.optional(v.string()),
+  estado: estadoHiloCorreoValidador,
+  noLeidos: v.number(),
+  ultimoMensajeEn: v.number(),
+  ultimoResumen: v.string(),
+  asignadoA: v.optional(v.id("users")),
+  asignadoNombre: v.optional(v.string()),
+  creadoEn: v.number(),
+  actualizadoEn: v.number(),
+});
+
+const mensajeValidador = v.object({
+  _id: v.id("mailMessages"),
+  _creationTime: v.number(),
+  direccion: v.union(v.literal("entrante"), v.literal("saliente")),
+  de: v.string(),
+  para: v.array(v.string()),
+  cc: v.array(v.string()),
+  asunto: v.string(),
+  texto: v.string(),
+  estado: estadoMensajeCorreoValidador,
+  autorCorreo: v.optional(v.string()),
+  error: v.optional(v.string()),
+  creadoEn: v.number(),
+  adjuntos: v.array(
+    v.object({
+      _id: v.id("mailAttachments"),
+      nombre: v.string(),
+      tipoContenido: v.string(),
+      tamano: v.number(),
+      url: v.union(v.string(), v.null()),
+    }),
+  ),
+});
+
+const trabajoValidador = v.object({
+  _id: v.id("mailInboundJobs"),
+  _creationTime: v.number(),
+  eventId: v.string(),
+  providerEmailId: v.string(),
+  de: v.string(),
+  para: v.array(v.string()),
+  cc: v.array(v.string()),
+  asunto: v.string(),
+  internetMessageId: v.string(),
+  recibidoEn: v.number(),
+  estado: estadoIngestaCorreoValidador,
+  intentos: v.number(),
+  ultimoError: v.optional(v.string()),
+  creadoEn: v.number(),
+  actualizadoEn: v.number(),
+});
+
+export const configuracion = query({
+  args: {},
+  returns: v.object({
+    listo: v.boolean(),
+    modoPrueba: v.boolean(),
+    remitente: v.string(),
+    entrada: v.string(),
+  }),
+  handler: async (ctx) => {
+    await requiereRol(ctx, "editor");
+    return {
+      listo: Boolean(process.env.RESEND_API_KEY && process.env.RESEND_WEBHOOK_SECRET),
+      modoPrueba: process.env.RESEND_TEST_MODE !== "false",
+      remitente: correoContacto(),
+      entrada: correoContacto(),
+    };
+  },
+});
+
+export const resumen = query({
+  args: {},
+  returns: v.object({ abiertos: v.number(), noLeidos: v.number(), fallidos: v.number() }),
+  handler: async (ctx) => {
+    await requiereRol(ctx, "editor");
+    const [abiertos, fallidos] = await Promise.all([
+      ctx.db
+        .query("mailThreads")
+        .withIndex("by_estado_ultimo", (q) => q.eq("estado", "abierto"))
+        .take(5000),
+      ctx.db
+        .query("mailMessages")
+        .withIndex("by_thread_time")
+        .order("desc")
+        .take(5000),
+    ]);
+    return {
+      abiertos: abiertos.length,
+      noLeidos: abiertos.reduce((total, hilo) => total + hilo.noLeidos, 0),
+      fallidos: fallidos.filter((mensaje) =>
+        mensaje.estado === "fallido" || mensaje.estado === "rebotado",
+      ).length,
+    };
+  },
+});
+
+export const listarHilos = query({
+  args: {
+    estado: v.optional(estadoHiloCorreoValidador),
+    busqueda: v.optional(v.string()),
+  },
+  returns: v.array(hiloValidador),
+  handler: async (ctx, args) => {
+    await requiereRol(ctx, "editor");
+    const hilos = args.estado
+      ? await ctx.db
+          .query("mailThreads")
+          .withIndex("by_estado_ultimo", (q) => q.eq("estado", args.estado!))
+          .order("desc")
+          .take(MAX_HILOS)
+      : await ctx.db.query("mailThreads").withIndex("by_ultimo").order("desc").take(MAX_HILOS);
+
+    const termino = limpiarTexto(args.busqueda ?? "", 100).toLowerCase();
+    const filtrados = termino
+      ? hilos.filter((hilo) =>
+          [hilo.asunto, hilo.contactoCorreo, hilo.contactoNombre ?? "", hilo.ultimoResumen]
+            .some((valor) => valor.toLowerCase().includes(termino)),
+        )
+      : hilos;
+
+    const ids = [...new Set(filtrados.flatMap((hilo) => hilo.asignadoA ? [hilo.asignadoA] : []))];
+    const usuarios = await Promise.all(ids.map((id) => ctx.db.get(id)));
+    const nombres = new Map(
+      usuarios
+        .filter((usuario): usuario is Doc<"users"> => usuario !== null)
+        .map((usuario) => [usuario._id, usuario.name ?? usuario.email ?? "Sin nombre"]),
+    );
+
+    return filtrados.map((hilo) => ({
+      ...hilo,
+      ...(hilo.asignadoA ? { asignadoNombre: nombres.get(hilo.asignadoA) } : {}),
+    }));
+  },
+});
+
+export const detalle = query({
+  args: { id: v.id("mailThreads") },
+  returns: v.union(
+    v.null(),
+    v.object({
+      hilo: hiloValidador,
+      mensajes: v.array(mensajeValidador),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    await requiereRol(ctx, "editor");
+    const hilo = await ctx.db.get(args.id);
+    if (hilo === null) return null;
+
+    const [mensajes, asignado] = await Promise.all([
+      ctx.db
+        .query("mailMessages")
+        .withIndex("by_thread_time", (q) => q.eq("threadId", args.id))
+        .order("asc")
+        .take(MAX_MENSAJES),
+      hilo.asignadoA ? ctx.db.get(hilo.asignadoA) : Promise.resolve(null),
+    ]);
+
+    const enriquecidos = await Promise.all(
+      mensajes.map(async (mensaje) => {
+        const adjuntos = await ctx.db
+          .query("mailAttachments")
+          .withIndex("by_message", (q) => q.eq("messageId", mensaje._id))
+          .collect();
+        const conUrl = await Promise.all(
+          adjuntos.map(async (adjunto) => ({
+            _id: adjunto._id,
+            nombre: adjunto.nombre,
+            tipoContenido: adjunto.tipoContenido,
+            tamano: adjunto.tamano,
+            url: await ctx.storage.getUrl(adjunto.storageId),
+          })),
+        );
+        return {
+          _id: mensaje._id,
+          _creationTime: mensaje._creationTime,
+          direccion: mensaje.direccion,
+          de: mensaje.de,
+          para: mensaje.para,
+          cc: mensaje.cc,
+          asunto: mensaje.asunto,
+          texto: mensaje.texto,
+          estado: mensaje.estado,
+          autorCorreo: mensaje.autorCorreo,
+          error: mensaje.error,
+          creadoEn: mensaje.creadoEn,
+          adjuntos: conUrl,
+        };
+      }),
+    );
+
+    return {
+      hilo: {
+        ...hilo,
+        ...(asignado
+          ? { asignadoNombre: asignado.name ?? asignado.email ?? "Sin nombre" }
+          : {}),
+      },
+      mensajes: enriquecidos,
+    };
+  },
+});
+
+export const enviar = mutation({
+  args: {
+    clientRequestId: v.string(),
+    threadId: v.optional(v.id("mailThreads")),
+    para: v.optional(v.string()),
+    asunto: v.string(),
+    texto: v.string(),
+  },
+  returns: v.object({ threadId: v.id("mailThreads"), messageId: v.id("mailMessages") }),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "editor");
+    const clientRequestId = limpiarTexto(args.clientRequestId, 80);
+    if (clientRequestId.length < 8) throw new ConvexError("Identificador de envio no valido.");
+    const existente = await ctx.db
+      .query("mailMessages")
+      .withIndex("by_client_request", (q) => q.eq("clientRequestId", clientRequestId))
+      .unique();
+    if (existente) return { threadId: existente.threadId, messageId: existente._id };
+
+    if (!process.env.RESEND_API_KEY) {
+      throw new ConvexError("El correo todavia no esta configurado en Convex.");
+    }
+
+    const limite = await consumirLimite(
+      ctx,
+      `correo:${actor._id}`,
+      CUOTAS.correosPorUsuario.maximo,
+      CUOTAS.correosPorUsuario.ventanaMs,
+    );
+    if (!limite.permitido) {
+      throw new ConvexError("Alcanzaste el limite de correos por hora. Intenta mas tarde.");
+    }
+
+    const texto = limpiarMultilinea(args.texto, 20_000);
+    const asuntoSolicitado = limpiarTexto(args.asunto, 180);
+    if (texto.length < 1) throw new ConvexError("Escribe el contenido del correo.");
+
+    let hilo: Doc<"mailThreads"> | null = null;
+    if (args.threadId) {
+      hilo = await ctx.db.get(args.threadId);
+      if (hilo === null) throw new ConvexError("La conversacion ya no existe.");
+    }
+
+    const para = hilo ? hilo.contactoCorreo : normalizarCorreo(args.para ?? "");
+    if (!CORREO_VALIDO.test(para)) throw new ConvexError("Escribe un destinatario valido.");
+    const asunto = asuntoSolicitado || hilo?.asunto || "Mensaje de Alpha";
+    const ahora = Date.now();
+
+    let threadId: Id<"mailThreads">;
+    if (hilo) {
+      threadId = hilo._id;
+    } else {
+      threadId = await ctx.db.insert("mailThreads", {
+        asunto,
+        asuntoClave: claveAsunto(asunto),
+        contactoCorreo: para,
+        estado: "abierto",
+        noLeidos: 0,
+        ultimoMensajeEn: ahora,
+        ultimoResumen: resumenTexto(texto),
+        asignadoA: actor._id,
+        creadoEn: ahora,
+        actualizadoEn: ahora,
+      });
+    }
+
+    const ultimo = hilo
+      ? await ctx.db
+          .query("mailMessages")
+          .withIndex("by_thread_time", (q) => q.eq("threadId", hilo!._id))
+          .order("desc")
+          .first()
+      : null;
+    const referencias = ultimo
+      ? [...ultimo.referencias, ...(ultimo.internetMessageId ? [ultimo.internetMessageId] : [])]
+          .slice(-20)
+      : [];
+    const headers = ultimo?.internetMessageId
+      ? [
+          { name: "In-Reply-To", value: ultimo.internetMessageId },
+          ...(referencias.length > 0
+            ? [{ name: "References", value: referencias.join(" ") }]
+            : []),
+        ]
+      : undefined;
+
+    const resendComponentId = await resend.sendEmail(ctx, {
+      from: nombreDireccion(correoContacto(), "Alpha CCM"),
+      to: para,
+      subject: ultimo && !/^re\s*:/i.test(asunto) ? `Re: ${asunto}` : asunto,
+      text: texto,
+      html: cuerpoHtml(texto),
+      replyTo: [correoContacto()],
+      ...(headers ? { headers } : {}),
+    });
+
+    const messageId = await ctx.db.insert("mailMessages", {
+      threadId,
+      direccion: "saliente",
+      de: correoContacto(),
+      para: [para],
+      cc: [],
+      asunto,
+      texto,
+      estado: "en_cola",
+      clientRequestId,
+      resendComponentId,
+      inReplyTo: ultimo?.internetMessageId,
+      referencias,
+      autorId: actor._id,
+      autorCorreo: actor.email ?? "",
+      creadoEn: ahora,
+    });
+
+    await ctx.db.patch(threadId, {
+      asunto,
+      asuntoClave: claveAsunto(asunto),
+      estado: "abierto",
+      ultimoMensajeEn: ahora,
+      ultimoResumen: resumenTexto(texto),
+      asignadoA: hilo?.asignadoA ?? actor._id,
+      actualizadoEn: ahora,
+    });
+    await registrarEnBitacora(ctx, {
+      actor,
+      accion: "correo.enviado",
+      entidad: "mailThreads",
+      entidadId: threadId,
+      detalle: para,
+    });
+
+    return { threadId, messageId };
+  },
+});
+
+export const marcarLeido = mutation({
+  args: { id: v.id("mailThreads") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requiereRol(ctx, "editor");
+    const hilo = await ctx.db.get(args.id);
+    if (hilo && hilo.noLeidos > 0) {
+      await ctx.db.patch(args.id, { noLeidos: 0, actualizadoEn: Date.now() });
+    }
+    return null;
+  },
+});
+
+export const cambiarEstado = mutation({
+  args: { id: v.id("mailThreads"), estado: estadoHiloCorreoValidador },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "editor");
+    const hilo = await ctx.db.get(args.id);
+    if (!hilo || hilo.estado === args.estado) return null;
+    await ctx.db.patch(args.id, { estado: args.estado, actualizadoEn: Date.now() });
+    await registrarEnBitacora(ctx, {
+      actor,
+      accion: "correo.estado",
+      entidad: "mailThreads",
+      entidadId: args.id,
+      detalle: `${hilo.estado} -> ${args.estado}`,
+    });
+    return null;
+  },
+});
+
+export const tomar = mutation({
+  args: { id: v.id("mailThreads"), tomar: v.boolean() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "editor");
+    await ctx.db.patch(args.id, {
+      asignadoA: args.tomar ? actor._id : undefined,
+      actualizadoEn: Date.now(),
+    });
+    await registrarEnBitacora(ctx, {
+      actor,
+      accion: args.tomar ? "correo.asignado" : "correo.liberado",
+      entidad: "mailThreads",
+      entidadId: args.id,
+    });
+    return null;
+  },
+});
+
+export const registrarEntrada = internalMutation({
+  args: {
+    eventId: v.string(),
+    providerEmailId: v.string(),
+    de: v.string(),
+    para: v.array(v.string()),
+    cc: v.array(v.string()),
+    asunto: v.string(),
+    internetMessageId: v.string(),
+    recibidoEn: v.number(),
+  },
+  returns: v.union(v.id("mailInboundJobs"), v.null()),
+  handler: async (ctx, args) => {
+    const existente = await ctx.db
+      .query("mailInboundJobs")
+      .withIndex("by_provider_email", (q) => q.eq("providerEmailId", args.providerEmailId))
+      .unique();
+    if (existente) return null;
+
+    const ahora = Date.now();
+    const id = await ctx.db.insert("mailInboundJobs", {
+      eventId: limpiarTexto(args.eventId, 100),
+      providerEmailId: limpiarTexto(args.providerEmailId, 100),
+      de: limpiarTexto(args.de, 320),
+      para: args.para.map((correo) => limpiarTexto(correo, 320)).slice(0, 25),
+      cc: args.cc.map((correo) => limpiarTexto(correo, 320)).slice(0, 25),
+      asunto: limpiarTexto(args.asunto || "Sin asunto", 180),
+      internetMessageId: limpiarTexto(args.internetMessageId, 500),
+      recibidoEn: args.recibidoEn,
+      estado: "pendiente",
+      intentos: 0,
+      creadoEn: ahora,
+      actualizadoEn: ahora,
+    });
+    await ctx.scheduler.runAfter(0, internal.correoActions.procesarEntrada, { jobId: id });
+    return id;
+  },
+});
+
+export const obtenerTrabajo = internalQuery({
+  args: { jobId: v.id("mailInboundJobs") },
+  returns: v.union(v.null(), trabajoValidador),
+  handler: async (ctx, args) => await ctx.db.get(args.jobId),
+});
+
+export const marcarTrabajoProcesando = internalMutation({
+  args: { jobId: v.id("mailInboundJobs") },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const trabajo = await ctx.db.get(args.jobId);
+    if (!trabajo || trabajo.estado !== "pendiente") return false;
+    await ctx.db.patch(args.jobId, {
+      estado: "procesando",
+      intentos: trabajo.intentos + 1,
+      ultimoError: undefined,
+      actualizadoEn: Date.now(),
+    });
+    return true;
+  },
+});
+
+export const guardarEntrada = internalMutation({
+  args: {
+    jobId: v.id("mailInboundJobs"),
+    texto: v.string(),
+    inReplyTo: v.optional(v.string()),
+    referencias: v.array(v.string()),
+    adjuntos: v.array(
+      v.object({
+        storageId: v.id("_storage"),
+        providerAttachmentId: v.string(),
+        nombre: v.string(),
+        tipoContenido: v.string(),
+        tamano: v.number(),
+      }),
+    ),
+  },
+  returns: v.id("mailMessages"),
+  handler: async (ctx, args) => {
+    const trabajo = await ctx.db.get(args.jobId);
+    if (!trabajo) throw new Error("El trabajo de correo ya no existe.");
+    const existente = await ctx.db
+      .query("mailMessages")
+      .withIndex("by_provider_inbound", (q) => q.eq("providerInboundId", trabajo.providerEmailId))
+      .unique();
+    if (existente) {
+      await ctx.db.patch(args.jobId, { estado: "completado", actualizadoEn: Date.now() });
+      return existente._id;
+    }
+
+    const remitente = extraerDireccion(trabajo.de);
+    const referencias = args.referencias.map((valor) => limpiarTexto(valor, 500)).slice(-20);
+    const candidatos = [args.inReplyTo, ...[...referencias].reverse()].filter(
+      (valor): valor is string => Boolean(valor),
+    );
+    let threadId: Id<"mailThreads"> | null = null;
+
+    for (const candidato of candidatos) {
+      const mensaje = await ctx.db
+        .query("mailMessages")
+        .withIndex("by_internet_message", (q) => q.eq("internetMessageId", candidato))
+        .unique();
+      if (mensaje) {
+        threadId = mensaje.threadId;
+        break;
+      }
+    }
+
+    const asunto = limpiarTexto(trabajo.asunto || "Sin asunto", 180);
+    const asuntoClave = claveAsunto(asunto);
+    if (!threadId) {
+      const recientes = await ctx.db
+        .query("mailThreads")
+        .withIndex("by_contacto_ultimo", (q) => q.eq("contactoCorreo", remitente.correo))
+        .order("desc")
+        .take(20);
+      const compatible = recientes.find(
+        (hilo) =>
+          hilo.asuntoClave === asuntoClave &&
+          hilo.ultimoMensajeEn >= Date.now() - VENTANA_HILO_MS,
+      );
+      threadId = compatible?._id ?? null;
+    }
+
+    const texto = limpiarMultilinea(args.texto || "Mensaje sin contenido de texto.", 60_000);
+    const ahora = Date.now();
+    if (!threadId) {
+      threadId = await ctx.db.insert("mailThreads", {
+        asunto,
+        asuntoClave,
+        contactoCorreo: remitente.correo,
+        ...(remitente.nombre ? { contactoNombre: remitente.nombre } : {}),
+        estado: "abierto",
+        noLeidos: 1,
+        ultimoMensajeEn: trabajo.recibidoEn,
+        ultimoResumen: resumenTexto(texto),
+        creadoEn: ahora,
+        actualizadoEn: ahora,
+      });
+    } else {
+      const hilo = await ctx.db.get(threadId);
+      if (!hilo) throw new Error("La conversacion vinculada ya no existe.");
+      await ctx.db.patch(threadId, {
+        asunto,
+        asuntoClave,
+        contactoCorreo: remitente.correo,
+        ...(remitente.nombre ? { contactoNombre: remitente.nombre } : {}),
+        estado: "abierto",
+        noLeidos: hilo.noLeidos + 1,
+        ultimoMensajeEn: trabajo.recibidoEn,
+        ultimoResumen: resumenTexto(texto),
+        actualizadoEn: ahora,
+      });
+    }
+
+    const messageId = await ctx.db.insert("mailMessages", {
+      threadId,
+      direccion: "entrante",
+      de: trabajo.de,
+      para: trabajo.para,
+      cc: trabajo.cc,
+      asunto,
+      texto,
+      estado: "recibido",
+      providerInboundId: trabajo.providerEmailId,
+      internetMessageId: trabajo.internetMessageId,
+      ...(args.inReplyTo ? { inReplyTo: limpiarTexto(args.inReplyTo, 500) } : {}),
+      referencias,
+      creadoEn: trabajo.recibidoEn,
+    });
+
+    await Promise.all(
+      args.adjuntos.map((adjunto) =>
+        ctx.db.insert("mailAttachments", {
+          messageId,
+          storageId: adjunto.storageId,
+          providerAttachmentId: limpiarTexto(adjunto.providerAttachmentId, 100),
+          nombre: limpiarTexto(adjunto.nombre, 180) || "adjunto",
+          tipoContenido: limpiarTexto(adjunto.tipoContenido, 120),
+          tamano: Math.max(0, Math.floor(adjunto.tamano)),
+          creadoEn: ahora,
+        }),
+      ),
+    );
+    await ctx.db.patch(args.jobId, {
+      estado: "completado",
+      ultimoError: undefined,
+      actualizadoEn: ahora,
+    });
+    await registrarEnBitacora(ctx, {
+      actor: null,
+      accion: "correo.recibido",
+      entidad: "mailThreads",
+      entidadId: threadId,
+      detalle: remitente.correo,
+    });
+    return messageId;
+  },
+});
+
+export const registrarFalloEntrada = internalMutation({
+  args: { jobId: v.id("mailInboundJobs"), error: v.string(), terminal: v.boolean() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const trabajo = await ctx.db.get(args.jobId);
+    if (!trabajo || trabajo.estado === "completado") return null;
+    await ctx.db.patch(args.jobId, {
+      estado: args.terminal ? "fallido" : "pendiente",
+      ultimoError: limpiarTexto(args.error, 500),
+      actualizadoEn: Date.now(),
+    });
+    return null;
+  },
+});
+
+export const actualizarEstadoEnvio = internalMutation({
+  args: vOnEmailEventArgs,
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const mensaje = await ctx.db
+      .query("mailMessages")
+      .withIndex("by_resend_component", (q) => q.eq("resendComponentId", args.id))
+      .unique();
+    if (!mensaje) return null;
+
+    const estado = estadoDesdeEvento(args.event, mensaje.estado);
+    const error =
+      args.event.type === "email.bounced"
+        ? args.event.data.bounce.message
+        : args.event.type === "email.failed"
+          ? args.event.data.failed.reason
+          : undefined;
+    await ctx.db.patch(mensaje._id, {
+      estado,
+      resendEmailId: args.event.data.email_id,
+      ...(args.event.data.message_id ? { internetMessageId: args.event.data.message_id } : {}),
+      ...(error ? { error: limpiarTexto(error, 500) } : {}),
+    });
+    return null;
+  },
+});
+
+function estadoDesdeEvento(
+  evento: EmailEvent,
+  actual: Doc<"mailMessages">["estado"],
+): Doc<"mailMessages">["estado"] {
+  switch (evento.type) {
+    case "email.sent":
+      return "enviado";
+    case "email.delivered":
+      return "entregado";
+    case "email.delivery_delayed":
+      return actual === "entregado" ? actual : "retrasado";
+    case "email.bounced":
+      return "rebotado";
+    case "email.failed":
+      return "fallido";
+    case "email.complained":
+      return "fallido";
+    case "email.opened":
+    case "email.clicked":
+      return actual;
+  }
+}
+
+export async function enviarInvitacionPorCorreo(
+  ctx: MutationCtx,
+  args: {
+    actor: Doc<"users">;
+    correo: string;
+    nombre: string;
+    token: string;
+    expiraEn: number;
+  },
+): Promise<boolean> {
+  const sitio = process.env.SITE_URL?.replace(/\/$/, "");
+  if (!sitio || !process.env.RESEND_API_KEY || process.env.RESEND_TEST_MODE !== "false") {
+    return false;
+  }
+
+  const enlace = `${sitio}/dashboard/invitacion/${args.token}`;
+  const vence = new Date(args.expiraEn).toISOString().slice(0, 10);
+  const texto = `Hola ${args.nombre},\n\nTe invitaron al panel interno de Alpha. El enlace es personal, funciona una sola vez y vence el ${vence}.\n\n${enlace}\n\nSi no esperabas esta invitacion, puedes ignorar este mensaje.`;
+  const ahora = Date.now();
+  const asunto = "Tu acceso al panel de Alpha";
+  const threadId = await ctx.db.insert("mailThreads", {
+    asunto,
+    asuntoClave: claveAsunto(asunto),
+    contactoCorreo: args.correo,
+    contactoNombre: args.nombre,
+    estado: "resuelto",
+    noLeidos: 0,
+    ultimoMensajeEn: ahora,
+    ultimoResumen: resumenTexto(texto),
+    asignadoA: args.actor._id,
+    creadoEn: ahora,
+    actualizadoEn: ahora,
+  });
+  const auto = normalizarCorreo(process.env.ALPHA_AUTO_EMAIL ?? "auto@alphaccm.org");
+  const resendComponentId = await resend.sendEmail(ctx, {
+    from: nombreDireccion(auto, "Alpha CCM"),
+    to: args.correo,
+    subject: asunto,
+    text: texto,
+    html: cuerpoHtml(texto),
+    replyTo: [correoContacto()],
+  });
+  await ctx.db.insert("mailMessages", {
+    threadId,
+    direccion: "saliente",
+    de: auto,
+    para: [args.correo],
+    cc: [],
+    asunto,
+    texto,
+    estado: "en_cola",
+    resendComponentId,
+    referencias: [],
+    autorId: args.actor._id,
+    autorCorreo: args.actor.email ?? "",
+    creadoEn: ahora,
+  });
+  return true;
+}

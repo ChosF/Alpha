@@ -8,6 +8,7 @@ import { registrarEnBitacora } from "./lib/auditoria";
 import { limpiarTexto, normalizarCorreo, sha256Hex } from "./lib/texto";
 import { rolValidador } from "./lib/validadores";
 import { CUOTAS, consumirLimite } from "./lib/limites";
+import { enviarInvitacionPorCorreo } from "./correo";
 
 /** Vigencia de una invitacion. */
 const DIAS_INVITACION = 7;
@@ -78,7 +79,7 @@ export const invitacionesPendientes = query({
  */
 export const invitar = mutation({
   args: { correo: v.string(), nombre: v.string(), rol: rolValidador },
-  returns: v.object({ token: v.string(), expiraEn: v.number() }),
+  returns: v.object({ token: v.string(), expiraEn: v.number(), correoEnviado: v.boolean() }),
   handler: async (ctx, args) => {
     const actor = await requiereRol(ctx, "admin");
 
@@ -115,9 +116,10 @@ export const invitar = mutation({
     const ahora = Date.now();
     const expiraEn = ahora + DIAS_INVITACION * 24 * 60 * 60 * 1000;
 
+    const nombre = limpiarTexto(args.nombre, 80);
     await ctx.db.insert("invites", {
       correo,
-      nombre: limpiarTexto(args.nombre, 80),
+      nombre,
       rol: args.rol,
       tokenHash: await sha256Hex(token),
       expiraEn,
@@ -132,7 +134,15 @@ export const invitar = mutation({
       detalle: `${correo} como ${args.rol}`,
     });
 
-    return { token, expiraEn };
+    const correoEnviado = await enviarInvitacionPorCorreo(ctx, {
+      actor,
+      correo,
+      nombre,
+      token,
+      expiraEn,
+    });
+
+    return { token, expiraEn, correoEnviado };
   },
 });
 

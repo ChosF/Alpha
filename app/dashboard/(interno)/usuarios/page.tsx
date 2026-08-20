@@ -10,9 +10,8 @@ import { Aviso, Bandeja, Cargando, Titulo, fecha } from "@/components/panel/piez
 /**
  * Usuarios del panel.
  *
- * El enlace de invitacion se muestra una sola vez, aqui mismo, porque el
- * sistema no manda correos todavia: quien invita lo copia y lo hace llegar por
- * el canal que ya usa el equipo. En la base solo queda su hash.
+ * El enlace de invitacion se muestra una sola vez. Si Resend esta configurado,
+ * tambien se envia desde auto@alphaccm.org y queda registrado en Correo.
  */
 export default function Usuarios() {
   const usuarios = useQuery(api.usuarios.listar, {});
@@ -172,6 +171,7 @@ function Invitar() {
   const [nombre, setNombre] = useState("");
   const [rol, setRol] = useState<Rol>("lector");
   const [enlace, setEnlace] = useState<string | null>(null);
+  const [correoEnviado, setCorreoEnviado] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
   const [copiado, setCopiado] = useState(false);
@@ -180,9 +180,12 @@ function Invitar() {
     setOcupado(true);
     setError(null);
     setEnlace(null);
+    setCorreoEnviado(false);
     try {
-      const { token } = await invitar({ correo, nombre, rol });
+      const resultado = await invitar({ correo, nombre, rol });
+      const { token } = resultado;
       setEnlace(`${window.location.origin}/dashboard/invitacion/${token}`);
+      setCorreoEnviado(resultado.correoEnviado);
       setCorreo("");
       setNombre("");
     } catch (e) {
@@ -196,8 +199,8 @@ function Invitar() {
     <div className="p-7">
       <p className="rotulo">Invitar a alguien</p>
       <p className="mt-3 text-[12.5px] font-light leading-[1.7] text-[var(--color-cuerpo)]">
-        Se genera un enlace de un solo uso, valido 7 dias. Copialo y hazlo llegar tu: el sistema
-        todavia no manda correos.
+        El acceso dura 7 dias y funciona una sola vez. Con el correo configurado, Alpha lo envia
+        desde auto@alphaccm.org. El enlace tambien aparece aqui como respaldo.
       </p>
 
       <div className="mt-7 grid gap-6">
@@ -265,7 +268,12 @@ function Invitar() {
 
       {enlace ? (
         <div className="mt-6 bg-[var(--color-surface)] p-5">
-          <p className="rotulo">Enlace de invitacion</p>
+          <Aviso tono={correoEnviado ? "exito" : "error"}>
+            {correoEnviado
+              ? "Invitacion enviada por correo."
+              : "El correo aun no esta configurado. Comparte el enlace manualmente."}
+          </Aviso>
+          <p className="rotulo mt-4">Enlace de invitacion</p>
           <p className="mt-3 cifra text-[11px] break-all leading-[1.6]">{enlace}</p>
           <button
             type="button"

@@ -1,7 +1,18 @@
 import { defineSchema, defineTable } from "convex/server";
 import { authTables } from "@convex-dev/auth/server";
 import { v } from "convex/values";
-import { areaValidador, estadoRegistroValidador, estadoProgramaValidador, pilarValidador, rolValidador, tipoRegistroValidador } from "./lib/validadores";
+import {
+  areaValidador,
+  direccionMensajeCorreoValidador,
+  estadoHiloCorreoValidador,
+  estadoIngestaCorreoValidador,
+  estadoMensajeCorreoValidador,
+  estadoProgramaValidador,
+  estadoRegistroValidador,
+  pilarValidador,
+  rolValidador,
+  tipoRegistroValidador,
+} from "./lib/validadores";
 
 /**
  * Esquema de Alpha.
@@ -124,4 +135,81 @@ export default defineSchema({
     ventanaInicio: v.number(),
     conteo: v.number(),
   }).index("by_clave", ["clave"]),
+
+  /** Conversaciones que entran y salen por contacto@alphaccm.org. */
+  mailThreads: defineTable({
+    asunto: v.string(),
+    asuntoClave: v.string(),
+    contactoCorreo: v.string(),
+    contactoNombre: v.optional(v.string()),
+    estado: estadoHiloCorreoValidador,
+    noLeidos: v.number(),
+    ultimoMensajeEn: v.number(),
+    ultimoResumen: v.string(),
+    asignadoA: v.optional(v.id("users")),
+    creadoEn: v.number(),
+    actualizadoEn: v.number(),
+  })
+    .index("by_ultimo", ["ultimoMensajeEn"])
+    .index("by_estado_ultimo", ["estado", "ultimoMensajeEn"])
+    .index("by_contacto_ultimo", ["contactoCorreo", "ultimoMensajeEn"]),
+
+  /** Mensajes. El panel renderiza siempre `texto`, nunca HTML de terceros. */
+  mailMessages: defineTable({
+    threadId: v.id("mailThreads"),
+    direccion: direccionMensajeCorreoValidador,
+    de: v.string(),
+    para: v.array(v.string()),
+    cc: v.array(v.string()),
+    asunto: v.string(),
+    texto: v.string(),
+    estado: estadoMensajeCorreoValidador,
+    clientRequestId: v.optional(v.string()),
+    resendComponentId: v.optional(v.string()),
+    resendEmailId: v.optional(v.string()),
+    providerInboundId: v.optional(v.string()),
+    internetMessageId: v.optional(v.string()),
+    inReplyTo: v.optional(v.string()),
+    referencias: v.array(v.string()),
+    autorId: v.optional(v.id("users")),
+    autorCorreo: v.optional(v.string()),
+    error: v.optional(v.string()),
+    creadoEn: v.number(),
+  })
+    .index("by_thread_time", ["threadId", "creadoEn"])
+    .index("by_client_request", ["clientRequestId"])
+    .index("by_resend_component", ["resendComponentId"])
+    .index("by_provider_inbound", ["providerInboundId"])
+    .index("by_internet_message", ["internetMessageId"]),
+
+  /** Adjuntos entrantes copiados a Convex Storage antes de que caduque su URL. */
+  mailAttachments: defineTable({
+    messageId: v.id("mailMessages"),
+    storageId: v.id("_storage"),
+    providerAttachmentId: v.string(),
+    nombre: v.string(),
+    tipoContenido: v.string(),
+    tamano: v.number(),
+    creadoEn: v.number(),
+  }).index("by_message", ["messageId"]),
+
+  /** Trabajo idempotente para convertir un webhook entrante en un mensaje. */
+  mailInboundJobs: defineTable({
+    eventId: v.string(),
+    providerEmailId: v.string(),
+    de: v.string(),
+    para: v.array(v.string()),
+    cc: v.array(v.string()),
+    asunto: v.string(),
+    internetMessageId: v.string(),
+    recibidoEn: v.number(),
+    estado: estadoIngestaCorreoValidador,
+    intentos: v.number(),
+    ultimoError: v.optional(v.string()),
+    creadoEn: v.number(),
+    actualizadoEn: v.number(),
+  })
+    .index("by_event", ["eventId"])
+    .index("by_provider_email", ["providerEmailId"])
+    .index("by_estado_actualizado", ["estado", "actualizadoEn"]),
 });

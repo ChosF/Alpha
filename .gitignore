@@ -6,6 +6,7 @@ build/
 .env.local
 .env*.local
 .vercel
+.convex-tmp/
 *.tsbuildinfo
 next-env.d.ts
 public/landing/

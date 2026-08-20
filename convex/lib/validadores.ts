@@ -25,12 +25,36 @@ export const PILARES = ["desarrollo", "industria", "comunidad"] as const;
 
 export const TIPOS_REGISTRO = ["miembro", "aliado"] as const;
 
+export const ESTADOS_HILO_CORREO = ["abierto", "resuelto", "spam"] as const;
+
+export const DIRECCIONES_MENSAJE_CORREO = ["entrante", "saliente"] as const;
+
+export const ESTADOS_MENSAJE_CORREO = [
+  "recibido",
+  "en_cola",
+  "enviado",
+  "entregado",
+  "retrasado",
+  "rebotado",
+  "fallido",
+] as const;
+
+export const ESTADOS_INGESTA_CORREO = [
+  "pendiente",
+  "procesando",
+  "completado",
+  "fallido",
+] as const;
+
 export type Area = (typeof AREAS)[number];
 export type Rol = (typeof ROLES)[number];
 export type EstadoRegistro = (typeof ESTADOS_REGISTRO)[number];
 export type EstadoPrograma = (typeof ESTADOS_PROGRAMA)[number];
 export type Pilar = (typeof PILARES)[number];
 export type TipoRegistro = (typeof TIPOS_REGISTRO)[number];
+export type EstadoHiloCorreo = (typeof ESTADOS_HILO_CORREO)[number];
+export type DireccionMensajeCorreo = (typeof DIRECCIONES_MENSAJE_CORREO)[number];
+export type EstadoMensajeCorreo = (typeof ESTADOS_MENSAJE_CORREO)[number];
 
 export const areaValidador = v.union(...AREAS.map((a) => v.literal(a)));
 export const rolValidador = v.union(...ROLES.map((r) => v.literal(r)));
@@ -38,6 +62,18 @@ export const estadoRegistroValidador = v.union(...ESTADOS_REGISTRO.map((e) => v.
 export const estadoProgramaValidador = v.union(...ESTADOS_PROGRAMA.map((e) => v.literal(e)));
 export const pilarValidador = v.union(...PILARES.map((p) => v.literal(p)));
 export const tipoRegistroValidador = v.union(...TIPOS_REGISTRO.map((t) => v.literal(t)));
+export const estadoHiloCorreoValidador = v.union(
+  ...ESTADOS_HILO_CORREO.map((e) => v.literal(e)),
+);
+export const direccionMensajeCorreoValidador = v.union(
+  ...DIRECCIONES_MENSAJE_CORREO.map((d) => v.literal(d)),
+);
+export const estadoMensajeCorreoValidador = v.union(
+  ...ESTADOS_MENSAJE_CORREO.map((e) => v.literal(e)),
+);
+export const estadoIngestaCorreoValidador = v.union(
+  ...ESTADOS_INGESTA_CORREO.map((e) => v.literal(e)),
+);
 
 /** Etiquetas en espanol para el panel y las exportaciones. */
 export const ETIQUETAS: Record<string, string> = {
@@ -62,4 +98,14 @@ export const ETIQUETAS: Record<string, string> = {
   comunidad: "Inclusion y comunidad",
   miembro: "Miembro",
   aliado: "Aliado",
+  abierto: "Abierto",
+  resuelto: "Resuelto",
+  spam: "Spam",
+  recibido: "Recibido",
+  en_cola: "En cola",
+  enviado: "Enviado",
+  entregado: "Entregado",
+  retrasado: "Retrasado",
+  rebotado: "Rebotado",
+  fallido: "Fallido",
 };

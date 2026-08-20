@@ -1,5 +1,6 @@
 import { httpRouter } from "convex/server";
 import { auth } from "./auth";
+import { manejarResend } from "./correoWebhook";
 
 /**
  * Rutas HTTP de Convex. Solo se exponen las de Convex Auth; la ingesta del
@@ -7,5 +8,6 @@ import { auth } from "./auth";
  */
 const http = httpRouter();
 auth.addHttpRoutes(http);
+http.route({ path: "/resend-webhook", method: "POST", handler: manejarResend });
 
 export default http;

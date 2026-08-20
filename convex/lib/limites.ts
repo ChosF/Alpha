@@ -58,4 +58,6 @@ export const CUOTAS = {
   registroPorCorreo: { maximo: 3, ventanaMs: 24 * 60 * 60 * 1000 },
   /** Invitaciones emitidas por un mismo administrador. */
   invitacionesPorAdmin: { maximo: 20, ventanaMs: 60 * 60 * 1000 },
+  /** Correos manuales emitidos por una misma cuenta del panel. */
+  correosPorUsuario: { maximo: 40, ventanaMs: 60 * 60 * 1000 },
 } as const;

@@ -3,6 +3,8 @@
 **Fecha:** 19 de agosto de 2026
 **Estado:** diseño aprobado para implementación (aprobación del usuario en la conversación del 19 de agosto de 2026).
 **Alcance:** primera versión completa del backend, el panel interno y la preparación del despliegue.
+El 20 de agosto de 2026 se amplio con correo de dominio mediante Convex y Resend. La configuracion
+operativa de esa extension vive en `docs/correo-resend.md`.
 
 ---
 
@@ -19,8 +21,8 @@ Objetivos, en orden:
 3. Que Operaciones edite el programa de eventos y que la landing lo lea desde la base.
 4. Que todo esto resista los ataques habituales de una aplicación web pública.
 
-No es objetivo de esta versión: envío de correos, integración con WhatsApp Business, registro de
-asistencia a eventos, ni el sitio público en React.
+No es objetivo de esta versión: integración con WhatsApp Business, registro de asistencia a
+eventos, ni el sitio público en React.
 
 ---
 
