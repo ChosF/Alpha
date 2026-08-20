@@ -92,6 +92,7 @@ El registro que llega del formulario público.
 | `nombre` | string | 2–80 caracteres, ya normalizado |
 | `correo` | string | En minúsculas, sin espacios; único por índice |
 | `carrera` | string | 2–80 caracteres |
+| `semestre` | string opcional | Campo separado, 1–30 caracteres; opcional en datos históricos |
 | `matricula` | string opcional | Formato `A########` si viene |
 | `canales` | objeto | `{ correo: boolean, whatsapp: boolean }`, sólo miembro |
 | `telefono` | string opcional | 10 dígitos, sólo si eligió WhatsApp |
@@ -228,11 +229,13 @@ El diseño de estas pantallas se hace con la skill `frontend-design` en la fase 
 ## 8. Despliegue
 
 1. `npx convex dev` una vez, para crear el despliegue de desarrollo.
-2. Variables en Vercel: `CONVEX_DEPLOYMENT`, `NEXT_PUBLIC_CONVEX_URL`, `INGEST_SECRET`,
-   `IP_SALT`, `JWT_PRIVATE_KEY`, `JWKS`, `SITE_URL`.
-3. `npx convex deploy --cmd "npm run build"` como comando de build en Vercel, que publica las
+2. Variables de producción en Vercel: `CONVEX_DEPLOY_KEY`, `NEXT_PUBLIC_CONVEX_URL`,
+   `INGEST_SECRET`, `IP_SALT` y `SITE_URL`. No se configura `CONVEX_DEPLOYMENT`, porque la clave
+   de despliegue ya selecciona el entorno de producción.
+3. Variables en Convex producción: `INGEST_SECRET`, `SITE_URL`, `JWT_PRIVATE_KEY` y `JWKS`.
+4. `npx convex deploy --cmd "npm run build"` como comando de build en Vercel, que publica las
    funciones y compila el sitio en un solo paso.
-4. Primer administrador: `npx convex run admin:sembrarAdmin '{"correo":"...","nombre":"..."}'`,
+5. Primer administrador: `npx convex run admin:sembrarAdmin '{"correo":"...","nombre":"..."}'`,
    que genera la invitación inicial.
 
 El README documenta el procedimiento con los comandos exactos.

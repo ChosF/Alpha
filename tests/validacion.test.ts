@@ -9,7 +9,8 @@ const base = {
   tipo: "miembro" as const,
   nombre: "Mariela Reyes",
   correo: "a01234567@tec.mx",
-  carrera: "LAF, 3.er semestre",
+  carrera: "LAF",
+  semestre: "3.er semestre",
   token: "1700000000.abc.firma",
 };
 
@@ -28,14 +29,20 @@ describe("campos obligatorios", () => {
     expect(r.success && r.data.correo).toBe("a01234567@tec.mx");
   });
 
-  it("exige nombre y carrera con contenido real", () => {
+  it("exige nombre, carrera y semestre con contenido real", () => {
     expect(esquemaRegistro.safeParse({ ...base, nombre: " " }).success).toBe(false);
     expect(esquemaRegistro.safeParse({ ...base, carrera: "" }).success).toBe(false);
+    expect(esquemaRegistro.safeParse({ ...base, semestre: "" }).success).toBe(false);
   });
 
-  it("rechaza correos fuera del dominio institucional", () => {
-    expect(esquemaRegistro.safeParse({ ...base, correo: "alguien@gmail.com" }).success).toBe(false);
-    expect(esquemaRegistro.safeParse({ ...base, correo: "ex@exatec.tec.mx" }).success).toBe(true);
+  it("acepta correo personal para miembros y exige institucional para aliados", () => {
+    expect(esquemaRegistro.safeParse({ ...base, correo: "alguien@gmail.com" }).success).toBe(true);
+    expect(
+      esquemaRegistro.safeParse({ ...base, tipo: "aliado", correo: "alguien@gmail.com" }).success,
+    ).toBe(false);
+    expect(
+      esquemaRegistro.safeParse({ ...base, tipo: "aliado", correo: "ex@exatec.tec.mx" }).success,
+    ).toBe(true);
   });
 
   it("rechaza un correo mal formado aunque acabe en el dominio", () => {
@@ -124,6 +131,7 @@ describe("traduccion al payload de Convex", () => {
     if (!r.success) return;
 
     const payload = aPayloadConvex(r.data, { ipHash: "h", userAgent: "ua" });
+    expect(payload.semestre).toBe("3.er semestre");
     expect(payload.canales).toEqual({ correo: false, whatsapp: false });
     expect(payload).not.toHaveProperty("telefono");
     expect(payload.areas).toEqual(["finanzas"]);

@@ -47,7 +47,8 @@ export const listar = query({
         (r) =>
           r.nombre.toLowerCase().includes(termino) ||
           r.correo.toLowerCase().includes(termino) ||
-          r.carrera.toLowerCase().includes(termino),
+          r.carrera.toLowerCase().includes(termino) ||
+          (r.semestre?.toLowerCase().includes(termino) ?? false),
       );
     }
 

@@ -11,11 +11,7 @@ import { limpiarMultilinea, limpiarTexto, normalizarCorreo, normalizarTelefono }
  * de pie.
  */
 
-/**
- * Dominios aceptados en el correo. La ventana de registro pide "correo
- * institucional", y exigirlo es de las pocas defensas gratuitas contra altas
- * automatizadas. Para abrirlo a correos personales, basta agregar aqui.
- */
+/** Los aliados usan correo institucional; los miembros pueden usar cualquier correo valido. */
 export const DOMINIOS_PERMITIDOS = ["tec.mx", "exatec.tec.mx"] as const;
 
 function dominioPermitido(correo: string): boolean {
@@ -39,9 +35,9 @@ export const esquemaRegistro = z
       .string()
       .max(120, "El correo es demasiado largo.")
       .transform(normalizarCorreo)
-      .refine((c) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c), "Ese correo no parece valido.")
-      .refine(dominioPermitido, "Usa tu correo institucional (@tec.mx o @exatec.tec.mx)."),
-    carrera: texto(2, 80, "Carrera y semestre"),
+      .refine((c) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c), "Ese correo no parece valido."),
+    carrera: texto(2, 80, "Carrera"),
+    semestre: texto(1, 30, "Semestre"),
     matricula: z
       .string()
       .transform((valor) => limpiarTexto(valor, 12).toUpperCase())
@@ -79,6 +75,13 @@ export const esquemaRegistro = z
     token: z.string().min(10).max(512),
   })
   .superRefine((datos, ctx) => {
+    if (datos.tipo === "aliado" && !dominioPermitido(datos.correo)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["correo"],
+        message: "Como aliado, usa tu correo institucional (@tec.mx o @exatec.tec.mx).",
+      });
+    }
     if (datos.tipo === "miembro" && datos.whatsapp && datos.telefono === "") {
       ctx.addIssue({
         code: "custom",
@@ -101,6 +104,7 @@ export function aPayloadConvex(
     nombre: datos.nombre,
     correo: datos.correo,
     carrera: datos.carrera,
+    semestre: datos.semestre,
     ...(datos.matricula ? { matricula: datos.matricula } : {}),
     canales: {
       correo: esMiembro ? datos.avisosCorreo : false,

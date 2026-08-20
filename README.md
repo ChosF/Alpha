@@ -108,14 +108,17 @@ npx convex run admin:sembrarProgramas
    | `CONVEX_DEPLOY_KEY` | Panel de Convex, despliegue de produccion |
    | `INGEST_SECRET` | El que generaste; el mismo que en `npx convex env set` de produccion |
    | `IP_SALT` | El que generaste |
-   | `SITE_URL` | La URL final del sitio |
+   | `NEXT_PUBLIC_CONVEX_URL` | `https://basic-gopher-658.convex.cloud` |
+   | `SITE_URL` | URL publica canonica, por ejemplo `https://alpha-iota-nine.vercel.app` |
 
    `NEXT_PUBLIC_CONVEX_URL` la inyecta `convex deploy` durante el build.
 
-4. En el despliegue de **produccion** de Convex hay que repetir:
+4. En el despliegue de **produccion** de Convex configura:
 
    ```bash
    npx convex env set INGEST_SECRET valor --prod
+   npx convex env set SITE_URL https://tu-dominio --prod
+   npx @convex-dev/auth --prod --web-server-url https://tu-dominio
    ```
 
 5. Tras el primer despliegue, crea el administrador de produccion:
@@ -165,8 +168,8 @@ Dos cosas que conviene saber:
   Tailwind), porque es HTML artesanal con scripts y estilos en linea. No maneja datos personales,
   asi que el riesgo es bajo; si algun dia se quiere endurecer, hay que compilar Tailwind y sacar
   los scripts a archivos.
-- **El registro exige correo `@tec.mx` o `@exatec.tec.mx`.** Para abrirlo, edita
-  `DOMINIOS_PERMITIDOS` en `lib/validacion.ts`.
+- **Los miembros pueden registrarse con cualquier correo valido.** Los aliados siguen usando
+  `@tec.mx` o `@exatec.tec.mx`; la regla vive en `lib/validacion.ts`.
 
 ---
 

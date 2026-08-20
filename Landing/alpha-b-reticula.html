@@ -991,10 +991,12 @@ img,svg{display:block;max-width:100%}
       <div class="jn-fields grid gap-7 sm:grid-cols-2">
         <div class="fld"><label for="jn-n">Nombre</label>
           <input class="inp" id="jn-n" name="nombre" placeholder="Nombre y apellido" autocomplete="name"></div>
-        <div class="fld"><label for="jn-e">Correo institucional</label>
-          <input class="inp" id="jn-e" name="correo" type="email" placeholder="a01234567@tec.mx" autocomplete="email"></div>
-        <div class="fld"><label for="jn-c">Carrera y semestre</label>
-          <input class="inp" id="jn-c" name="carrera" placeholder="LAF · 3.er semestre"></div>
+        <div class="fld"><label for="jn-e">Correo <span data-only="aliado" class="normal-case tracking-normal">(institucional para aliados)</span></label>
+          <input class="inp" id="jn-e" name="correo" type="email" placeholder="nombre@correo.com" autocomplete="email"></div>
+        <div class="fld"><label for="jn-c">Carrera</label>
+          <input class="inp" id="jn-c" name="carrera" placeholder="LAF"></div>
+        <div class="fld"><label for="jn-sem">Semestre</label>
+          <input class="inp" id="jn-sem" name="semestre" placeholder="3.er semestre"></div>
         <div class="fld"><label for="jn-m">Matrícula <span class="normal-case tracking-normal">(opcional)</span></label>
           <input class="inp" id="jn-m" name="matricula" placeholder="A01234567"></div>
       </div>
@@ -1325,6 +1327,7 @@ img,svg{display:block;max-width:100%}
       nombre: String(datos.get("nombre") || ""),
       correo: String(datos.get("correo") || ""),
       carrera: String(datos.get("carrera") || ""),
+      semestre: String(datos.get("semestre") || ""),
       matricula: String(datos.get("matricula") || ""),
       avisosCorreo: datos.get("correo_avisos") !== null,
       whatsapp: datos.get("whatsapp") !== null,

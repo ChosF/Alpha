@@ -45,6 +45,8 @@ export default defineSchema({
     nombre: v.string(),
     correo: v.string(),
     carrera: v.string(),
+    // Opcional para conservar registros creados antes de separar este campo.
+    semestre: v.optional(v.string()),
     matricula: v.optional(v.string()),
 
     // Solo miembro

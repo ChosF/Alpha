@@ -19,6 +19,8 @@ const datosRegistro = v.object({
   nombre: v.string(),
   correo: v.string(),
   carrera: v.string(),
+  // Opcional durante la transicion para aceptar clientes anteriores al cambio.
+  semestre: v.optional(v.string()),
   matricula: v.optional(v.string()),
   canales: v.object({ correo: v.boolean(), whatsapp: v.boolean() }),
   telefono: v.optional(v.string()),
@@ -91,6 +93,9 @@ export const guardar = internalMutation({
       nombre: limpiarTexto(datos.nombre, 80),
       correo,
       carrera: limpiarTexto(datos.carrera, 80),
+      ...(datos.semestre
+        ? { semestre: limpiarTexto(datos.semestre, 30) }
+        : {}),
       ...(datos.matricula ? { matricula: limpiarTexto(datos.matricula, 12).toUpperCase() } : {}),
       canales: esMiembro ? datos.canales : { correo: false, whatsapp: false },
       ...(telefono ? { telefono } : {}),

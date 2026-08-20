@@ -39,7 +39,8 @@ const datosBase = {
   tipo: "miembro" as const,
   nombre: "Mariela Reyes",
   correo: "a01234567@tec.mx",
-  carrera: "LAF 3",
+  carrera: "LAF",
+  semestre: "3.er semestre",
   canales: { correo: true, whatsapp: false },
   areas: [],
   ipHash: "hash-ip",
@@ -72,12 +73,13 @@ describe("ingesta del formulario publico", () => {
     await t.action(api.ingesta.registrar, { secreto: SECRETO, datos: datosBase });
     await t.action(api.ingesta.registrar, {
       secreto: SECRETO,
-      datos: { ...datosBase, carrera: "LAF 4" },
+      datos: { ...datosBase, semestre: "4.º semestre" },
     });
 
     const filas = await t.run(async (ctx) => ctx.db.query("registrations").collect());
     expect(filas).toHaveLength(1);
-    expect(filas[0]?.carrera).toBe("LAF 4");
+    expect(filas[0]?.carrera).toBe("LAF");
+    expect(filas[0]?.semestre).toBe("4.º semestre");
   });
 
   it("un aliado no conserva canales ni telefono", async () => {

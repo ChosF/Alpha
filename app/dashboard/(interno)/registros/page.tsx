@@ -52,7 +52,7 @@ export default function Registros() {
             className="entrada"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Nombre, correo o carrera"
+            placeholder="Nombre, correo, carrera o semestre"
             autoComplete="off"
           />
         </div>
@@ -185,7 +185,8 @@ function Ficha({
   return (
     <div className="bg-[var(--color-surface)] px-5 sm:px-7 py-7 mb-1 grid gap-7 lg:grid-cols-2">
       <dl className="grid gap-4 text-[13px]">
-        <Dato titulo="Carrera y semestre" valor={registro.carrera} />
+        <Dato titulo="Carrera" valor={registro.carrera} />
+        <Dato titulo="Semestre" valor={registro.semestre ?? "—"} />
         <Dato titulo="Matricula" valor={registro.matricula ?? "—"} mono />
         <Dato titulo="Registrado" valor={fecha(registro.creadoEn)} />
         {registro.tipo === "miembro" ? (
@@ -311,6 +312,7 @@ function BotonExportar({ tipo, estado }: { tipo: TipoRegistro | ""; estado: Esta
         "Nombre",
         "Correo",
         "Carrera",
+        "Semestre",
         "Matricula",
         "Avisos correo",
         "WhatsApp",
@@ -326,6 +328,7 @@ function BotonExportar({ tipo, estado }: { tipo: TipoRegistro | ""; estado: Esta
         r.nombre,
         r.correo,
         r.carrera,
+        r.semestre ?? "",
         r.matricula ?? "",
         r.canales.correo ? "Si" : "No",
         r.canales.whatsapp ? "Si" : "No",
