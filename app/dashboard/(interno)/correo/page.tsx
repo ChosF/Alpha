@@ -206,7 +206,7 @@ export default function Correo() {
                   </p>
                   <p className="mt-6 max-w-[46ch] text-[13px] font-light leading-[1.8] text-white/55">
                     Selecciona una conversacion. Los adjuntos, responsables y estados de entrega
-                    quedan registrados en Convex.
+                    quedan organizados en un solo lugar.
                   </p>
                 </div>
               </div>
