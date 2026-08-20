@@ -417,6 +417,108 @@ img,svg{display:block;max-width:100%}
 .jn-form[data-tipo="aliado"] [data-only="miembro"]{display:none}
 .jn-sub{margin-top:clamp(26px,3vw,36px);padding-top:26px;border-top:1px solid var(--hair)}
 
+/* ══ CONFIRMACIÓN DE REGISTRO ════════════════════════════════════ */
+#registro-exito{
+  position:fixed;inset:0;z-index:80;min-height:100dvh;overflow-y:auto;
+  visibility:hidden;pointer-events:none;color:#fff;
+  transition:visibility 0s linear 1s
+}
+#registro-exito.on{visibility:visible;pointer-events:auto;transition-delay:0s}
+.sx-cols{position:fixed;inset:0;display:flex;z-index:0;overflow:hidden}
+.sx-cols i{
+  flex:1;background:var(--ink);transform:translate3d(0,101%,0);
+  transition:transform .9s var(--E3)
+}
+#registro-exito.on .sx-cols i{transform:translate3d(0,0,0)}
+#registro-exito.on .sx-cols i:nth-child(1){transition-delay:0s}
+#registro-exito.on .sx-cols i:nth-child(2){transition-delay:.045s}
+#registro-exito.on .sx-cols i:nth-child(3){transition-delay:.09s}
+#registro-exito.on .sx-cols i:nth-child(4){transition-delay:.135s}
+#registro-exito.on .sx-cols i:nth-child(5){transition-delay:.18s}
+#registro-exito.on .sx-cols i:nth-child(6){transition-delay:.225s}
+.sx-sky{position:fixed;inset:0;z-index:1;width:100%;height:100%;opacity:0;
+  transition:opacity .9s var(--E) .35s}
+#registro-exito.on .sx-sky{opacity:1}
+.sx-atmosphere{
+  position:fixed;inset:0;z-index:2;pointer-events:none;opacity:0;
+  background:
+    radial-gradient(circle at 78% 72%,rgba(31,95,208,.34),transparent 32%),
+    linear-gradient(to right,rgba(175,207,255,.07) 1px,transparent 1px);
+  background-size:auto,calc(100vw / 6) 100%;
+  transition:opacity 1.1s var(--E) .3s
+}
+#registro-exito.on .sx-atmosphere{opacity:1}
+.sx-shell{
+  position:relative;z-index:3;width:min(1480px,100%);min-height:100dvh;margin:0 auto;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:max(28px,env(safe-area-inset-top)) clamp(22px,6vw,92px) max(28px,env(safe-area-inset-bottom))
+}
+.sx-top{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;
+  opacity:0;transform:translate3d(0,20px,0);transition:opacity .8s var(--E),transform .9s var(--E)}
+#registro-exito.on .sx-top{opacity:1;transform:translate3d(0,0,0);transition-delay:.62s}
+.sx-logo{width:clamp(112px,15vw,182px);color:#fff}
+.sx-meta{padding-right:68px;font-size:9px;line-height:1.6;letter-spacing:.28em;text-align:right;
+  text-transform:uppercase;color:rgba(255,255,255,.48)}
+.sx-x{
+  position:fixed;z-index:4;top:max(22px,env(safe-area-inset-top));right:clamp(22px,4vw,58px);
+  width:46px;height:46px;display:grid;place-items:center;border:0;cursor:pointer;
+  color:#fff;background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);
+  opacity:0;transform:scale(.86) rotate(-16deg);
+  transition:opacity .65s var(--E),transform .75s var(--E2),background .55s var(--E2),box-shadow .55s var(--E2)
+}
+#registro-exito.on .sx-x{opacity:1;transform:scale(1) rotate(0);transition-delay:.7s}
+.sx-x:hover{background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(175,207,255,.55);transform:scale(1.04) rotate(0)}
+#registro-exito.on .sx-x:hover{transition-delay:0s}
+.sx-x:active{transform:scale(.96)}
+.sx-main{
+  display:grid;grid-template-columns:minmax(0,1.18fr) minmax(310px,.82fr);
+  align-items:end;gap:clamp(42px,8vw,132px);padding:clamp(88px,14vh,170px) 0 clamp(30px,6vh,70px);
+  opacity:0;transform:translate3d(0,52px,0);
+  transition:opacity .9s var(--E),transform 1s var(--E)
+}
+#registro-exito.on .sx-main{opacity:1;transform:translate3d(0,0,0);transition-delay:.48s}
+.sx-kicker{margin:0 0 22px;font-size:10px;font-weight:500;letter-spacing:.3em;text-transform:uppercase;color:#7fa9f5}
+.sx-title{margin:0;font-size:clamp(3.5rem,8.6vw,8.8rem);font-weight:700;line-height:.82;letter-spacing:-.065em;max-width:7ch}
+.sx-rule{width:100%;height:2px;margin:clamp(28px,4vw,52px) 0 22px;background:rgba(255,255,255,.22);
+  transform:scaleX(0);transform-origin:0 50%;transition:transform 1.25s var(--E3)}
+#registro-exito.on .sx-rule{transform:scaleX(1);transition-delay:.92s}
+.sx-contact{max-width:58ch;margin:0;font-size:clamp(13px,1.35vw,16px);line-height:1.8;font-weight:300;color:rgba(255,255,255,.68)}
+.sx-card-shell{padding:6px;background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1px rgba(175,207,255,.15)}
+.sx-card{padding:clamp(26px,4vw,46px);background:rgba(5,16,34,.64);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 34px 100px -58px rgba(0,0,0,.9)}
+.sx-card-label{margin:0 0 18px;font-size:9px;font-weight:500;letter-spacing:.28em;text-transform:uppercase;color:#7fa9f5}
+.sx-invite{margin:0;font-size:clamp(1.35rem,2.4vw,2.15rem);font-weight:600;line-height:1.2;letter-spacing:-.035em}
+.sx-cta{
+  display:flex;align-items:center;justify-content:space-between;gap:22px;margin-top:clamp(28px,4vw,42px);
+  padding:9px 9px 9px 22px;background:#fff;color:var(--ink);font-size:12px;font-weight:600;
+  box-shadow:0 18px 52px -30px rgba(127,169,245,.72);
+  transition:transform .62s var(--E2),background .55s var(--E2),box-shadow .62s var(--E2)
+}
+.sx-cta-i{width:38px;height:38px;display:grid;place-items:center;background:var(--accent);color:#fff;
+  transition:transform .62s var(--E2),background .55s var(--E2)}
+.sx-cta:hover{transform:translateY(-4px);background:#eef4ff;box-shadow:0 24px 68px -32px rgba(127,169,245,.92)}
+.sx-cta:hover .sx-cta-i{transform:translate(2px,-2px) scale(1.05);background:#16459c}
+.sx-cta:active{transform:scale(.985)}
+.sx-foot{display:flex;justify-content:space-between;gap:24px;font-size:8px;letter-spacing:.24em;text-transform:uppercase;
+  color:rgba(255,255,255,.34);opacity:0;transform:translate3d(0,12px,0);
+  transition:opacity .7s var(--E),transform .8s var(--E)}
+#registro-exito.on .sx-foot{opacity:1;transform:translate3d(0,0,0);transition-delay:1.08s}
+
+@media (max-width:767px){
+  .sx-atmosphere{background-size:auto,25vw 100%}
+  .sx-shell{padding-left:18px;padding-right:18px}
+  .sx-logo{width:112px}
+  .sx-meta{padding-right:54px;font-size:7.5px;letter-spacing:.2em}
+  .sx-x{right:18px;width:42px;height:42px}
+  .sx-main{grid-template-columns:1fr;align-items:start;gap:34px;padding:clamp(94px,14vh,140px) 0 54px}
+  .sx-title{font-size:clamp(3.35rem,18vw,5.2rem);max-width:8ch}
+  .sx-contact{font-size:13px;line-height:1.72}
+  .sx-card-shell{padding:5px}
+  .sx-card{padding:24px 20px}
+  .sx-foot{padding-bottom:4px;font-size:7px;letter-spacing:.18em}
+  .sx-foot span:last-child{display:none}
+}
+
 /* ══ CONTACTO ═════════════════════════════════════════════════════ */
 .contact-shell{padding:7px;background:rgba(13,33,64,.045);box-shadow:inset 0 0 0 1px rgba(13,33,64,.06)}
 .contact-core{position:relative;overflow:hidden;background:var(--ink);color:#fff;padding:clamp(28px,5vw,64px)}
@@ -1172,6 +1274,49 @@ img,svg{display:block;max-width:100%}
   </div>
 </div>
 
+<!-- ═══ CONFIRMACIÓN DE REGISTRO ═══════════════════════════════════ -->
+<section id="registro-exito" role="dialog" aria-modal="true" aria-labelledby="sx-title" aria-describedby="sx-contacto" aria-hidden="true">
+  <div class="sx-cols" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <canvas class="sx-sky" id="sx-sky" aria-hidden="true"></canvas>
+  <div class="sx-atmosphere" aria-hidden="true"></div>
+
+  <button class="sx-x" type="button" data-success-close aria-label="Cerrar confirmación">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"><path d="M5 5l14 14M19 5 5 19"/></svg>
+  </button>
+
+  <div class="sx-shell">
+    <header class="sx-top">
+      <svg class="sx-logo lk" viewBox="0 0 4.65 1.45" role="img" aria-label="Alpha"><use href="#lk"/></svg>
+      <span class="sx-meta tnum">Registro recibido<br>Tec CCM · 2026 — 2027</span>
+    </header>
+
+    <div class="sx-main">
+      <div>
+        <p class="sx-kicker" id="sx-kicker">Registro confirmado</p>
+        <h2 class="sx-title" id="sx-title">Ya eres parte.</h2>
+        <div class="sx-rule"></div>
+        <p class="sx-contact" id="sx-contacto"></p>
+      </div>
+
+      <div class="sx-card-shell">
+        <div class="sx-card">
+          <p class="sx-card-label">Comunidad Alpha</p>
+          <p class="sx-invite" id="sx-invitacion">Únete al grupo y conoce a la comunidad.</p>
+          <a class="sx-cta" href="https://chat.whatsapp.com/CDRLe4FEHZN0jrdf2WkH8n" target="_blank" rel="noopener noreferrer">
+            <span>Entrar al grupo de WhatsApp</span>
+            <span class="sx-cta-i" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <footer class="sx-foot">
+      <span>Sociedad estudiantil de finanzas</span>
+      <span>Alpha · Tecnológico de Monterrey CCM</span>
+    </footer>
+  </div>
+</section>
+
 <script>
 (() => {
   const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1231,6 +1376,72 @@ img,svg{display:block;max-width:100%}
     })();
     splash.addEventListener("_stop", () => { running = false; clearInterval(timer); });
   }
+
+  const crearCieloConfirmacion = canvas => {
+    if (RM || !canvas) return () => {};
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return () => {};
+
+    const compacto = innerWidth < 768;
+    const dpr = Math.min(devicePixelRatio || 1, compacto ? 1.35 : 2);
+    let W = 0, H = 0, activo = true, fade = 0, tiempo = 0;
+    const size = () => { W = canvas.width = innerWidth*dpr; H = canvas.height = innerHeight*dpr; };
+    size();
+    addEventListener("resize", size, {passive:true});
+
+    const estrellas = Array.from({length:compacto ? 72 : 164}, () => ({
+      x:Math.random()*W, y:Math.random()*H, r:Math.max(1,(Math.random()*1.45+.75)*dpr),
+      a:Math.random()*.44+.4, ph:Math.random()*6.28
+    }));
+    const fugaces = [];
+    const lanzar = () => fugaces.push({
+      x:Math.random()*W, y:-40*dpr + Math.random()*H*.42,
+      v:(6+Math.random()*6)*dpr, len:(140+Math.random()*260)*dpr,
+      life:1, ang:Math.PI/3.4 + (Math.random()-.5)*.3
+    });
+    for (let i=0;i<2;i++) lanzar();
+    const timer = setInterval(() => {
+      if (activo && fugaces.length < (compacto ? 3 : 6)) lanzar();
+    }, compacto ? 680 : 420);
+
+    (function dibujar(){
+      if (!activo) return;
+      tiempo += .016; fade = Math.min(1,fade+.022);
+      ctx.clearRect(0,0,W,H);
+      for (const estrella of estrellas) {
+        ctx.globalAlpha = estrella.a*(.5+.5*Math.sin(tiempo*1.7+estrella.ph))*fade;
+        ctx.fillStyle = "#e2ebfb";
+        ctx.fillRect(estrella.x,estrella.y,estrella.r,estrella.r);
+      }
+      for (let i=fugaces.length-1;i>=0;i--) {
+        const fugaz = fugaces[i];
+        fugaz.x += Math.cos(fugaz.ang)*fugaz.v;
+        fugaz.y += Math.sin(fugaz.ang)*fugaz.v;
+        fugaz.life -= .006;
+        const tx = fugaz.x-Math.cos(fugaz.ang)*fugaz.len;
+        const ty = fugaz.y-Math.sin(fugaz.ang)*fugaz.len;
+        const gradiente = ctx.createLinearGradient(fugaz.x,fugaz.y,tx,ty);
+        gradiente.addColorStop(0,"rgba(230,240,255,"+(.92*fugaz.life*fade)+")");
+        gradiente.addColorStop(.3,"rgba(127,169,245,"+(.5*fugaz.life*fade)+")");
+        gradiente.addColorStop(1,"rgba(127,169,245,0)");
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = gradiente;
+        ctx.lineWidth = Math.max(1.4,1.8*dpr);
+        ctx.beginPath(); ctx.moveTo(fugaz.x,fugaz.y); ctx.lineTo(tx,ty); ctx.stroke();
+        ctx.globalAlpha = fugaz.life*fade;
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(fugaz.x-1.4*dpr,fugaz.y-1.4*dpr,3*dpr,3*dpr);
+        if (fugaz.life <= 0 || fugaz.y > H+fugaz.len) fugaces.splice(i,1);
+      }
+      requestAnimationFrame(dibujar);
+    })();
+
+    return () => {
+      activo = false;
+      clearInterval(timer);
+      removeEventListener("resize",size);
+    };
+  };
 
   requestAnimationFrame(() => requestAnimationFrame(() => splash.classList.add("go")));
 
@@ -1334,12 +1545,61 @@ img,svg{display:block;max-width:100%}
   const join  = document.getElementById("join");
   const jform = join.querySelector(".jn-form");
   const opts  = [...join.querySelectorAll(".opt")];
+  const success = document.getElementById("registro-exito");
+  const successClose = success.querySelector("[data-success-close]");
+  const successKicker = document.getElementById("sx-kicker");
+  const successTitle = document.getElementById("sx-title");
+  const successContact = document.getElementById("sx-contacto");
+  const successInvite = document.getElementById("sx-invitacion");
   const correoCh = jform.querySelector('input[name="correo_avisos"]');
   const waCh  = document.getElementById("jn-wa");
   const telFld = document.getElementById("jn-tel-f");
   const telInput = document.getElementById("jn-tel");
   const telLabel = document.getElementById("jn-tel-label");
   let lastFocus = null;
+  let detenerCieloExito = () => {};
+  let temporizadorFocoExito = null;
+
+  const abrirExito = datos => {
+    if (datos.tipo === "aliado") {
+      successKicker.textContent = "Aliado · Registro confirmado";
+      successTitle.textContent = "Gracias por sumarte.";
+      successContact.textContent = "Recibimos tu registro como aliado. La mesa directiva te contactará al número que registraste para conversar sobre las áreas que marcaste.";
+      successInvite.textContent = "Mientras tanto, únete a nuestra comunidad.";
+    } else {
+      const medios = [];
+      if (datos.avisosCorreo) medios.push("correo electrónico");
+      if (datos.whatsapp) medios.push("WhatsApp");
+      const medio = medios.length === 2 ? medios.join(" y ") : (medios[0] || "el medio que elegiste");
+      successKicker.textContent = "Miembro · Registro confirmado";
+      successTitle.textContent = "Ya eres parte.";
+      successContact.textContent = "Guardamos tu registro. Te contactaremos por "+medio+" para compartirte las próximas actividades de Alpha.";
+      successInvite.textContent = "Únete ahora al grupo de WhatsApp y conoce a la comunidad.";
+    }
+
+    join.classList.remove("on");
+    join.setAttribute("aria-hidden","true");
+    success.classList.add("on");
+    success.setAttribute("aria-hidden","false");
+    document.body.classList.add("locked");
+    themeColor.setAttribute("content","#0d2140");
+    detenerCieloExito();
+    detenerCieloExito = crearCieloConfirmacion(document.getElementById("sx-sky"));
+    clearTimeout(temporizadorFocoExito);
+    temporizadorFocoExito = setTimeout(() => successClose.focus(),RM ? 20 : 760);
+  };
+
+  const cerrarExito = () => {
+    success.classList.remove("on");
+    success.setAttribute("aria-hidden","true");
+    document.body.classList.remove("locked");
+    themeColor.setAttribute("content","#f2f4f7");
+    clearTimeout(temporizadorFocoExito);
+    temporizadorFocoExito = null;
+    detenerCieloExito();
+    detenerCieloExito = () => {};
+    setTimeout(() => { if (lastFocus) lastFocus.focus(); },RM ? 20 : 900);
+  };
 
   const syncTelefono = () => {
     const aliado = jform.dataset.tipo === "aliado";
@@ -1402,6 +1662,7 @@ img,svg{display:block;max-width:100%}
   document.querySelectorAll("[data-join]").forEach(b =>
     b.addEventListener("click", e => { e.preventDefault(); openJoin(); }));
   join.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", closeJoin));
+  successClose.addEventListener("click",cerrarExito);
   addEventListener("keydown", e => {
     if (e.key === "Escape" && join.classList.contains("on")) closeJoin();
   });
@@ -1413,6 +1674,16 @@ img,svg{display:block;max-width:100%}
       .filter(el => !el.disabled && el.offsetParent !== null);
     if (!f.length) return;
     const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
+  success.addEventListener("keydown", e => {
+    if (e.key !== "Tab") return;
+    const f = [...success.querySelectorAll("button, [href]")]
+      .filter(el => !el.disabled && el.offsetParent !== null);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length-1];
     if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   });
@@ -1495,9 +1766,10 @@ img,svg{display:block;max-width:100%}
       if (r.ok && d.ok) {
         jform.reset();
         syncTelefono();
-        decir("Listo. Te avisamos de la proxima convocatoria.", false);
+        decir("",false);
         campoTok.value = "";
         pedirToken();
+        abrirExito(cuerpo);
       } else {
         decir(d.error || "No pudimos guardar tu registro. Intenta de nuevo.", true);
       }
