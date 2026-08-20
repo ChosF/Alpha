@@ -1,0 +1,101 @@
+import type { NextConfig } from "next";
+
+/**
+ * El panel corre con una CSP estricta; la landing necesita una mas permisiva
+ * porque es HTML artesanal con <script> y <style> en linea, Google Fonts y el
+ * compilador de Tailwind en navegador. Separar ambas por ruta evita relajar la
+ * politica del panel, que es donde hay datos personales.
+ */
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL ?? "";
+const convexOrigins = convexUrl
+  ? `${convexUrl} ${convexUrl.replace(/^https:/, "wss:")}`
+  : "";
+
+const cspPanel = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  "script-src 'self'",
+  // Next inyecta estilos en linea para el streaming de RSC; no hay forma de evitarlo.
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  `connect-src 'self' ${convexOrigins}`.trim(),
+  "upgrade-insecure-requests",
+].join("; ");
+
+const cspLanding = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "connect-src 'self'",
+  "upgrade-insecure-requests",
+].join("; ");
+
+const cabecerasComunes = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
+  },
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=63072000; includeSubDomains; preload",
+  },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+];
+
+const nextConfig: NextConfig = {
+  reactStrictMode: true,
+  poweredByHeader: false,
+
+  async rewrites() {
+    return {
+      beforeFiles: [{ source: "/", destination: "/landing/alpha.html" }],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
+
+  async headers() {
+    return [
+      {
+        source: "/panel/:path*",
+        headers: [
+          ...cabecerasComunes,
+          { key: "Content-Security-Policy", value: cspPanel },
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+          { key: "Cache-Control", value: "no-store, max-age=0" },
+        ],
+      },
+      {
+        source: "/api/:path*",
+        headers: [
+          ...cabecerasComunes,
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+          { key: "Cache-Control", value: "no-store, max-age=0" },
+        ],
+      },
+      {
+        // Todo lo demas (la landing). Excluye /panel y /api con un lookahead
+        // negativo: Next aplica TODAS las reglas que coincidan y la ultima
+        // gana, asi que un "/:path*" a secas pisaria la CSP estricta del panel
+        // con la permisiva de la landing.
+        source: "/((?!panel|api).*)",
+        headers: [...cabecerasComunes, { key: "Content-Security-Policy", value: cspLanding }],
+      },
+    ];
+  },
+};
+
+export default nextConfig;

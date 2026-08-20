@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+<link rel="stylesheet" href="_ds/modernist-d00b141a-47a0-4ce6-860c-3873c48a6b18/styles.css">
+<script src="_ds/modernist-d00b141a-47a0-4ce6-860c-3873c48a6b18/_ds_bundle.js"></script>
+<script src="./image-slot.js"></script>
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.js"></script>
+<style>
+  body { margin: 0; background: #f2f4f7; font-family: "Poppins", system-ui, sans-serif; }
+  a { color: #16459c; text-decoration: none; border-bottom: 1px solid #b6d0ff; }
+  a:hover { color: #1f5fd0; border-bottom-color: #1f5fd0; }
+  .num { font-variant-numeric: tabular-nums; }
+</style>
+</helmet>
+
+<div style="--color-bg:#f2f4f7;--color-surface:#e6eaf0;--color-text:#0d2140;--color-accent:#1f5fd0;--color-accent-2:#3b7ae4;--color-divider:rgba(13,33,64,0.4);--color-neutral-100:#f7f8fa;--color-neutral-200:#e9ebef;--color-neutral-300:#d5d9e0;--color-neutral-400:#b7bdc8;--color-neutral-500:#979eab;--color-neutral-600:#79808e;--color-neutral-700:#5c6371;--color-neutral-800:#414754;--color-neutral-900:#2a2f3a;--color-accent-100:#eef4ff;--color-accent-200:#d8e6ff;--color-accent-300:#b6d0ff;--color-accent-400:#7fa9f5;--color-accent-500:#3b7ae4;--color-accent-600:#1f5fd0;--color-accent-700:#16459c;--color-accent-800:#10306e;--color-accent-900:#0c2149;--font-heading:'Poppins',system-ui,sans-serif;--font-body:'Poppins',system-ui,sans-serif;--font-heading-weight:700;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-size:15px;line-height:1.6;min-height:100vh">
+
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true"><defs><g id="alpha-wordmark">
+<path d="M217-222L125 0L11 0L306-709L421-709L716 0L603 0L510-222L217-222ZM364-574L257-318L470-318L364-574Z"></path>
+<path d="M793-730L890-730L890-730L890 0L793 0L793-730Z"></path>
+<path d="M1097 198L1000 198L1000-479L1077-479L1097-429Q1126-458 1163.50-474Q1201-490 1248-490L1248-490Q1298-490 1340.50-470.50Q1383-451 1414-417Q1445-383 1462.50-337Q1480-291 1480-239L1480-239Q1480-187 1462.50-141Q1445-95 1414-61Q1383-27 1340.50-7.50Q1298 12 1248 12L1248 12Q1199 12 1162-4.50Q1125-21 1097-52L1097-52L1097 198ZM1240-402L1240-402Q1211-402 1185-392.50Q1159-383 1139.50-362.50Q1120-342 1109-311.50Q1098-281 1098-239L1098-239Q1098-194 1109-162.50Q1120-131 1139.50-111.50Q1159-92 1185-83Q1211-74 1240-74L1240-74Q1269-74 1295-87Q1321-100 1340-122.50Q1359-145 1370-175Q1381-205 1381-239L1381-239Q1381-273 1370-303Q1359-333 1340-355Q1321-377 1295-389.50Q1269-402 1240-402Z"></path>
+<path d="M1661-241L1661 0L1564 0L1564-730L1661-730L1661-435Q1688-465 1717.50-477.50Q1747-490 1786-490L1786-490Q1836-490 1875.50-470.50Q1915-451 1943-417Q1971-383 1985.50-337Q2000-291 2000-239L2000-239L2000 0L1902 0L1902-239Q1902-273 1892.50-303Q1883-333 1866.50-355Q1850-377 1828.50-389.50Q1807-402 1782-402L1782-402Q1761-402 1740-393.50Q1719-385 1701.50-366Q1684-347 1672.50-316Q1661-285 1661-241L1661-241Z"></path>
+</g></defs></svg>
+
+<div style="max-width:1160px;margin:0 auto;padding:0 40px 120px">
+
+  <header style="display:flex;align-items:flex-end;justify-content:space-between;gap:32px;padding:40px 0 24px;border-bottom:2px solid var(--color-divider)">
+    <div style="display:flex;align-items:center;gap:16px">
+      <svg viewBox="0 -828 3295 1026" style="width:132px;height:auto;display:block" role="img" aria-label="Alpha">
+        <use href="#alpha-wordmark" fill="var(--color-text)"></use>
+        <image href="assets/alpha-mark-navy.png" x="1815" y="-828" width="1480" height="1020"></image>
+      </svg>
+      <span style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">design.md</span>
+    </div>
+    <div style="text-align:right;font-size:13px;letter-spacing:0.04em;color:var(--color-neutral-700)">
+      Sociedad estudiantil de finanzas<br>Tec de Monterrey · Campus Ciudad de México
+    </div>
+  </header>
+
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:48px;padding:56px 0 8px">
+    <div>
+      <h1 style="margin:0 0 20px;font-size:58px;line-height:1.02;letter-spacing:-0.02em">Brand and interface guidance</h1>
+      <p style="margin:0;font-size:19px;line-height:1.5;max-width:52ch;text-wrap:pretty">Written for three readers: designers working by hand, engineers implementing in code, and AI tools asked to produce on-brand output. The logo, the blue palette and Poppins are a record of what is already decided. Spacing, components and imagery are a proposed starting position.</p>
+    </div>
+    <div style="border-left:2px solid var(--color-divider);padding-left:24px;font-size:14px">
+      <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px">Status</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:10px;align-items:baseline"><span class="tag tag-accent">Locked</span><span>Logo lockup, wordmark face, mark artwork, blue palette, Poppins</span></div>
+        <div style="display:flex;gap:10px;align-items:baseline"><span class="tag tag-outline">Proposed</span><span>Spacing, components, imagery, icons</span></div>
+      </div>
+    </div>
+  </div>
+
+  <section style="padding:64px 0 0">
+    <div style="display:flex;gap:24px;align-items:baseline;border-top:2px solid var(--color-divider);padding-top:16px;margin-bottom:32px">
+      <div class="num" style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:var(--color-accent-700)">01</div>
+      <h2 style="margin:0;font-size:32px">The society</h2>
+    </div>
+    <p style="margin:0 0 32px;max-width:70ch;text-wrap:pretty">Alpha is student-run and open to the whole campus, led mostly by students from LAF and adjacent finance programs. It teaches technical finance to people who are not yet professionals — so the system is precise and plain: rules, grids and flush-left labels, with no decoration standing in for rigor.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--color-divider)">
+      <div style="background:var(--color-bg);padding:24px 24px 28px">
+        <div class="num" style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:var(--color-accent-700);margin-bottom:10px">PILAR 01</div>
+        <h4 style="margin:0 0 8px">Professional development</h4>
+        <p style="margin:0;color:var(--color-neutral-800)">Workshops, certifications, financial modeling, Excel and Python.</p>
+      </div>
+      <div style="background:var(--color-bg);padding:24px 24px 28px">
+        <div class="num" style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:var(--color-accent-700);margin-bottom:10px">PILAR 02</div>
+        <h4 style="margin:0 0 8px">Industry connection</h4>
+        <p style="margin:0;color:var(--color-neutral-800)">Company visits, talks, alumni and networking.</p>
+      </div>
+      <div style="background:var(--color-bg);padding:24px 24px 28px">
+        <div class="num" style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:var(--color-accent-700);margin-bottom:10px">PILAR 03</div>
+        <h4 style="margin:0 0 8px">Education and community</h4>
+        <p style="margin:0;color:var(--color-neutral-800)">Inclusive financial education, community, and the Alphanálisis podcast.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:64px 0 0">
+    <div style="display:flex;gap:24px;align-items:baseline;border-top:2px solid var(--color-divider);padding-top:16px;margin-bottom:32px">
+      <div class="num" style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:var(--color-accent-700)">02</div>
+      <h2 style="margin:0;font-size:32px">Logo</h2>
+      <span class="tag tag-accent" style="margin-left:auto">Locked</span>
+    </div>
+
+    <div style="background:var(--color-text);padding:80px 96px">
+      <svg viewBox="0 -828 3295 1026" style="width:100%;max-width:620px;height:auto;display:block" role="img" aria-label="Alpha">
+        <use href="#alpha-wordmark" fill="#ffffff"></use>
+        <image href="assets/alpha-mark-white.png" x="1815" y="-828" width="1480" height="1020"></image>
+      </svg>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--color-divider);margin-top:2px">
+      <div style="background:var(--color-bg);padding:40px 48px;display:flex;align-items:center">
+        <svg viewBox="0 -828 3295 1026" style="width:100%;max-width:300px;height:auto;display:block" role="img" aria-label="Alpha">
+          <use href="#alpha-wordmark" fill="var(--color-text)"></use>
+          <image href="assets/alpha-mark-navy.png" x="1815" y="-828" width="1480" height="1020"></image>
+        </svg>
+      </div>
+      <div style="background:var(--color-bg);padding:40px 48px">
+        <p style="margin:0 0 12px;max-width:44ch">The letters <strong>Alph</strong> set in <strong>Kollektif</strong>, completed by a calligraphic <strong>α</strong> that is fixed artwork — never typed, never substituted by a font character.</p>
+        <p style="margin:0;color:var(--color-neutral-800)">White on navy is the primary form; navy on the light ground is the secondary. Single color only: no gradient, outline, second color or shadow inside the lockup.</p>
+      </div>
+    </div>
+
+    <sc-if value="{{ showConstruction }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:1.35fr 1fr;gap:48px;margin-top:48px;align-items:start">
+        <div>
+          <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px">Construction</div>
+          <svg viewBox="-120 -1000 3620 1420" style="width:100%;height:auto;display:block;background:var(--color-neutral-100)">
+            <g stroke="var(--color-accent)" stroke-width="4" fill="none" stroke-dasharray="18 14">
+              <line x1="-120" y1="-709" x2="3500" y2="-709"></line>
+              <line x1="-120" y1="0" x2="3500" y2="0"></line>
+              <line x1="-120" y1="-828" x2="3500" y2="-828"></line>
+              <line x1="-120" y1="192" x2="3500" y2="192"></line>
+            </g>
+            <rect x="1815" y="-828" width="1480" height="1020" fill="none" stroke="var(--color-accent)" stroke-width="4"></rect>
+            <rect x="1815" y="-828" width="235" height="1020" fill="var(--color-accent)" opacity="0.14"></rect>
+            <use href="#alpha-wordmark" fill="var(--color-text)"></use>
+            <image href="assets/alpha-mark-navy.png" x="1815" y="-828" width="1480" height="1020" opacity="0.85"></image>
+            <g fill="var(--color-accent-700)" font-family="Poppins" font-size="66" font-weight="600">
+              <text x="-110" y="-748">α rise · 0.17 C</text>
+              <text x="-110" y="-655">cap line</text>
+              <text x="-110" y="56">baseline</text>
+              <text x="-110" y="248">α drop · 0.27 C</text>
+              <text x="1860" y="-880">overlap 0.33 C</text>
+              <text x="3320" y="-320" transform="rotate(90 3320 -320)">1.44 C</text>
+            </g>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px">Measured, in cap heights (C)</div>
+          <table class="table" style="width:100%">
+            <tbody>
+              <tr><td>Wordmark width</td><td class="num" style="text-align:right">2.89 C</td></tr>
+              <tr><td>α width</td><td class="num" style="text-align:right">2.09 C</td></tr>
+              <tr><td>α height</td><td class="num" style="text-align:right">1.44 C</td></tr>
+              <tr><td>Overlap with <em>h</em></td><td class="num" style="text-align:right">0.33 C</td></tr>
+              <tr><td>Rise above cap line</td><td class="num" style="text-align:right">0.17 C</td></tr>
+              <tr><td>Drop below baseline</td><td class="num" style="text-align:right">0.27 C</td></tr>
+              <tr><td>Full lockup</td><td class="num" style="text-align:right">4.65 × 1.45 C</td></tr>
+              <tr><td>Clear space, all sides</td><td class="num" style="text-align:right">1 C</td></tr>
+              <tr><td>Minimum width</td><td class="num" style="text-align:right">96 px / 25 mm</td></tr>
+            </tbody>
+          </table>
+          <p style="margin:16px 0 0;color:var(--color-neutral-800)">Below the minimum, use the α alone: a square navy or ground field with the α at 60% of the field height, optically centered.</p>
+        </div>
+      </div>
+    </sc-if>
+
+    <div style="margin-top:48px">
+      <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px">Don't</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--color-divider)">
+        <div style="background:var(--color-bg);padding:20px 20px 24px"><div style="color:var(--color-accent);font-weight:700;margin-bottom:6px">×</div>Retype the α from a font or Greek keyboard</div>
+        <div style="background:var(--color-bg);padding:20px 20px 24px"><div style="color:var(--color-accent);font-weight:700;margin-bottom:6px">×</div>Set the wordmark in any face but Kollektif</div>
+        <div style="background:var(--color-bg);padding:20px 20px 24px"><div style="color:var(--color-accent);font-weight:700;margin-bottom:6px">×</div>Change the overlap, tracking or offsets</div>
+        <div style="background:var(--color-bg);padding:20px 20px 24px"><div style="color:var(--color-accent);font-weight:700;margin-bottom:6px">×</div>Stack, arch, outline, rotate or shadow it</div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:64px 0 0">
+    <div style="display:flex;gap:24px;align-items:baseline;border-top:2px solid var(--color-divider);padding-top:16px;margin-bottom:32px">
+      <div class="num" style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:var(--color-accent-700)">03</div>
+      <h2 style="margin:0;font-size:32px">Color</h2>
+      <span class="tag tag-accent" style="margin-left:auto">Locked</span>
+    </div>
+    <p style="margin:0 0 32px;max-width:70ch">Navy on a cool light ground, with the brand blue as the single accent. Roughly 90% navy-on-ground to 10% blue. Reference the variables in code, not the hex values.</p>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;background:var(--color-divider)">
+      <div style="background:var(--color-bg)"><div style="height:120px;background:var(--color-bg);border:2px solid var(--color-divider);border-width:0 0 2px 0"></div><div style="padding:16px"><div style="font-weight:700">Ground</div><div class="num" style="color:var(--color-neutral-700)">#f2f4f7</div><div class="num" style="font-size:13px;color:var(--color-neutral-700)">--color-bg</div></div></div>
+      <div style="background:var(--color-bg)"><div style="height:120px;background:var(--color-surface)"></div><div style="padding:16px"><div style="font-weight:700">Surface</div><div class="num" style="color:var(--color-neutral-700)">#e6eaf0</div><div class="num" style="font-size:13px;color:var(--color-neutral-700)">--color-surface</div></div></div>
+      <div style="background:var(--color-bg)"><div style="height:120px;background:var(--color-text)"></div><div style="padding:16px"><div style="font-weight:700">Navy</div><div class="num" style="color:var(--color-neutral-700)">#0d2140</div><div class="num" style="font-size:13px;color:var(--color-neutral-700)">--color-text</div></div></div>
+      <div style="background:var(--color-bg)"><div style="height:120px;background:var(--color-accent)"></div><div style="padding:16px"><div style="font-weight:700">Blue</div><div class="num" style="color:var(--color-neutral-700)">#1f5fd0</div><div class="num" style="font-size:13px;color:var(--color-neutral-700)">--color-accent</div></div></div>
+      <div style="background:var(--color-bg)"><div style="height:120px;background:var(--color-accent-700)"></div><div style="padding:16px"><div style="font-weight:700">Blue deep</div><div class="num" style="color:var(--color-neutral-700)">#16459c</div><div class="num" style="font-size:13px;color:var(--color-neutral-700)">for body copy</div></div></div>
+    </div>
+    <sc-if value="{{ showRamps }}" hint-placeholder-val="{{ true }}">
+      <div style="margin-top:32px;display:flex;flex-direction:column;gap:20px">
+        <div>
+          <div class="num" style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px">Neutral 100–900 · cool grey</div>
+          <div style="display:grid;grid-template-columns:repeat(9,1fr);gap:2px">
+            <div style="height:52px;background:var(--color-neutral-100)"></div><div style="height:52px;background:var(--color-neutral-200)"></div><div style="height:52px;background:var(--color-neutral-300)"></div><div style="height:52px;background:var(--color-neutral-400)"></div><div style="height:52px;background:var(--color-neutral-500)"></div><div style="height:52px;background:var(--color-neutral-600)"></div><div style="height:52px;background:var(--color-neutral-700)"></div><div style="height:52px;background:var(--color-neutral-800)"></div><div style="height:52px;background:var(--color-neutral-900)"></div>
+          </div>
+        </div>
+        <div>
+          <div class="num" style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px">Blue 100–900</div>
+          <div style="display:grid;grid-template-columns:repeat(9,1fr);gap:2px">
+            <div style="height:52px;background:var(--color-accent-100)"></div><div style="height:52px;background:var(--color-accent-200)"></div><div style="height:52px;background:var(--color-accent-300)"></div><div style="height:52px;background:var(--color-accent-400)"></div><div style="height:52px;background:var(--color-accent-500)"></div><div style="height:52px;background:var(--color-accent-600)"></div><div style="height:52px;background:var(--color-accent-700)"></div><div style="height:52px;background:var(--color-accent-800)"></div><div style="height:52px;background:var(--color-accent-900)"></div>
+          </div>
+        </div>
+        <p style="margin:0;max-width:70ch;color:var(--color-neutral-800)">Steps 100–300 for tinted fills, hovers and soft borders; 500 as the base; 700–900 for text on tinted fills and pressed states. Prefer a ramp step over an ad-hoc <code>color-mix()</code>. Blue 600 on the ground clears 4.5:1, so it is safe for body copy; blue 500 and lighter are for large text, icons and chrome only.</p>
+      </div>
+    </sc-if>
+  </section>
+
+  <section style="padding:64px 0 0">
+    <div style="display:flex;gap:24px;align-items:baseline;border-top:2px solid var(--color-divider);padding-top:16px;margin-bottom:32px">
+      <div class="num" style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:var(--color-accent-700)">04</div>
+      <h2 style="margin:0;font-size:32px">Typography</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--color-divider)">
+      <div style="background:var(--color-bg);padding:0 32px 28px 0">
+        <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px">Kollektif <span class="tag tag-accent" style="margin-left:8px">Logo only</span></div>
+        <svg viewBox="0 -780 2100 1000" style="width:100%;max-width:340px;height:auto;display:block">
+          <use href="#alpha-wordmark" fill="var(--color-text)"></use>
+        </svg>
+        <p style="margin:16px 0 0;color:var(--color-neutral-800)">Kollektif Bold appears in the logo and nowhere else. It is not a copy face — all typesetting is Poppins.</p>
+      </div>
+      <div style="background:var(--color-bg);padding:0 0 28px 32px">
+        <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px">Poppins <span class="tag tag-outline" style="margin-left:8px">Everything else</span></div>
+        <div style="font-size:44px;font-weight:700;line-height:1.05;letter-spacing:-0.02em">Modelado financiero</div>
+        <div style="font-size:44px;font-weight:400;line-height:1.05;letter-spacing:-0.01em;color:var(--color-neutral-700)">Financial modeling</div>
+        <p style="margin:16px 0 0;color:var(--color-neutral-800)">Poppins 700 for display and headings, 400–500 for body and UI. Spanish and English get the same treatment; never italicize one against the other.</p>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;margin-top:32px">
+      <div style="display:flex;align-items:baseline;gap:24px;border-top:2px solid var(--color-divider);padding:14px 0"><div class="num" style="width:130px;flex:none;font-size:13px;color:var(--color-neutral-700)">h1 · 42 / 700</div><div style="font-size:42px;font-weight:700;line-height:1.12;letter-spacing:-0.015em">Alphanálisis</div></div>
+      <div style="display:flex;align-items:baseline;gap:24px;border-top:2px solid var(--color-divider);padding:14px 0"><div class="num" style="width:130px;flex:none;font-size:13px;color:var(--color-neutral-700)">h2 · 32 / 700</div><div style="font-size:32px;font-weight:700;line-height:1.12;letter-spacing:-0.015em">Valuation workshop</div></div>
+      <div style="display:flex;align-items:baseline;gap:24px;border-top:2px solid var(--color-divider);padding:14px 0"><div class="num" style="width:130px;flex:none;font-size:13px;color:var(--color-neutral-700)">h3 · 25 / 700</div><div style="font-size:25px;font-weight:700;line-height:1.12">Company visit</div></div>
+      <div style="display:flex;align-items:baseline;gap:24px;border-top:2px solid var(--color-divider);padding:14px 0"><div class="num" style="width:130px;flex:none;font-size:13px;color:var(--color-neutral-700)">h6 · 13 / 700</div><div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em">Eyebrow label</div></div>
+      <div style="display:flex;align-items:baseline;gap:24px;border-top:2px solid var(--color-divider);padding:14px 0"><div class="num" style="width:130px;flex:none;font-size:13px;color:var(--color-neutral-700)">body · 15 / 1.6</div><div style="max-width:60ch">Flush left, no italics, tabular figures in tables and financial numbers. Minimum 15 px on screen, 12 pt in print, 24 px on a slide.</div></div>
+    </div>
+  </section>
+
+  <section style="padding:64px 0 0">
+    <div style="display:flex;gap:24px;align-items:baseline;border-top:2px solid var(--color-divider);padding-top:16px;margin-bottom:32px">
+      <div class="num" style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:var(--color-accent-700)">05</div>
+      <h2 style="margin:0;font-size:32px">Spacing and layout</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:48px">
+      <div>
+        <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px">Scale</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:16px"><span class="num" style="width:96px;flex:none;font-size:13px;color:var(--color-neutral-700)">--space-1 · 4</span><span style="height:14px;width:4px;background:var(--color-text)"></span></div>
+          <div style="display:flex;align-items:center;gap:16px"><span class="num" style="width:96px;flex:none;font-size:13px;color:var(--color-neutral-700)">--space-2 · 8</span><span style="height:14px;width:8px;background:var(--color-text)"></span></div>
+          <div style="display:flex;align-items:center;gap:16px"><span class="num" style="width:96px;flex:none;font-size:13px;color:var(--color-neutral-700)">--space-3 · 12</span><span style="height:14px;width:12px;background:var(--color-text)"></span></div>
+          <div style="display:flex;align-items:center;gap:16px"><span class="num" style="width:96px;flex:none;font-size:13px;color:var(--color-neutral-700)">--space-4 · 16</span><span style="height:14px;width:16px;background:var(--color-text)"></span></div>
+          <div style="display:flex;align-items:center;gap:16px"><span class="num" style="width:96px;flex:none;font-size:13px;color:var(--color-neutral-700)">--space-6 · 24</span><span style="height:14px;width:24px;background:var(--color-text)"></span></div>
+          <div style="display:flex;align-items:center;gap:16px"><span class="num" style="width:96px;flex:none;font-size:13px;color:var(--color-neutral-700)">--space-8 · 32</span><span style="height:14px;width:32px;background:var(--color-text)"></span></div>
+        </div>
+        <p style="margin:20px 0 0;color:var(--color-neutral-800)">Compose larger gaps as multiples of 8. Radius is 0 everywhere, on purpose.</p>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px">Grid and rules</div>
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:2px;background:var(--color-divider);border-top:2px solid var(--color-text);border-bottom:2px solid var(--color-text);padding:2px 0">
+          <div style="background:var(--color-neutral-200);height:88px"></div><div style="background:var(--color-neutral-200);height:88px"></div><div style="background:var(--color-neutral-200);height:88px"></div><div style="background:var(--color-neutral-200);height:88px"></div><div style="background:var(--color-neutral-200);height:88px"></div><div style="background:var(--color-neutral-200);height:88px"></div>
+        </div>
+        <p style="margin:20px 0 0;max-width:56ch;color:var(--color-neutral-800)">Equal-width cells and 2 px dividers between major sections. Don't soften a rule into a hairline or replace it with whitespace. Lay sibling groups out with flex or grid plus <code>gap</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:64px 0 0">
+    <div style="display:flex;gap:24px;align-items:baseline;border-top:2px solid var(--color-divider);padding-top:16px;margin-bottom:32px">
+      <div class="num" style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:var(--color-accent-700)">06</div>
+      <h2 style="margin:0;font-size:32px">Components</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start">
+      <div>
+        <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px">Actions and labels</div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+          <button class="btn btn-primary" type="button">Inscríbete</button>
+          <button class="btn btn-secondary" type="button">Ver calendario</button>
+          <button class="btn btn-ghost" type="button">Saber más</button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px">
+          <span class="tag tag-accent">Workshop</span>
+          <span class="tag tag-neutral">Alumni</span>
+          <span class="tag tag-outline">Podcast</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;max-width:340px">
+          <div class="field"><label for="a-email">Correo institucional</label><input class="input" id="a-email" type="email" placeholder="a01234567@tec.mx"></div>
+        </div>
+        <p style="margin:20px 0 0;color:var(--color-neutral-800)">Button labels stay flush left. Hover, pressed and focus states ship with the stylesheet — never restyle them per page, and never leave a default blue focus ring.</p>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px">Cards and data</div>
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-kicker">Alphanálisis · Ep. 12</div>
+          <div class="card-title">Cómo leer un estado de resultados</div>
+          <div class="card-body">Twenty minutes on reading an income statement without a finance background.</div>
+          <div class="card-meta">32 min · Spotify</div>
+        </div>
+        <table class="table" style="width:100%">
+          <thead><tr><th>Sesión</th><th style="text-align:right">Cupo</th><th style="text-align:right">Fecha</th></tr></thead>
+          <tbody>
+            <tr><td>Excel para modelado</td><td class="num" style="text-align:right">40</td><td class="num" style="text-align:right">04 Sep</td></tr>
+            <tr><td>Python en finanzas</td><td class="num" style="text-align:right">30</td><td class="num" style="text-align:right">18 Sep</td></tr>
+            <tr><td>Visita: banca de inversión</td><td class="num" style="text-align:right">18</td><td class="num" style="text-align:right">02 Oct</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:64px 0 0">
+    <div style="display:flex;gap:24px;align-items:baseline;border-top:2px solid var(--color-divider);padding-top:16px;margin-bottom:32px">
+      <div class="num" style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:var(--color-accent-700)">07</div>
+      <h2 style="margin:0;font-size:32px">Imagery</h2>
+    </div>
+    <p style="margin:0 0 24px;max-width:70ch">Documentary photography of real events and real members: workshops, company visits, panels, podcast recordings. Every content photograph goes through the <code>.grayscale</code> wrapper — pure black and white, no tint, no duotone, no rounded corners, no shadow.</p>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:2px;background:var(--color-divider)">
+      <div class="grayscale" style="position:relative;height:340px"><image-slot id="alpha-photo-1" shape="rect" placeholder="Drop a workshop or event photo"></image-slot></div>
+      <div class="grayscale" style="position:relative;height:340px"><image-slot id="alpha-photo-2" shape="rect" placeholder="Drop a portrait or podcast photo"></image-slot></div>
+    </div>
+    <div style="display:flex;gap:32px;margin-top:12px">
+      <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">Caption sits below, flush left</div>
+    </div>
+    <p style="margin:24px 0 0;max-width:70ch;color:var(--color-neutral-800)">Charts follow the same logic: ink lines on the ground, one accent series, no gradient fills, no 3D. Label series directly instead of with a legend where it fits.</p>
+  </section>
+
+  <section style="padding:64px 0 0">
+    <div style="display:flex;gap:24px;align-items:baseline;border-top:2px solid var(--color-divider);padding-top:16px;margin-bottom:32px">
+      <div class="num" style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:var(--color-accent-700)">08</div>
+      <h2 style="margin:0;font-size:32px">Iconography</h2>
+    </div>
+    <p style="margin:0 0 24px;max-width:70ch">Lucide throughout, 1.5–2 px stroke, no fill, ink by default and accent only when the icon carries the action. Sizes 16, 20 or 24 px, optically aligned to the cap height of adjacent text. Never mix another family, never use emoji.</p>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:2px;background:var(--color-divider)">
+      <div style="background:var(--color-bg);padding:20px;display:flex;flex-direction:column;gap:10px"><i data-lucide="trending-up" style="width:24px;height:24px"></i><span class="num" style="font-size:13px;color:var(--color-neutral-700)">trending-up</span></div>
+      <div style="background:var(--color-bg);padding:20px;display:flex;flex-direction:column;gap:10px"><i data-lucide="table-2" style="width:24px;height:24px"></i><span class="num" style="font-size:13px;color:var(--color-neutral-700)">table-2</span></div>
+      <div style="background:var(--color-bg);padding:20px;display:flex;flex-direction:column;gap:10px"><i data-lucide="mic" style="width:24px;height:24px"></i><span class="num" style="font-size:13px;color:var(--color-neutral-700)">mic</span></div>
+      <div style="background:var(--color-bg);padding:20px;display:flex;flex-direction:column;gap:10px"><i data-lucide="users" style="width:24px;height:24px"></i><span class="num" style="font-size:13px;color:var(--color-neutral-700)">users</span></div>
+      <div style="background:var(--color-bg);padding:20px;display:flex;flex-direction:column;gap:10px"><i data-lucide="building-2" style="width:24px;height:24px"></i><span class="num" style="font-size:13px;color:var(--color-neutral-700)">building-2</span></div>
+      <div style="background:var(--color-bg);padding:20px;display:flex;flex-direction:column;gap:10px"><i data-lucide="award" style="width:24px;height:24px"></i><span class="num" style="font-size:13px;color:var(--color-neutral-700)">award</span></div>
+    </div>
+  </section>
+
+  <sc-if value="{{ showCode }}" hint-placeholder-val="{{ true }}">
+    <section style="padding:64px 0 0">
+      <div style="display:flex;gap:24px;align-items:baseline;border-top:2px solid var(--color-divider);padding-top:16px;margin-bottom:32px">
+        <div class="num" style="font-size:13px;font-weight:700;letter-spacing:0.08em;color:var(--color-accent-700)">09</div>
+        <h2 style="margin:0;font-size:32px">In code</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:48px;align-items:start">
+        <div>
+          <pre style="margin:0;background:var(--color-text);color:var(--color-neutral-200);padding:24px;overflow-x:auto;font-size:13px;line-height:1.7"><code>:root {
+  --color-bg:      #f2f4f7;
+  --color-surface: #e6eaf0;
+  --color-text:    #0d2140;  /* navy  */
+  --color-accent:  #1f5fd0;  /* blue  */
+  --font-heading:  "Poppins", system-ui, sans-serif;
+  --font-body:     "Poppins", system-ui, sans-serif;
+}
+
+.panel {
+  background: var(--color-surface);
+  padding: var(--space-6);
+  border-top: 2px solid var(--color-divider);
+  border-radius: 0;
+}</code></pre>
+          <p style="margin:16px 0 0;color:var(--color-neutral-800)">Take every color, font, space, radius and shadow from the variables. A value that isn't in the tokens is a decision this document hasn't made yet — add it here before shipping it.</p>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px">Before anything goes out</div>
+          <div style="display:flex;flex-direction:column">
+            <div style="border-top:2px solid var(--color-divider);padding:12px 0">Logo as artwork, correct proportions, 1 C clear space</div>
+            <div style="border-top:2px solid var(--color-divider);padding:12px 0">Zero rounded corners</div>
+            <div style="border-top:2px solid var(--color-divider);padding:12px 0">Everything flush left</div>
+            <div style="border-top:2px solid var(--color-divider);padding:12px 0">Accent on the primary action and little else</div>
+            <div style="border-top:2px solid var(--color-divider);padding:12px 0">Photographs grayscale</div>
+            <div style="border-top:2px solid var(--color-divider);padding:12px 0">2 px rules between sections</div>
+            <div style="border-top:2px solid var(--color-divider);padding:12px 0">Focus rings themed, not browser default</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <section style="margin-top:64px;background:var(--color-accent);color:#fff;padding:64px 48px">
+    <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:24px">Still open</div>
+    <h2 style="margin:0 0 32px;font-size:40px;line-height:1.08;max-width:24ch;color:#fff">The source file held only the cover slide.</h2>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:32px;font-size:15px">
+      <div><div class="num" style="font-weight:700;margin-bottom:8px">01</div>Master logo files — a vector α and the licensed Kollektif files. The α here came from a 360 × 248 raster: reference, not print.</div>
+      <div><div class="num" style="font-weight:700;margin-bottom:8px">02</div>Alpha's own palette, if one exists beyond the black-and-white cover. Section 03 is currently the bound system's.</div>
+      <div><div class="num" style="font-weight:700;margin-bottom:8px">03</div>Voice and tone, naming for Alphanálisis and other sub-brands, bilingual copy conventions.</div>
+      <div><div class="num" style="font-weight:700;margin-bottom:8px">04</div>Templates for what Alpha actually publishes: deck, podcast cover, Instagram post, member certificate.</div>
+    </div>
+  </section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showConstruction&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Sections&quot;},&quot;showRamps&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Sections&quot;},&quot;showCode&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Sections&quot;}}">
+class Component extends DCLogic {
+  componentDidMount() { this.icons(); }
+  componentDidUpdate() { this.icons(); }
+  icons() {
+    const go = () => { if (window.lucide && window.lucide.createIcons) window.lucide.createIcons(); };
+    go();
+    setTimeout(go, 400);
+    setTimeout(go, 1500);
+  }
+  renderVals() {
+    return {
+      showConstruction: this.props.showConstruction ?? true,
+      showRamps: this.props.showRamps ?? true,
+      showCode: this.props.showCode ?? true
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+@import "tailwindcss";
+
+/**
+ * Sistema visual del panel.
+ *
+ * No es un tema nuevo: son los mismos tokens de la landing. La continuidad es
+ * deliberada, para que el interno se sienta parte de Alpha y no una
+ * herramienta ajena pegada al lado. Lo que cambia es la densidad: aqui se
+ * trabaja, no se lee una vez.
+ */
+
+@theme {
+  --color-ground: #f2f4f7;
+  --color-surface: #e6eaf0;
+  --color-ink: #0d2140;
+  --color-accent: #1f5fd0;
+  --color-accent-alto: #2a6fe8;
+
+  --color-n300: #d5d9e0;
+  --color-n400: #b7bdc8;
+  --color-n500: #979eab;
+  --color-n600: #79808e;
+  --color-n700: #5c6371;
+  --color-cuerpo: #3c485c;
+
+  /* Estados. Verde y rojo apagados para que no compitan con el azul de marca. */
+  --color-nuevo: #1f5fd0;
+  --color-contactado: #5c6371;
+  --color-activo: #0f7a63;
+  --color-baja: #9a3b32;
+
+  --font-sans: var(--fuente-poppins), system-ui, sans-serif;
+  --font-mono: var(--fuente-mono), ui-monospace, monospace;
+}
+
+:root {
+  --hair: rgba(13, 33, 64, 0.12);
+  --hair-2: rgba(13, 33, 64, 0.06);
+  --hair-clara: rgba(255, 255, 255, 0.1);
+  --sombra-md: 0 18px 44px -30px rgba(13, 33, 64, 0.3);
+  --E: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Cantos vivos en todo: es la regla mas visible de la marca. */
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #d8e6ff;
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@layer components {
+  /**
+   * Bandeja de doble bisel: 7px de superficie alrededor de un nucleo claro.
+   * Es el elemento firma que se hereda de la landing y el contenedor de todo
+   * panel de datos.
+   */
+  .bandeja {
+    background: var(--color-surface);
+    box-shadow: inset 0 0 0 1px var(--hair-2);
+    padding: 7px;
+  }
+  .nucleo {
+    background: var(--color-ground);
+    box-shadow: inset 0 0 0 1px var(--hair-2);
+    height: 100%;
+  }
+  .bandeja-ink {
+    background: var(--color-ink);
+  }
+  .bandeja-ink .nucleo {
+    background: var(--color-ink);
+    box-shadow: inset 0 0 0 1px var(--hair-clara);
+    color: var(--color-ground);
+  }
+
+  .rotulo {
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--color-n600);
+  }
+  .cejilla {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+  .cifra {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  /* Boton primario, calcado del de la landing. */
+  .boton {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      0 14px 30px -20px rgba(31, 95, 208, 0.85);
+    transition:
+      background 0.4s var(--E),
+      transform 0.4s var(--E);
+  }
+  .boton:hover:not(:disabled) {
+    background: var(--color-accent-alto);
+  }
+  .boton:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  .boton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .boton-linea {
+    background: transparent;
+    color: var(--color-ink);
+    box-shadow: inset 0 0 0 1px var(--hair);
+  }
+  .boton-linea:hover:not(:disabled) {
+    background: var(--color-surface);
+  }
+  .boton-peligro {
+    background: transparent;
+    color: var(--color-baja);
+    box-shadow: inset 0 0 0 1px rgba(154, 59, 50, 0.35);
+  }
+  .boton-peligro:hover:not(:disabled) {
+    background: rgba(154, 59, 50, 0.08);
+  }
+
+  /* Campo de formulario: linea inferior, sin caja. */
+  .campo label {
+    display: block;
+    font-size: 9.5px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--color-n600);
+    margin-bottom: 8px;
+  }
+  .entrada {
+    width: 100%;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--hair);
+    color: var(--color-ink);
+    font: 400 14px/1.6 var(--font-sans);
+    padding: 9px 0;
+    transition: border-color 0.4s var(--E);
+  }
+  .entrada::placeholder {
+    color: var(--color-n400);
+  }
+  .entrada:focus {
+    outline: 0;
+    border-bottom-color: var(--color-accent);
+  }
+  select.entrada {
+    padding-right: 18px;
+  }
+
+  /* Marcador de estado: cuadrado, nunca circulo. */
+  .marca {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .marca b {
+    width: 7px;
+    height: 7px;
+    flex: none;
+    background: currentColor;
+  }
+
+  /* Fila de tabla: solo filetes horizontales, como el indice de la landing. */
+  .fila {
+    position: relative;
+    border-top: 1px solid var(--hair);
+    transition: background 0.35s var(--E);
+  }
+  .fila:hover {
+    background: var(--color-surface);
+  }
+  .fila:last-child {
+    border-bottom: 1px solid var(--hair);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

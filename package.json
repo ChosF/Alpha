@@ -1,0 +1,46 @@
+{
+  "name": "alpha-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sitio publico y panel interno de la Sociedad Estudiantil Alpha (Tec de Monterrey CCM)",
+  "scripts": {
+    "sync:landing": "node scripts/sync-landing.mjs",
+    "predev": "npm run sync:landing",
+    "dev": "next dev",
+    "dev:convex": "convex dev",
+    "prebuild": "npm run sync:landing",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm run lint && npm run test"
+  },
+  "dependencies": {
+    "@auth/core": "0.41.1",
+    "@convex-dev/auth": "^0.0.95",
+    "convex": "^1.44.0",
+    "next": "^16.3.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@edge-runtime/vm": "^5.0.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^24.10.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.1.0",
+    "convex-test": "^0.0.56",
+    "eslint": "^9.39.0",
+    "eslint-config-next": "^16.3.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  }
+}
