@@ -12,6 +12,7 @@ import {
 } from "./_generated/server";
 import { registrarEnBitacora } from "./lib/auditoria";
 import { CUOTAS, consumirLimite } from "./lib/limites";
+import { renderizarCorreoDashboard } from "./lib/plantillaCorreo";
 import { requiereRol } from "./lib/rbac";
 import { limpiarMultilinea, limpiarTexto, normalizarCorreo } from "./lib/texto";
 import {
@@ -68,15 +69,6 @@ function escaparHtml(valor: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
-}
-
-function cuerpoHtml(texto: string): string {
-  const parrafos = escaparHtml(texto)
-    .split(/\n{2,}/)
-    .map((parrafo) => `<p style="margin:0 0 18px;line-height:1.7">${parrafo.replaceAll("\n", "<br>")}</p>`)
-    .join("");
-
-  return `<!doctype html><html><body style="margin:0;background:#f2f4f7;color:#0d2140;font-family:Montserrat,sans-serif"><div style="max-width:640px;margin:0 auto;padding:44px 24px"><div style="background:#e6eaf0;padding:7px"><div style="background:#f2f4f7;padding:36px">${parrafos}<div style="margin-top:34px;padding-top:18px;border-top:1px solid rgba(13,33,64,.12);font-size:12px;line-height:1.6;color:#5c6371">Sociedad Estudiantil Alpha<br>Tecnologico de Monterrey, Campus Ciudad de Mexico</div></div></div></div></body></html>`;
 }
 
 type ConfirmacionRegistro = {
@@ -568,12 +560,17 @@ export const enviar = mutation({
         ]
       : undefined;
 
+    const asuntoEnvio = ultimo && !/^re\s*:/i.test(asunto) ? `Re: ${asunto}` : asunto;
     const resendComponentId = await resend.sendEmail(ctx, {
       from: nombreDireccion(correoContacto(), "Alpha CCM"),
       to: para,
-      subject: ultimo && !/^re\s*:/i.test(asunto) ? `Re: ${asunto}` : asunto,
+      subject: asuntoEnvio,
       text: texto,
-      html: cuerpoHtml(texto),
+      html: renderizarCorreoDashboard({
+        asunto: asuntoEnvio,
+        texto,
+        sitio: process.env.SITE_URL,
+      }),
       replyTo: [correoContacto()],
       ...(headers ? { headers } : {}),
     });
@@ -972,7 +969,7 @@ export async function enviarInvitacionPorCorreo(
     to: args.correo,
     subject: asunto,
     text: texto,
-    html: cuerpoHtml(texto),
+    html: renderizarCorreoDashboard({ asunto, texto, sitio }),
     replyTo: [correoContacto()],
   });
   await ctx.db.insert("mailMessages", {

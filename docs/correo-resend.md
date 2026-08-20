@@ -12,9 +12,10 @@ En Resend, agrega y verifica el dominio raiz `alphaccm.org`. El modulo usa estas
 | `auto@alphaccm.org` | Invitaciones y avisos automaticos |
 | `contacto@alphaccm.org` | Bandeja publica, mensajes manuales y respuestas |
 
-Agrega en Vercel DNS los valores exactos que muestre Resend para SPF, DKIM y el return path. Activa
-Receiving para el dominio y agrega tambien su registro MX. No inventes ni reutilices valores de
-otro dominio.
+Agrega en Vercel DNS los valores exactos que muestre Resend para SPF, DKIM y el return path. Para
+recibir en `contacto@alphaccm.org`, la capacidad Receiving de `alphaccm.org` debe estar activa y la
+raiz del dominio debe tener el MX `inbound-smtp.us-east-1.amazonaws.com` con prioridad `10`. El MX
+de `send.alphaccm.org` sirve para rebotes de salida y no recibe mensajes dirigidos a la bandeja.
 
 Antes de agregar el MX, confirma que no exista otro proveedor de buzones en el dominio. Dos juegos
 de MX con prioridades incompatibles pueden repartir o bloquear el correo entrante.
