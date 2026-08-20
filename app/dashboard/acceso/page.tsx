@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Aviso } from "@/components/panel/piezas";
+import { MarcaAlpha } from "@/components/marca-alpha";
 
 /**
  * Acceso al panel.
@@ -36,9 +37,9 @@ export default function Acceso() {
   return (
     <div className="min-h-dvh grid lg:grid-cols-2">
       <div className="bg-[var(--color-ink)] text-white px-8 py-14 lg:px-16 lg:py-20 flex flex-col justify-between">
-        <div>
-          <span className="text-[26px] font-bold tracking-[-.04em]">Alpha</span>
-          <span className="ml-2.5 text-[10px] tracking-[.24em] uppercase text-white/45">Dashboard</span>
+        <div className="flex items-center gap-4">
+          <MarcaAlpha className="h-auto w-[142px]" tono="blanco" />
+          <span className="text-[10px] tracking-[.24em] uppercase text-white/45">Dashboard</span>
         </div>
         <div className="mt-16 lg:mt-0">
           <p className="text-[10px] tracking-[.3em] uppercase text-white/45">Uso interno</p>

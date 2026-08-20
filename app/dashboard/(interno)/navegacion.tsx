@@ -6,6 +6,7 @@ import { useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "@/convex/_generated/api";
 import { ETIQUETAS } from "@/convex/lib/validadores";
+import { MarcaAlpha } from "@/components/marca-alpha";
 
 /**
  * Riel de navegacion.
@@ -36,9 +37,9 @@ export function Navegacion() {
   return (
     <nav className="bg-[var(--color-ink)] text-[var(--color-ground)] lg:min-h-dvh lg:sticky lg:top-0 flex flex-col">
       <div className="px-6 py-7 border-b border-[var(--hair-clara)]">
-        <Link href="/dashboard" className="block">
-          <span className="text-[22px] font-bold tracking-[-.04em]">Alpha</span>
-          <span className="ml-2 text-[10px] tracking-[.24em] uppercase text-white/45">Dashboard</span>
+        <Link href="/dashboard" className="flex items-center gap-3">
+          <MarcaAlpha className="h-auto w-[108px]" tono="blanco" />
+          <span className="text-[9px] tracking-[.2em] uppercase text-white/45">Dashboard</span>
         </Link>
       </div>
 

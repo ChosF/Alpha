@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Kollektif";
+  src: url("/kollektif.ttf") format("truetype");
+  font-display: block;
+}
+
 /**
  * Sistema visual del panel.
  *

@@ -3,6 +3,7 @@
 import { ConvexAuthNextjsProvider } from "@convex-dev/auth/nextjs";
 import { ConvexReactClient } from "convex/react";
 import type { ReactNode } from "react";
+import { MarcaAlpha } from "@/components/marca-alpha";
 
 const url = process.env.NEXT_PUBLIC_CONVEX_URL;
 
@@ -22,7 +23,7 @@ function ConfiguracionConvexFaltante() {
         role="alert"
       >
         <div className="mb-10 flex items-center justify-between border-b border-[#d9e1ec] pb-5">
-          <span className="text-lg font-semibold tracking-[-0.04em]">Alphα</span>
+          <MarcaAlpha className="h-auto w-[112px]" tono="navy" />
           <span className="font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-[#5f6f86]">
             Configuración local
           </span>

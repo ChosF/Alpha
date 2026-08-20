@@ -1,13 +1,14 @@
 "use client";
 
-import { use, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "@/convex/_generated/api";
 import { ETIQUETAS } from "@/convex/lib/validadores";
 import { validarContrasena, LARGO_MINIMO } from "@/convex/lib/contrasena";
 import { Aviso } from "@/components/panel/piezas";
+import { MarcaAlpha } from "@/components/marca-alpha";
 
 /**
  * Alta por invitacion.
@@ -16,8 +17,8 @@ import { Aviso } from "@/components/panel/piezas";
  * a alguien cuyo enlace ya caduco. La comprobacion de verdad ocurre igual en
  * el servidor al crear la cuenta: esta es solo cortesia.
  */
-export default function Invitacion({ params }: { params: Promise<{ token: string }> }) {
-  const { token } = use(params);
+export default function Invitacion() {
+  const { token } = useParams<{ token: string }>();
   const { signIn } = useAuthActions();
   const router = useRouter();
 
@@ -62,8 +63,8 @@ export default function Invitacion({ params }: { params: Promise<{ token: string
   return (
     <div className="min-h-dvh grid place-items-center px-6 py-16">
       <div className="w-full max-w-[420px]">
-        <div>
-          <span className="text-[24px] font-bold tracking-[-.04em]">Alpha</span>
+        <div className="flex items-center gap-4">
+          <MarcaAlpha className="h-auto w-[132px]" tono="navy" />
           <span className="ml-2.5 text-[10px] tracking-[.24em] uppercase text-[var(--color-n500)]">
             Dashboard
           </span>
@@ -111,7 +112,7 @@ export default function Invitacion({ params }: { params: Promise<{ token: string
                 </p>
               </div>
               <div className="campo">
-                <label htmlFor="c2">Reptela</label>
+                <label htmlFor="c2">Repítela</label>
                 <input
                   id="c2"
                   className="entrada"

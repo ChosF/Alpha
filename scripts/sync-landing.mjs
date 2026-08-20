@@ -13,6 +13,7 @@ const origenHtml = path.join(raiz, "Landing", "alpha-b-reticula.html");
 const origenAssets = path.join(raiz, "Landing", "assets");
 const destinoDir = path.join(raiz, "public", "landing");
 const destinoHtml = path.join(destinoDir, "alpha.html");
+const destinoPublico = path.join(raiz, "public");
 
 if (!existsSync(origenHtml)) {
   console.error(`sync-landing: no existe ${origenHtml}`);
@@ -27,6 +28,24 @@ await mkdir(destinoDir, { recursive: true });
 // y los archivos se copian dentro de esta carpeta publica.
 const html = await readFile(origenHtml, "utf8");
 await writeFile(destinoHtml, html, "utf8");
+
+// El dashboard reutiliza exactamente la tipografia y las variantes aprobadas
+// del lockup que vive en la landing. Se extraen desde la misma fuente para no
+// mantener una copia paralela de la identidad.
+const kollektiv = html.match(
+  /font-family:"Kollektif"; src:url\(data:font\/ttf;base64,([A-Za-z0-9+/=]+)\)/,
+);
+if (!kollektiv) {
+  throw new Error("sync-landing: no se encontro la fuente Kollektif embebida");
+}
+await writeFile(path.join(destinoPublico, "kollektif.ttf"), Buffer.from(kollektiv[1], "base64"));
+
+for (const variante of ["white", "navy", "blue"]) {
+  await cp(
+    path.join(origenAssets, `alpha-mark-${variante}.png`),
+    path.join(destinoPublico, `alpha-mark-${variante}.png`),
+  );
+}
 
 // Solo se publican los archivos que el HTML menciona. Los originales de camara
 // (varios MB) viven en Landing/assets como material de trabajo, pero el sitio
