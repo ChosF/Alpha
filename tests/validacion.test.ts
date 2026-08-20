@@ -11,6 +11,7 @@ const base = {
   correo: "a01234567@tec.mx",
   carrera: "LAF",
   semestre: "3.er semestre",
+  avisosCorreo: true,
   token: "1700000000.abc.firma",
 };
 
@@ -38,10 +39,20 @@ describe("campos obligatorios", () => {
   it("acepta correo personal para miembros y exige institucional para aliados", () => {
     expect(esquemaRegistro.safeParse({ ...base, correo: "alguien@gmail.com" }).success).toBe(true);
     expect(
-      esquemaRegistro.safeParse({ ...base, tipo: "aliado", correo: "alguien@gmail.com" }).success,
+      esquemaRegistro.safeParse({
+        ...base,
+        tipo: "aliado",
+        correo: "alguien@gmail.com",
+        telefono: "5512345678",
+      }).success,
     ).toBe(false);
     expect(
-      esquemaRegistro.safeParse({ ...base, tipo: "aliado", correo: "ex@exatec.tec.mx" }).success,
+      esquemaRegistro.safeParse({
+        ...base,
+        tipo: "aliado",
+        correo: "ex@exatec.tec.mx",
+        telefono: "5512345678",
+      }).success,
     ).toBe(true);
   });
 
@@ -51,6 +62,25 @@ describe("campos obligatorios", () => {
 });
 
 describe("reglas por tipo", () => {
+  it("exige al menos un medio de contacto para miembros", () => {
+    const sinContacto = esquemaRegistro.safeParse({
+      ...base,
+      avisosCorreo: false,
+      whatsapp: false,
+    });
+    expect(sinContacto.success).toBe(false);
+  });
+
+  it("exige teléfono para aliados", () => {
+    const sinTelefono = esquemaRegistro.safeParse({
+      ...base,
+      tipo: "aliado",
+      correo: "aliado@tec.mx",
+      telefono: "",
+    });
+    expect(sinTelefono.success).toBe(false);
+  });
+
   it("pide telefono si el miembro quiere el grupo de WhatsApp", () => {
     const sinTelefono = esquemaRegistro.safeParse({ ...base, whatsapp: true });
     expect(sinTelefono.success).toBe(false);
@@ -67,6 +97,7 @@ describe("reglas por tipo", () => {
     const valido = esquemaRegistro.safeParse({
       ...base,
       tipo: "aliado",
+      telefono: "5512345678",
       areas: ["finanzas", "comunicacion"],
     });
     expect(valido.success).toBe(true);
@@ -74,6 +105,7 @@ describe("reglas por tipo", () => {
     const invalido = esquemaRegistro.safeParse({
       ...base,
       tipo: "aliado",
+      telefono: "5512345678",
       areas: ["presidencia"],
     });
     expect(invalido.success).toBe(false);
@@ -118,7 +150,7 @@ describe("defensas", () => {
 });
 
 describe("traduccion al payload de Convex", () => {
-  it("un aliado no arrastra canales ni telefono", () => {
+  it("un aliado conserva su telefono obligatorio, pero no los canales de miembro", () => {
     const r = esquemaRegistro.safeParse({
       ...base,
       tipo: "aliado",
@@ -133,7 +165,7 @@ describe("traduccion al payload de Convex", () => {
     const payload = aPayloadConvex(r.data, { ipHash: "h", userAgent: "ua" });
     expect(payload.semestre).toBe("3.er semestre");
     expect(payload.canales).toEqual({ correo: false, whatsapp: false });
-    expect(payload).not.toHaveProperty("telefono");
+    expect(payload.telefono).toBe("5512345678");
     expect(payload.areas).toEqual(["finanzas"]);
     expect(payload.aporte).toBe("Modelado en Excel");
   });

@@ -60,7 +60,7 @@ export default defineSchema({
     semestre: v.optional(v.string()),
     matricula: v.optional(v.string()),
 
-    // Solo miembro
+    // Los canales corresponden al miembro. El telefono tambien identifica al aliado.
     canales: v.object({ correo: v.boolean(), whatsapp: v.boolean() }),
     telefono: v.optional(v.string()),
 

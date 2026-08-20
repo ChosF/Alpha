@@ -82,7 +82,7 @@ describe("ingesta del formulario publico", () => {
     expect(filas[0]?.semestre).toBe("4.º semestre");
   });
 
-  it("un aliado no conserva canales ni telefono", async () => {
+  it("un aliado conserva su telefono obligatorio, pero no los canales de miembro", async () => {
     const t = convexTest(schema, modulos);
     await t.action(api.ingesta.registrar, {
       secreto: SECRETO,
@@ -97,7 +97,7 @@ describe("ingesta del formulario publico", () => {
 
     const fila = await t.run(async (ctx) => ctx.db.query("registrations").first());
     expect(fila?.canales).toEqual({ correo: false, whatsapp: false });
-    expect(fila?.telefono).toBeUndefined();
+    expect(fila?.telefono).toBe("5512345678");
     // Las areas repetidas se colapsan.
     expect(fila?.areas).toEqual(["finanzas"]);
   });

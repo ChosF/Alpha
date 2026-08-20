@@ -56,6 +56,21 @@ export const guardar = internalMutation({
   handler: async (ctx, { datos }) => {
     const correo = normalizarCorreo(datos.correo);
     const ahora = Date.now();
+    const esMiembro = datos.tipo === "miembro";
+    const telefono = datos.telefono ? normalizarTelefono(datos.telefono) : undefined;
+
+    if (esMiembro && !datos.canales.correo && !datos.canales.whatsapp) {
+      throw new Error("El miembro necesita un canal de contacto.");
+    }
+    if (esMiembro && datos.canales.whatsapp && !telefono) {
+      throw new Error("El registro de WhatsApp necesita telefono.");
+    }
+    if (!esMiembro && !telefono) {
+      throw new Error("El aliado necesita telefono.");
+    }
+    if (telefono && !/^\d{10}$/.test(telefono)) {
+      throw new Error("El telefono debe tener 10 digitos.");
+    }
 
     // Primer limite: por origen. El hash de IP lo calcula Next, que es el
     // unico que ve la direccion real; aqui solo se cuenta contra ese hash.
@@ -81,12 +96,6 @@ export const guardar = internalMutation({
     if (!limite.permitido) {
       return { ok: false, motivo: "limite" };
     }
-
-    const esMiembro = datos.tipo === "miembro";
-    const telefono =
-      esMiembro && datos.canales.whatsapp && datos.telefono
-        ? normalizarTelefono(datos.telefono)
-        : undefined;
 
     const comun = {
       tipo: datos.tipo,

@@ -82,11 +82,25 @@ export const esquemaRegistro = z
         message: "Como aliado, usa tu correo institucional (@tec.mx o @exatec.tec.mx).",
       });
     }
+    if (datos.tipo === "miembro" && !datos.avisosCorreo && !datos.whatsapp) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["avisosCorreo"],
+        message: "Elige Correo Electrónico, Whatsapp o ambos.",
+      });
+    }
     if (datos.tipo === "miembro" && datos.whatsapp && datos.telefono === "") {
       ctx.addIssue({
         code: "custom",
         path: ["telefono"],
-        message: "Si quieres el grupo de WhatsApp, deja tu numero.",
+        message: "Si quieres el grupo de WhatsApp, deja tu número.",
+      });
+    }
+    if (datos.tipo === "aliado" && datos.telefono === "") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["telefono"],
+        message: "Como aliado, deja tu número de teléfono.",
       });
     }
   });
@@ -110,7 +124,7 @@ export function aPayloadConvex(
       correo: esMiembro ? datos.avisosCorreo : false,
       whatsapp: esMiembro ? datos.whatsapp : false,
     },
-    ...(esMiembro && datos.whatsapp && datos.telefono ? { telefono: datos.telefono } : {}),
+    ...(datos.telefono ? { telefono: datos.telefono } : {}),
     areas: esMiembro ? [] : datos.areas,
     ...(!esMiembro && datos.aporte ? { aporte: datos.aporte } : {}),
     ipHash: extra.ipHash,

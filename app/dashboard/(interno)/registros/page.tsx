@@ -210,6 +210,11 @@ function Ficha({
         ) : (
           <>
             <Dato
+              titulo="Teléfono"
+              valor={registro.telefono ?? "—"}
+              mono={Boolean(registro.telefono)}
+            />
+            <Dato
               titulo="Areas"
               valor={
                 registro.areas.length > 0

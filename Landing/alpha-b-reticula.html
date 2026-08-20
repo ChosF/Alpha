@@ -360,18 +360,25 @@ img,svg{display:block;max-width:100%}
 .btn-lg .btn-i{width:34px;height:34px}
 
 #join{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;
-  padding:clamp(10px,3.5vw,44px);opacity:0;pointer-events:none;transition:opacity .5s var(--E)}
-#join.on{opacity:1;pointer-events:auto}
-.jn-bd{position:absolute;inset:0;background:rgba(13,33,64,.80);
+  padding:clamp(10px,3.5vw,44px);visibility:hidden;pointer-events:none;
+  transition:visibility 0s linear .72s}
+#join.on{visibility:visible;pointer-events:auto;transition-delay:0s}
+.jn-bd{position:absolute;inset:0;opacity:0;background:rgba(13,33,64,0);
+  backdrop-filter:blur(0);-webkit-backdrop-filter:blur(0);
+  transition:opacity .58s var(--E),background-color .72s var(--E2),
+    backdrop-filter .72s var(--E),-webkit-backdrop-filter .72s var(--E);
+  will-change:opacity,backdrop-filter}
+#join.on .jn-bd{opacity:1;background:rgba(13,33,64,.80);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 .jn-pn{
   position:relative;z-index:1;width:min(1060px,100%);max-height:calc(100dvh - clamp(20px,7vw,88px));
   overflow-y:auto;overscroll-behavior:contain;background:var(--ground);
   box-shadow:inset 0 0 0 1px var(--hair), var(--shadow-lg);
   padding:clamp(24px,3.6vw,52px);
-  transform:translateY(28px);transition:transform .65s var(--E)
+  opacity:0;transform:translate3d(0,28px,0);
+  transition:opacity .48s var(--E),transform .65s var(--E)
 }
-#join.on .jn-pn{transform:none}
+#join.on .jn-pn{opacity:1;transform:translate3d(0,0,0);transition-delay:.08s}
 .jn-x{position:absolute;top:clamp(14px,2vw,22px);right:clamp(14px,2vw,22px);width:40px;height:40px;
   display:grid;place-items:center;background:transparent;border:0;cursor:pointer;color:var(--n600);
   box-shadow:inset 0 0 0 1px var(--hair);transition:color .4s var(--E),background .4s var(--E)}
@@ -1109,20 +1116,20 @@ img,svg{display:block;max-width:100%}
           <input class="inp" id="jn-sem" name="semestre" placeholder="3.er semestre"></div>
         <div class="fld"><label for="jn-m">Matrícula <span class="normal-case tracking-normal">(opcional)</span></label>
           <input class="inp" id="jn-m" name="matricula" placeholder="A01234567"></div>
+        <div class="fld" id="jn-tel-f" hidden><label for="jn-tel" id="jn-tel-label">Teléfono · 10 dígitos</label>
+          <input class="inp" id="jn-tel" name="tel" type="tel" inputmode="numeric" placeholder="55 1234 5678" autocomplete="tel"></div>
       </div>
 
       <!-- ── MIEMBRO ── -->
       <div data-only="miembro" class="grid gap-5 mt-2">
-        <p class="kicker">Por dónde quieres que te avisemos</p>
+        <p class="kicker">Medio de contacto</p>
         <p class="text-[12.5px] leading-[1.7] text-[var(--n600)] font-light -mt-2">
-          Los dos canales son opcionales. Si no marcas ninguno, quedas registrado y no te escribimos.
+          Elige al menos una opción.
         </p>
         <label class="chk"><input type="checkbox" name="correo_avisos" checked>
-          <span>Correo con convocatorias, talleres y calendario de sesiones.</span></label>
+          <span>Correo Electrónico</span></label>
         <label class="chk"><input type="checkbox" name="whatsapp" id="jn-wa">
-          <span>Grupo de WhatsApp de la comunidad Alpha.</span></label>
-        <div class="fld" id="jn-wa-f" hidden><label for="jn-tel">WhatsApp · 10 dígitos</label>
-          <input class="inp" id="jn-tel" name="tel" type="tel" inputmode="numeric" placeholder="55 1234 5678" autocomplete="tel"></div>
+          <span>Whatsapp</span></label>
       </div>
 
       <!-- ── ALIADO ── -->
@@ -1159,7 +1166,7 @@ img,svg{display:block;max-width:100%}
 
       <p class="text-[11px] leading-[1.75] text-[var(--n500)] max-w-[70ch]">
         Usamos tus datos sólo para contactarte sobre actividades de Alpha. Puedes pedir que te demos
-        de baja en cualquier momento escribiendo desde tu correo institucional.
+        de baja en cualquier momento escribiendo a contacto@alphaccm.org.
       </p>
     </form>
   </div>
@@ -1327,13 +1334,26 @@ img,svg{display:block;max-width:100%}
   const join  = document.getElementById("join");
   const jform = join.querySelector(".jn-form");
   const opts  = [...join.querySelectorAll(".opt")];
+  const correoCh = jform.querySelector('input[name="correo_avisos"]');
   const waCh  = document.getElementById("jn-wa");
-  const waFld = document.getElementById("jn-wa-f");
+  const telFld = document.getElementById("jn-tel-f");
+  const telInput = document.getElementById("jn-tel");
+  const telLabel = document.getElementById("jn-tel-label");
   let lastFocus = null;
+
+  const syncTelefono = () => {
+    const aliado = jform.dataset.tipo === "aliado";
+    const obligatorio = aliado || waCh.checked;
+    telFld.hidden = !obligatorio;
+    telLabel.textContent = aliado ? "Teléfono · 10 dígitos" : "Whatsapp · 10 dígitos";
+    telInput.required = obligatorio;
+    telInput.setAttribute("aria-required", String(obligatorio));
+  };
 
   const setTipo = t => {
     jform.dataset.tipo = t;
     opts.forEach(o => o.setAttribute("aria-checked", String(o.dataset.tipo === t)));
+    syncTelefono();
   };
   const openJoin = () => {
     lastFocus = document.activeElement;
@@ -1398,8 +1418,8 @@ img,svg{display:block;max-width:100%}
   });
 
   waCh.addEventListener("change", () => {
-    waFld.hidden = !waCh.checked;
-    if (waCh.checked) document.getElementById("jn-tel").focus();
+    syncTelefono();
+    if (waCh.checked) telInput.focus();
   });
 
   /* ─── Envio del registro ──────────────────────────────────────── */
@@ -1429,6 +1449,18 @@ img,svg{display:block;max-width:100%}
   jform.addEventListener("submit", async e => {
     e.preventDefault();
     if (btnEnvia.disabled) return;
+
+    const esMiembro = jform.dataset.tipo === "miembro";
+    if (esMiembro && !correoCh.checked && !waCh.checked) {
+      decir("Elige Correo Electrónico, Whatsapp o ambos.", true);
+      correoCh.focus();
+      return;
+    }
+    if ((!esMiembro || waCh.checked) && telInput.value.replace(/\D/g, "").length !== 10) {
+      decir("Escribe un número de teléfono de 10 dígitos.", true);
+      telInput.focus();
+      return;
+    }
 
     const datos = new FormData(jform);
     const areas = datos.getAll("area").map(String);
@@ -1462,7 +1494,7 @@ img,svg{display:block;max-width:100%}
 
       if (r.ok && d.ok) {
         jform.reset();
-        waFld.hidden = true;
+        syncTelefono();
         decir("Listo. Te avisamos de la proxima convocatoria.", false);
         campoTok.value = "";
         pedirToken();
