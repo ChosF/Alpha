@@ -27,21 +27,25 @@ export function FormularioInvitacion({
   const { signIn } = useAuthActions();
   const router = useRouter();
   const [contrasena, setContrasena] = useState("");
-  const [repetida, setRepetida] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
 
   const problema = contrasena === "" ? null : validarContrasena(contrasena);
 
-  const crear = async (evento: React.FormEvent) => {
+  const crear = async (evento: React.FormEvent<HTMLFormElement>) => {
     evento.preventDefault();
     if (invitacion === null) return;
 
-    if (problema !== null) {
-      setError(problema);
+    const datos = new FormData(evento.currentTarget);
+    const contrasenaActual = String(datos.get("contrasena") ?? "");
+    const repetidaActual = String(datos.get("repetida") ?? "");
+    const problemaActual = validarContrasena(contrasenaActual);
+
+    if (problemaActual !== null) {
+      setError(problemaActual);
       return;
     }
-    if (contrasena !== repetida) {
+    if (contrasenaActual !== repetidaActual) {
       setError("Las dos contrasenas no coinciden.");
       return;
     }
@@ -51,7 +55,7 @@ export function FormularioInvitacion({
     try {
       await signIn("password", {
         email: invitacion.correo,
-        password: contrasena,
+        password: contrasenaActual,
         nombre: invitacion.nombre,
         invitacion: token,
         flow: "signUp",
@@ -113,9 +117,9 @@ export function FormularioInvitacion({
                 <label htmlFor="c1">Contrasena</label>
                 <input
                   id="c1"
+                  name="contrasena"
                   className="entrada"
                   type="password"
-                  value={contrasena}
                   onChange={(e) => setContrasena(e.target.value)}
                   autoComplete="new-password"
                   required
@@ -129,10 +133,9 @@ export function FormularioInvitacion({
                 <label htmlFor="c2">Repitela</label>
                 <input
                   id="c2"
+                  name="repetida"
                   className="entrada"
                   type="password"
-                  value={repetida}
-                  onChange={(e) => setRepetida(e.target.value)}
                   autoComplete="new-password"
                   required
                 />
@@ -142,7 +145,7 @@ export function FormularioInvitacion({
             <button
               type="submit"
               className="boton mt-9 w-full justify-center"
-              disabled={ocupado || problema !== null || contrasena === ""}
+              disabled={ocupado}
             >
               {ocupado ? "Creando cuenta..." : "Crear mi cuenta"}
             </button>
