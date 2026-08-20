@@ -6,7 +6,7 @@ Ciudad de Mexico. Next.js + Convex + TypeScript, para desplegar en Vercel.
 | | |
 | --- | --- |
 | Landing | `Landing/alpha-b-reticula.html`, HTML artesanal, se sirve en `/` |
-| Panel | `/panel`, React, acceso por invitacion |
+| Dashboard | `/dashboard`, React, acceso por invitacion |
 | Backend | Convex (`convex/`) |
 
 ---
@@ -17,7 +17,7 @@ Ciudad de Mexico. Next.js + Convex + TypeScript, para desplegar en Vercel.
 /                      -> public/landing/alpha.html  (copia de Landing/, se sincroniza sola)
 POST /api/registro     -> valida, limita y llama a Convex con un secreto de servidor
 GET  /api/registro/token -> token firmado que la ventana de registro adjunta al enviar
-/panel/*               -> panel interno, exige sesion
+/dashboard/*           -> dashboard interno, exige sesion
 ```
 
 La landing **no** habla con Convex directamente. Su formulario hace `fetch` al mismo origen y el
@@ -82,7 +82,7 @@ npx convex run admin:sembrarAdmin '{"correo":"tucorreo@tec.mx","nombre":"Tu Nomb
 ```
 
 Devuelve un enlace de un solo uso. Abrelo, elige contrasena y ya tienes acceso de administrador.
-Desde ahi puedes invitar al resto del equipo en **Panel -> Usuarios**.
+Desde ahi puedes invitar al resto del equipo en **Dashboard -> Usuarios**.
 
 Para cargar el plan de trabajo 2026 — 2027 en la base:
 

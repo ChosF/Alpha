@@ -52,7 +52,7 @@ export default function Invitacion({ params }: { params: Promise<{ token: string
         invitacion: token,
         flow: "signUp",
       });
-      router.push("/panel");
+      router.push("/dashboard");
     } catch {
       setError("No se pudo crear la cuenta. La invitacion pudo caducar o ya se uso.");
       setOcupado(false);
@@ -65,7 +65,7 @@ export default function Invitacion({ params }: { params: Promise<{ token: string
         <div>
           <span className="text-[24px] font-bold tracking-[-.04em]">Alpha</span>
           <span className="ml-2.5 text-[10px] tracking-[.24em] uppercase text-[var(--color-n500)]">
-            Panel
+            Dashboard
           </span>
         </div>
 

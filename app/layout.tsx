@@ -21,19 +21,23 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Panel - Alpha",
-  description: "Panel interno de la Sociedad Estudiantil Alpha.",
+  title: "Dashboard - Alpha",
+  description: "Dashboard interno de la Sociedad Estudiantil Alpha.",
   robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <ConvexAuthNextjsServerProvider>
-      <html lang="es" className={`${poppins.variable} ${mono.variable}`}>
-        <body>
-          <ProveedorConvex>{children}</ProveedorConvex>
-        </body>
-      </html>
-    </ConvexAuthNextjsServerProvider>
+  const documento = (
+    <html lang="es" className={`${poppins.variable} ${mono.variable}`}>
+      <body>
+        <ProveedorConvex>{children}</ProveedorConvex>
+      </body>
+    </html>
   );
+
+  if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
+    return documento;
+  }
+
+  return <ConvexAuthNextjsServerProvider>{documento}</ConvexAuthNextjsServerProvider>;
 }

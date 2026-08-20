@@ -15,10 +15,10 @@ import { ETIQUETAS } from "@/convex/lib/validadores";
  * comprobar el rol en cada consulta.
  */
 const APARTADOS = [
-  { href: "/panel", texto: "Inicio", minimo: "lector" },
-  { href: "/panel/registros", texto: "Registros", minimo: "lector" },
-  { href: "/panel/programa", texto: "Programa", minimo: "lector" },
-  { href: "/panel/usuarios", texto: "Usuarios", minimo: "admin" },
+  { href: "/dashboard", texto: "Inicio", minimo: "lector" },
+  { href: "/dashboard/registros", texto: "Registros", minimo: "lector" },
+  { href: "/dashboard/programa", texto: "Programa", minimo: "lector" },
+  { href: "/dashboard/usuarios", texto: "Usuarios", minimo: "admin" },
 ] as const;
 
 export function Navegacion() {
@@ -33,15 +33,15 @@ export function Navegacion() {
   return (
     <nav className="bg-[var(--color-ink)] text-[var(--color-ground)] lg:min-h-dvh lg:sticky lg:top-0 flex flex-col">
       <div className="px-6 py-7 border-b border-[var(--hair-clara)]">
-        <Link href="/panel" className="block">
+        <Link href="/dashboard" className="block">
           <span className="text-[22px] font-bold tracking-[-.04em]">Alpha</span>
-          <span className="ml-2 text-[10px] tracking-[.24em] uppercase text-white/45">Panel</span>
+          <span className="ml-2 text-[10px] tracking-[.24em] uppercase text-white/45">Dashboard</span>
         </Link>
       </div>
 
       <ul className="flex-1 px-3 py-4 flex lg:flex-col gap-1 overflow-x-auto">
         {visibles.map((a) => {
-          const activo = a.href === "/panel" ? ruta === "/panel" : ruta.startsWith(a.href);
+          const activo = a.href === "/dashboard" ? ruta === "/dashboard" : ruta.startsWith(a.href);
           return (
             <li key={a.href}>
               <Link

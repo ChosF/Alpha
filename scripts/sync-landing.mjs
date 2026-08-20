@@ -22,8 +22,9 @@ if (!existsSync(origenHtml)) {
 await rm(destinoDir, { recursive: true, force: true });
 await mkdir(destinoDir, { recursive: true });
 
-// El HTML apunta a "assets/...", que resuelto desde /landing/alpha.html da
-// /landing/assets/... — por eso los assets se copian dentro de la misma carpeta.
+// La landing se reescribe desde / hacia /landing/alpha.html, pero el navegador
+// conserva / como URL del documento. Por eso el HTML usa /landing/assets/...
+// y los archivos se copian dentro de esta carpeta publica.
 const html = await readFile(origenHtml, "utf8");
 await writeFile(destinoHtml, html, "utf8");
 

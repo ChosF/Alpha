@@ -67,10 +67,20 @@ const nextConfig: NextConfig = {
     };
   },
 
-  async headers() {
+  async redirects() {
     return [
       {
         source: "/panel/:path*",
+        destination: "/dashboard/:path*",
+        permanent: true,
+      },
+    ];
+  },
+
+  async headers() {
+    return [
+      {
+        source: "/dashboard/:path*",
         headers: [
           ...cabecerasComunes,
           { key: "Content-Security-Policy", value: cspPanel },
@@ -87,11 +97,11 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Todo lo demas (la landing). Excluye /panel y /api con un lookahead
+        // Todo lo demas (la landing). Excluye /dashboard, /panel y /api con un lookahead
         // negativo: Next aplica TODAS las reglas que coincidan y la ultima
         // gana, asi que un "/:path*" a secas pisaria la CSP estricta del panel
         // con la permisiva de la landing.
-        source: "/((?!panel|api).*)",
+        source: "/((?!dashboard|panel|api).*)",
         headers: [...cabecerasComunes, { key: "Content-Security-Policy", value: cspLanding }],
       },
     ];

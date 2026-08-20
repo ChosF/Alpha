@@ -53,7 +53,7 @@ Un solo proyecto de Vercel sirve tres cosas desde el mismo origen:
                   │   · límite por IP                ├─────▶│ action ingesta   │
                   │   · secreto de servidor          │      │  └▶ internal     │
                   │                                  │      │     mutation     │
-  /panel  ────────▶ app router (React, RSC)          │      │                  │
+  /dashboard ─────▶ app router (React, RSC)          │      │                  │
                   │        │                          │      │  queries y      │
                   │        └── websocket autenticado ─┼─────▶│  mutations      │
                   └──────────────────────────────────┘      └──────────────────┘
@@ -199,10 +199,10 @@ Controles, uno por vector:
 
 ## 6. El panel
 
-Ruta `/panel`, en español, con el sistema visual de Alpha (azul `#1f5fd0`, tinta `#0d2140`,
+Ruta `/dashboard`, en español, con el sistema visual de Alpha (azul `#1f5fd0`, tinta `#0d2140`,
 Poppins, cantos vivos). Pantallas:
 
-1. **Acceso** — correo y contraseña; y `/panel/invitacion/[token]` para fijar contraseña.
+1. **Acceso** — correo y contraseña; y `/dashboard/invitacion/[token]` para fijar contraseña.
 2. **Inicio** — altas por semana, reparto miembro/aliado, canales elegidos, áreas más pedidas por
    aliados y actividad reciente del equipo.
 3. **Registros** — tabla con búsqueda, filtros por tipo y estado, ficha lateral con notas y

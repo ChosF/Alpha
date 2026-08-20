@@ -65,7 +65,7 @@ export const sembrarAdmin = internalMutation({
     });
 
     const sitio = (args.sitio ?? "http://localhost:3000").replace(/\/+$/, "");
-    return { enlace: `${sitio}/panel/invitacion/${token}`, expiraEn };
+    return { enlace: `${sitio}/dashboard/invitacion/${token}`, expiraEn };
   },
 });
 

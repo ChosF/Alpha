@@ -98,13 +98,79 @@ img,svg{display:block;max-width:100%}
 #splash.out .sp-core,#splash.out #sky{opacity:0;transition:opacity .5s var(--E)}
 #splash.gone{pointer-events:none}
 
+/* ══ PORTADA DE ACCESO (móvil) ════════════════════════════════════ */
+.mobile-gateway{display:none}
+@media (max-width:767px){
+  .mobile-gateway{
+    position:fixed;inset:0;z-index:62;min-height:100dvh;overflow-y:auto;
+    display:flex;flex-direction:column;justify-content:space-between;
+    padding:max(24px,env(safe-area-inset-top)) 18px max(20px,env(safe-area-inset-bottom));
+    background:#000;color:#fff;opacity:0;visibility:hidden;pointer-events:none;
+    transition:opacity .72s var(--E),visibility 0s linear .72s;
+  }
+  .mobile-gateway::before{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.16;
+    background-image:
+      linear-gradient(to right,rgba(175,207,255,.25) 1px,transparent 1px),
+      linear-gradient(to bottom,rgba(175,207,255,.10) 1px,transparent 1px);
+    background-size:25vw 100%,100% 22vw;
+  }
+  .mobile-gateway::after{
+    content:"";position:absolute;left:18px;right:18px;top:calc(max(24px,env(safe-area-inset-top)) + 47px);
+    height:2px;background:var(--accent);transform:scaleX(0);transform-origin:0 50%;
+    transition:transform 1.05s var(--E) .18s;
+  }
+  .mobile-gateway.in{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .72s var(--E),visibility 0s}
+  .mobile-gateway.in::after{transform:scaleX(1)}
+  .mobile-gateway.out{opacity:0;pointer-events:none;transition:opacity .48s var(--E)}
+  .mg-head,.mg-body,.mg-foot{position:relative;z-index:1}
+  .mg-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;min-width:0}
+  .mg-logo{width:112px;max-width:40vw;flex:0 1 112px;color:#fff}
+  .mg-cycle{min-width:0;flex:1 1 auto;font-size:8px;line-height:1.5;letter-spacing:.24em;text-align:right;text-transform:uppercase;color:rgba(255,255,255,.46)}
+  .mg-body{width:100%;padding:clamp(48px,9vh,84px) 0 30px}
+  .mg-kicker{margin:0 0 12px;font-size:9px;font-weight:500;letter-spacing:.3em;text-transform:uppercase;color:#7fa9f5;
+    opacity:0;transform:translateY(18px)}
+  .mg-title{margin:0 0 clamp(28px,6vh,52px);font-size:clamp(2.4rem,12.8vw,4.35rem);font-weight:700;line-height:.92;letter-spacing:-.045em;
+    opacity:0;transform:translateY(26px)}
+  .mg-actions{display:grid;gap:8px}
+  .mg-action{
+    display:grid;grid-template-columns:44px 1fr 48px;align-items:center;min-height:72px;padding:0 8px 0 0;
+    color:#fff;background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);
+    opacity:0;transform:translateY(28px);
+    transition:transform .55s var(--E2),background .55s var(--E2),box-shadow .55s var(--E2),opacity .8s var(--E);
+    -webkit-tap-highlight-color:transparent;
+  }
+  .mg-action:first-child{background:var(--accent);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 22px 48px -30px rgba(31,95,208,.95)}
+  .mg-action:active{transform:scale(.982)}
+  .mg-ix{font-size:9px;letter-spacing:.16em;text-align:center;color:rgba(255,255,255,.45)}
+  .mg-action:first-child .mg-ix{color:rgba(255,255,255,.65)}
+  .mg-copy{display:grid;gap:1px}
+  .mg-label{font-size:20px;font-weight:600;letter-spacing:-.025em}
+  .mg-note{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.46)}
+  .mg-action:first-child .mg-note{color:rgba(255,255,255,.7)}
+  .mg-arrow{width:36px;height:36px;display:grid;place-items:center;background:rgba(255,255,255,.1);
+    transition:transform .55s var(--E2),background .55s var(--E2)}
+  .mg-action:first-child .mg-arrow{background:rgba(255,255,255,.18)}
+  .mg-action:active .mg-arrow{transform:translate(2px,-2px)}
+  .mobile-gateway.in .mg-kicker,.mobile-gateway.in .mg-title,.mobile-gateway.in .mg-action{opacity:1;transform:none}
+  .mobile-gateway.in .mg-kicker{transition:opacity .72s var(--E) .24s,transform .82s var(--E) .24s}
+  .mobile-gateway.in .mg-title{transition:opacity .78s var(--E) .31s,transform .9s var(--E) .31s}
+  .mobile-gateway.in .mg-action:nth-child(1){transition-delay:.43s}
+  .mobile-gateway.in .mg-action:nth-child(2){transition-delay:.50s}
+  .mobile-gateway.in .mg-action:nth-child(3){transition-delay:.57s}
+  .mobile-gateway.ready .mg-action{transition-delay:0s}
+  .mg-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);
+    font-size:8px;line-height:1.5;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.35)}
+  .mg-mark{width:8px;height:8px;background:var(--accent);flex:none}
+}
+
 /* ══ NAVEGACIÓN ═══════════════════════════════════════════════════ */
 /* riel vertical a la izquierda (escritorio) */
 .rail{
   position:fixed;left:clamp(16px,2.6vw,34px);top:50%;transform:translateY(-50%);z-index:60;
-  display:none;flex-direction:column;gap:20px;opacity:0;
+  display:none;flex-direction:column;gap:20px;opacity:0;visibility:hidden;pointer-events:none;
 }
-.rail.in{opacity:1;transition:opacity 1s var(--E) .3s}
+.rail.in{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .8s var(--E),visibility 0s}
 @media (min-width:1024px){.rail{display:flex}}
 .rail a{display:flex;align-items:center;gap:12px;color:var(--n600);font-size:10px;letter-spacing:.2em;text-transform:uppercase;font-weight:500}
 .rail a b{display:block;width:16px;height:1.5px;background:currentColor;transition:width .6s var(--E),background .5s var(--E)}
@@ -129,9 +195,9 @@ img,svg{display:block;max-width:100%}
   display:flex;align-items:center;gap:8px;padding:7px 7px 7px 18px;width:max-content;max-width:calc(100vw - 28px);
   background:rgba(242,244,247,.72);backdrop-filter:blur(20px) saturate(170%);-webkit-backdrop-filter:blur(20px) saturate(170%);
   box-shadow:inset 0 0 0 1px var(--hair), var(--shadow-md);
-  opacity:0;
+  opacity:0;visibility:hidden;pointer-events:none;
 }
-.dock.in{opacity:1;transition:opacity .9s var(--E) .45s}
+.dock.in{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .8s var(--E),visibility 0s}
 @media (min-width:1024px){.dock{display:none}}
 .dock-l{font-size:12px;font-weight:500;color:var(--n700)}
 
@@ -250,6 +316,7 @@ img,svg{display:block;max-width:100%}
   box-shadow:inset 0 0 0 1px var(--hair);background:transparent;cursor:pointer;transition:all .45s var(--E)}
 .chip:hover{color:var(--ink);box-shadow:inset 0 0 0 1px rgba(13,33,64,.26)}
 .chip[aria-pressed="true"]{background:var(--ink);color:#fff;box-shadow:inset 0 0 0 1px var(--ink)}
+.program-more{display:none}
 
 /* ══ IMAGEN DOCUMENTAL ═══════════════════════════════════════════ */
 .shot{position:relative;overflow:hidden;background:linear-gradient(160deg,#dfe4ec,#c9d1dd);filter:grayscale(1)}
@@ -258,10 +325,10 @@ img,svg{display:block;max-width:100%}
 .rv .shot::after{transform:scaleX(0)}
 .shot-color{filter:none}
 /* Bloque LAF: la foto se atenua para que el texto encima se lea */
-.laf-img{filter:grayscale(.6) contrast(1.03) brightness(.94)}
+.laf-img{filter:grayscale(.35) contrast(1.04) brightness(.78);transform:scale(1.01)}
 .laf-veil{background:
-  linear-gradient(180deg, rgba(13,33,64,.34) 0%, rgba(13,33,64,.52) 42%, rgba(13,33,64,.88) 100%),
-  linear-gradient(90deg, rgba(13,33,64,.55) 0%, rgba(13,33,64,0) 62%)}
+  linear-gradient(180deg, rgba(13,33,64,.38) 0%, rgba(13,33,64,.56) 42%, rgba(13,33,64,.90) 100%),
+  linear-gradient(90deg, rgba(13,33,64,.58) 0%, rgba(13,33,64,0) 62%)}
 
 /* ══ FORMULARIO ══════════════════════════════════════════════════ */
 .fld label{display:block;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--n600);margin-bottom:9px}
@@ -305,6 +372,7 @@ img,svg{display:block;max-width:100%}
 .opt-k{font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--n600);font-weight:500}
 .opt-t{font-size:clamp(1.1rem,1.9vw,1.4rem);font-weight:600;letter-spacing:-.02em;margin-top:14px}
 .opt-d{margin-top:10px;font-size:13px;line-height:1.7;font-weight:300;color:#3c485c}
+.opt-mini{display:none}
 .opt[aria-checked="true"] .opt-k{color:rgba(255,255,255,.62)}
 .opt[aria-checked="true"] .opt-d{color:rgba(255,255,255,.78)}
 
@@ -323,6 +391,131 @@ img,svg{display:block;max-width:100%}
 .jn-form[data-tipo="miembro"] [data-only="aliado"]{display:none}
 .jn-form[data-tipo="aliado"] [data-only="miembro"]{display:none}
 .jn-sub{margin-top:clamp(26px,3vw,36px);padding-top:26px;border-top:1px solid var(--hair)}
+
+/* ══ AJUSTE MÓVIL — menos capas, decisiones más claras ═══════════ */
+@media (max-width:767px){
+  body{font-size:14px;line-height:1.55}
+  .top{max-width:100vw;gap:12px;overflow:hidden;padding:max(14px,env(safe-area-inset-top)) 14px 10px}
+  .top>a{display:block;min-width:0;max-width:calc(100vw - 78px);flex:0 1 auto}
+  .top-lk{width:auto;max-width:min(112px,40vw);height:17px}
+  .top>div{min-width:38px;flex:0 0 auto}
+  .burg{width:38px;height:38px;flex:none}
+  .burg i{left:10px}
+
+  .dock{
+    bottom:max(8px,env(safe-area-inset-bottom));padding:4px;gap:0;
+    max-width:calc(100vw - 20px);background:rgba(242,244,247,.86);
+    backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);
+  }
+  .dock-l{display:none}
+  .dock .btn{gap:9px;padding:6px 6px 6px 14px;font-size:11.5px}
+  .dock .btn-i{width:24px;height:24px}
+
+  .d1{font-size:clamp(2.75rem,14vw,3.8rem);line-height:.94}
+  .d2{font-size:clamp(2rem,11vw,2.8rem);line-height:1}
+  .d3{font-size:1.15rem}
+  .lede{font-size:14px;line-height:1.58}
+  .eyebrow{font-size:9px;letter-spacing:.25em}
+  .kicker{font-size:8.5px;letter-spacing:.21em}
+
+  main>section:not(.hscroll){padding-left:18px !important;padding-right:18px !important}
+  main>section:first-child{min-height:100svh;padding-top:92px !important;padding-bottom:56px !important}
+  main>section:nth-child(2){padding-top:48px !important;padding-bottom:56px !important}
+  #programa,#podcast,#unete{padding-top:72px !important;padding-bottom:72px !important}
+  main>footer{padding:64px 18px 82px !important}
+
+  main>section:first-child .grid{row-gap:28px}
+  main>section:first-child .lede{max-width:33ch}
+  main>section:first-child .flex.flex-wrap{margin-top:24px;gap:8px}
+  main>section:first-child .btn{font-size:11.5px;padding-left:15px;gap:9px}
+  .strip{margin-right:-18px;padding-right:18px;gap:8px}
+  .pill{width:min(76vw,240px);padding:17px}
+
+  .alpha-stats{gap:8px}
+  .alpha-stats .tray{padding:5px}
+  .alpha-stats .core{min-height:108px !important;padding:17px !important}
+  .alpha-stats .d2{margin-top:16px;font-size:2rem}
+
+  #pilares{padding:68px 0 72px}
+  #pilares .hstick>div>div:first-child{margin-bottom:24px}
+  #pilares .htrack{padding:0 18px;gap:10px}
+  #pilares .hcard{padding:5px}
+  #pilares .hcard .core{min-height:236px !important;padding:22px !important}
+  #pilares .hcard p{font-size:13px;line-height:1.6;margin-top:12px}
+
+  #programa .grid{row-gap:24px}
+  #chips{margin-top:30px;display:flex;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;
+    margin-right:-18px;padding-right:18px;padding-bottom:3px}
+  #chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;padding:8px 11px;font-size:9px;letter-spacing:.1em}
+  #idx{margin-top:26px}
+  .row{grid-template-columns:26px 1fr;gap:0 8px;padding:17px 0}
+  .row .ix{font-size:9px;padding-top:3px}
+  .row .nm{font-size:15px;line-height:1.28}
+  .row .meta{gap:5px 12px;margin-top:7px;font-size:10px;line-height:1.45}
+  .row:hover .nm,.row:hover .meta{transform:none}
+  .program-more{
+    width:100%;min-height:46px;margin-top:12px;padding:0 14px;align-items:center;justify-content:space-between;
+    background:var(--surface);color:var(--ink);border:0;box-shadow:inset 0 0 0 1px var(--hair);
+    font:500 10px/1 "Poppins",sans-serif;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;
+  }
+  .program-more:not([hidden]){display:flex}
+  .program-more svg{transition:transform .5s var(--E2)}
+  .program-more[aria-expanded="true"] svg{transform:rotate(180deg)}
+
+  #podcast .core{min-height:260px !important}
+  #unete .grid{row-gap:26px}
+
+  #join{align-items:stretch;justify-content:stretch;padding:0;transition:opacity .38s var(--E)}
+  .jn-bd{background:var(--ink);backdrop-filter:none;-webkit-backdrop-filter:none}
+  .jn-pn{
+    width:100%;height:100dvh;max-height:none;padding:0 18px calc(22px + env(safe-area-inset-bottom));
+    box-shadow:none;transform:translateY(100%);scroll-padding-top:132px;
+    transition:transform .72s var(--E2);
+  }
+  .jn-head{
+    position:sticky;top:0;z-index:2;margin:0 -18px;padding:max(17px,env(safe-area-inset-top)) 66px 17px 18px;
+    background:rgba(242,244,247,.97);box-shadow:0 1px 0 var(--hair);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  }
+  .jn-head .eyebrow{white-space:nowrap}
+  .jn-head .d2{margin-top:9px !important;font-size:2rem}
+  .jn-head .lede{margin-top:9px !important;font-size:12.5px;line-height:1.5;max-width:31ch}
+  .jn-x{position:fixed;z-index:3;top:max(14px,env(safe-area-inset-top));right:14px;width:38px;height:38px;background:var(--ground)}
+
+  .jn-grid{grid-template-columns:1fr 1fr;gap:7px;margin-top:18px}
+  .opt{min-height:88px;padding:13px 12px}
+  .opt:hover{transform:none}
+  .opt-k{font-size:7.5px;letter-spacing:.17em}
+  .opt-t{font-size:15px;margin-top:7px}
+  .opt-d{display:none !important}
+  .opt-mini{display:block;margin-top:6px;font-size:9.5px;line-height:1.45;font-weight:300;color:var(--n600)}
+  .opt[aria-checked="true"] .opt-mini{color:rgba(255,255,255,.76)}
+
+  .jn-form{margin-top:26px !important;gap:24px !important}
+  .jn-section-label{margin-bottom:-10px}
+  .jn-fields{gap:20px !important}
+  .fld label{font-size:8.5px;letter-spacing:.2em;margin-bottom:5px}
+  .inp{font-size:16px;line-height:1.45;padding:9px 0}
+  .jn-form>[data-only]{gap:12px !important;margin-top:0 !important;padding-top:22px;border-top:1px solid var(--hair)}
+  .jn-form>[data-only]>p:nth-child(2){margin-top:-5px !important;font-size:11px;line-height:1.55}
+  .chk{min-height:44px;align-items:center;gap:10px;padding:10px 11px;background:rgba(230,234,240,.66);
+    font-size:12px;line-height:1.45}
+  .chk input{width:18px;height:18px;margin:0}
+  .jn-areas{grid-template-columns:1fr 1fr !important;gap:7px !important}
+  .jn-areas .chk{min-height:50px;padding:9px;font-size:10.5px}
+  .jn-sub{
+    position:sticky;bottom:calc(-22px - env(safe-area-inset-bottom));z-index:2;
+    margin:4px -18px 0;padding:11px 18px max(11px,env(safe-area-inset-bottom));
+    background:rgba(242,244,247,.97);border-top:1px solid var(--hair);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  }
+  .jn-sub .btn{width:100%;justify-content:space-between;padding:9px 9px 9px 15px}
+  .jn-sub .ok{width:100%;line-height:1.45}
+}
+@media (max-width:359px){
+  .jn-head .d2{font-size:1.7rem;white-space:nowrap}
+}
 
 /* El riel vertical ocupa el margen izquierdo: el contenido se retira de ahi */
 @media (min-width:1024px){
@@ -368,6 +561,37 @@ img,svg{display:block;max-width:100%}
   </div>
 </div>
 
+<section class="mobile-gateway" id="mobile-gateway" role="dialog" aria-modal="true" aria-label="Acceso a Alpha" aria-hidden="true">
+  <div class="mg-head">
+    <svg class="mg-logo lk" viewBox="0 0 4.65 1.45" role="img" aria-label="Alpha"><use href="#lk"/></svg>
+    <span class="mg-cycle tnum">Sociedad estudiantil<br>Tec CCM</span>
+  </div>
+
+  <div class="mg-body">
+    <p class="mg-kicker tnum">2026 — 2027</p>
+    <h1 class="mg-title">Empieza<br>aquí.</h1>
+    <nav class="mg-actions" aria-label="Elige tu destino">
+      <a class="mg-action" href="#unete" data-gateway-action="join" aria-label="Únete, abrir convocatoria">
+        <span class="mg-ix tnum">01</span>
+        <span class="mg-copy"><span class="mg-label">Únete</span><span class="mg-note">Convocatoria</span></span>
+        <span class="mg-arrow" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
+      </a>
+      <a class="mg-action" href="#inicio" data-gateway-action="site" aria-label="Conócenos, entrar al sitio principal">
+        <span class="mg-ix tnum">02</span>
+        <span class="mg-copy"><span class="mg-label">Conócenos</span><span class="mg-note">Sitio principal</span></span>
+        <span class="mg-arrow" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
+      </a>
+      <a class="mg-action" href="#programa" data-gateway-action="events" aria-label="Eventos, ver próximas actividades">
+        <span class="mg-ix tnum">03</span>
+        <span class="mg-copy"><span class="mg-label">Eventos</span><span class="mg-note">Próximas actividades</span></span>
+        <span class="mg-arrow" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
+      </a>
+    </nav>
+  </div>
+
+  <div class="mg-foot"><span>Finanzas · comunidad · industria</span><i class="mg-mark" aria-hidden="true"></i></div>
+</section>
+
 <div class="grid-lines" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
 <div class="grain" aria-hidden="true"></div>
 
@@ -390,7 +614,7 @@ img,svg{display:block;max-width:100%}
 
 <div class="dock" id="dock">
   <span class="dock-l tnum">14 programas · 2026 — 2027</span>
-  <a class="btn" href="#unete">Únete
+  <a class="btn" href="#unete" data-join>Únete
     <span class="btn-i"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
   </a>
 </div>
@@ -405,7 +629,7 @@ img,svg{display:block;max-width:100%}
 <main id="inicio" class="relative z-10">
 
   <!-- ═══ HERO — división editorial ═══════════════════════════════ -->
-  <section class="min-h-[100dvh] flex items-end px-5 sm:px-8 lg:pl-24 lg:pr-12 pt-32 pb-24 lg:pb-16">
+  <section class="min-h-[100dvh] flex items-center px-5 py-24 sm:px-8 lg:pl-24 lg:pr-12 lg:py-20">
     <div class="w-full max-w-[1560px] mx-auto" data-rv>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-y-10 lg:gap-x-10 items-end">
@@ -434,11 +658,15 @@ img,svg{display:block;max-width:100%}
         </div>
       </div>
 
-      <div class="hr2 mt-14 mb-7"></div>
+    </div>
+  </section>
 
-      <!-- tira horizontal -->
+  <!-- ═══ PRÓXIMO SEMESTRE — comienza bajo el primer viewport ═══ -->
+  <section aria-labelledby="proximo-semestre" class="px-5 sm:px-8 lg:pl-24 lg:pr-12 py-16 lg:py-20">
+    <div class="w-full max-w-[1560px] mx-auto" data-rv>
+      <div class="hr2 mb-7"></div>
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-y-8 lg:gap-x-10 items-start">
-        <p class="lg:col-span-3 kicker up">Próximo semestre<br><span class="text-[var(--ink)] tnum">Ago — Dic 2026</span></p>
+        <p id="proximo-semestre" class="lg:col-span-3 kicker up">Próximo semestre<br><span class="text-[var(--ink)] tnum">Ago — Dic 2026</span></p>
         <div class="lg:col-span-9 strip up" role="list">
           <article class="pill" role="listitem">
             <span class="st st-p"><b></b><span class="kicker" style="color:var(--accent)">En planeación</span></span>
@@ -476,7 +704,7 @@ img,svg{display:block;max-width:100%}
 
       <div class="lg:col-span-7 tray tray-ink up">
         <div class="core relative overflow-hidden flex flex-col justify-end min-h-[320px] lg:min-h-[400px]">
-          <img src="assets/generation-web.jpg" loading="lazy" decoding="async"
+          <img src="/landing/assets/generation-web.jpg" width="1600" height="1067" loading="lazy" decoding="async"
                alt="Comunidad LAF del Tec de Monterrey CCM reunida en el campus con la letra alfa"
                class="laf-img absolute inset-0 w-full h-full object-cover"
                style="object-position:50% 42%">
@@ -490,7 +718,7 @@ img,svg{display:block;max-width:100%}
         </div>
       </div>
 
-      <div class="lg:col-span-5 grid grid-cols-2 gap-4 lg:gap-5">
+      <div class="alpha-stats lg:col-span-5 grid grid-cols-2 gap-4 lg:gap-5">
         <div class="tray up"><div class="core p-6 sm:p-8 flex flex-col justify-between min-h-[150px]">
           <span class="kicker">Pilares</span>
           <span class="tnum d2 mt-6" data-count="3">0</span>
@@ -593,8 +821,7 @@ img,svg{display:block;max-width:100%}
           </h2>
         </div>
         <p class="lg:col-span-5 lg:col-start-8 lede text-[14px] up">
-          Éste es el plan completo, con su estado real. Nada aparece aquí como confirmado hasta que el área
-          responsable verifica fecha, sede, cupo y aprobación institucional.
+          Éste es el plan completo y su estado real. Fechas, sedes y cupos se publican sólo cuando están verificados.
         </p>
       </div>
 
@@ -622,12 +849,11 @@ img,svg{display:block;max-width:100%}
         <div class="row" data-s="prop"><span class="ix tnum">14</span><div><h3 class="nm">Cena de cierre y reconocimiento</h3><div class="meta tnum"><span>Jun 2027</span><span>Comunidad</span><span class="st st-r"><b></b>Propuesto</span></div></div></div>
       </div>
 
-      <p class="mt-8 text-[12px] leading-[1.75] text-[var(--n600)] max-w-[80ch] up">
-        <span class="text-[var(--ink)]">En planeación</span>
-        significa que existe un documento de trabajo activo; <span class="text-[var(--ink)]">propuesto</span> y
-        <span class="text-[var(--ink)]">exploratorio</span> significan que aún se evalúan viabilidad, costo, sede y permisos.
-        Fechas y sedes se publican sólo cuando están verificadas.
-      </p>
+      <button class="program-more up" id="program-more" type="button" aria-expanded="false">
+        <span>Ver los 14 programas</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg>
+      </button>
+
     </div>
   </section>
 
@@ -636,8 +862,8 @@ img,svg{display:block;max-width:100%}
     <div class="max-w-[1560px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-y-10 lg:gap-x-5 items-stretch" data-rv>
       <div class="lg:col-span-7 tray">
         <div class="shot shot-color core min-h-[300px] lg:min-h-[540px] relative">
-          <img src="assets/alphanalisis-web.jpg" alt="Sesión de grabación de Alphanálisis" loading="lazy" decoding="async"
-               class="absolute inset-0 w-full h-full object-cover">
+          <img src="/landing/assets/alphanalisis-web.jpg" width="1800" height="1200" alt="Sesión de grabación de Alphanálisis" loading="lazy" decoding="async"
+               class="absolute inset-0 w-full h-full object-cover" style="object-position:50% 48%">
         </div>
       </div>
       <div class="lg:col-span-5 flex flex-col justify-center lg:pl-8">
@@ -729,39 +955,39 @@ img,svg{display:block;max-width:100%}
   <div class="jn-bd" data-close></div>
 
   <div class="jn-pn">
-    <button class="jn-x" type="button" data-close aria-label="Cerrar">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"><path d="M5 5l14 14M19 5 5 19"/></svg>
-    </button>
+    <div class="jn-head">
+      <button class="jn-x" type="button" data-close aria-label="Cerrar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"><path d="M5 5l14 14M19 5 5 19"/></svg>
+      </button>
 
-    <p class="eyebrow">Convocatoria 2026 — 2027</p>
-    <h2 class="d2 mt-4" id="join-t">Únete a Alpha</h2>
-    <p class="lede text-[14px] mt-6">
-      Hay dos formas de entrar. Elige la que corresponde a lo que quieres hacer este semestre:
-      puedes cambiar de una a otra más adelante.
-    </p>
+      <p class="eyebrow">Convocatoria 2026 — 2027</p>
+      <h2 class="d2 mt-4" id="join-t">Únete a Alpha</h2>
+      <p class="lede text-[14px] mt-6">Elige cómo quieres participar. Puedes cambiar después.</p>
+    </div>
 
     <div class="jn-grid" role="radiogroup" aria-label="Tipo de registro">
       <button type="button" class="opt" role="radio" aria-checked="true" data-tipo="miembro">
         <span class="opt-k">01 · Comunidad</span>
         <span class="opt-t" style="display:block">Miembro</span>
+        <span class="opt-mini">Comunidad y actividades</span>
         <span class="opt-d" style="display:block">
-          Formas parte de la comunidad de Alpha. Te llegan las convocatorias, los talleres y el calendario
-          de sesiones, y entras al grupo de WhatsApp si quieres. Tú eliges por dónde te avisamos.
+          Recibe convocatorias, talleres y el calendario de sesiones. También puedes entrar al grupo de WhatsApp.
         </span>
       </button>
 
       <button type="button" class="opt" role="radio" aria-checked="false" data-tipo="aliado">
         <span class="opt-k">02 · Colaboración</span>
         <span class="opt-t" style="display:block">Aliado</span>
+        <span class="opt-mini">Proyectos y organización</span>
         <span class="opt-d" style="display:block">
-          Te sumas a organizar. Apoyas a un área en comités, eventos, contenido o proyectos de impacto
-          social. Implica más compromiso y trabajo real dentro de la sociedad.
+          Colabora con un área en eventos, contenido o proyectos de impacto social.
         </span>
       </button>
     </div>
 
     <form class="jn-form mt-10 grid gap-7" data-tipo="miembro" novalidate>
-      <div class="grid gap-7 sm:grid-cols-2">
+      <p class="jn-section-label kicker">Tus datos</p>
+      <div class="jn-fields grid gap-7 sm:grid-cols-2">
         <div class="fld"><label for="jn-n">Nombre</label>
           <input class="inp" id="jn-n" name="nombre" placeholder="Nombre y apellido" autocomplete="name"></div>
         <div class="fld"><label for="jn-e">Correo institucional</label>
@@ -793,7 +1019,7 @@ img,svg{display:block;max-width:100%}
           Marca todas las que te interesen. La mesa directiva te contacta para platicar el alcance real
           antes de asignarte algo.
         </p>
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="jn-areas grid gap-4 sm:grid-cols-2">
           <label class="chk"><input type="checkbox" name="area" value="operaciones"><span>Operaciones y Logística</span></label>
           <label class="chk"><input type="checkbox" name="area" value="comunicacion"><span>Comunicación</span></label>
           <label class="chk"><input type="checkbox" name="area" value="finanzas"><span>Finanzas</span></label>
@@ -830,16 +1056,20 @@ img,svg{display:block;max-width:100%}
 (() => {
   const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const splash = document.getElementById("splash"), cv = document.getElementById("sky");
+  const gateway = document.getElementById("mobile-gateway");
+  const themeColor = document.querySelector('meta[name="theme-color"]');
+  const hasMobileGateway = () => matchMedia("(max-width: 767px)").matches;
   let running = true;
 
   /* ─── Estrellas fugaces sobre el campo navy ─────────────────────── */
   if (!RM && cv) {
     const ctx = cv.getContext("2d");
-    let W, H, dpr = Math.min(devicePixelRatio || 1, 2), fade = 0;
+    const compactSky = innerWidth < 768;
+    let W, H, dpr = Math.min(devicePixelRatio || 1, compactSky ? 1.35 : 2), fade = 0;
     const size = () => { W = cv.width = innerWidth*dpr; H = cv.height = innerHeight*dpr; };
     size(); addEventListener("resize", size, {passive:true});
 
-    const stars = Array.from({length:150}, () => ({
+    const stars = Array.from({length:compactSky ? 64 : 150}, () => ({
       x:Math.random()*W, y:Math.random()*H, r:Math.max(1,(Math.random()*1.5+.8)*dpr),
       a:Math.random()*.45+.42, ph:Math.random()*6.28
     }));
@@ -850,7 +1080,9 @@ img,svg{display:block;max-width:100%}
       life:1, ang:Math.PI/3.4 + (Math.random()-.5)*.3
     });
     for (let i=0;i<2;i++) spawn();
-    const timer = setInterval(() => { if (running && shots.length < 6) spawn(); }, 380);
+    const timer = setInterval(() => {
+      if (running && shots.length < (compactSky ? 3 : 6)) spawn();
+    }, compactSky ? 620 : 380);
 
     let t = 0;
     (function draw(){
@@ -885,9 +1117,20 @@ img,svg{display:block;max-width:100%}
   let ended = false;
   const end = () => {
     if (ended) return; ended = true;
+    if (hasMobileGateway()) {
+      gateway.classList.add("in");
+      gateway.setAttribute("aria-hidden", "false");
+      document.body.classList.add("locked");
+      themeColor.setAttribute("content", "#000000");
+      setTimeout(() => {
+        gateway.classList.add("ready");
+        gateway.querySelector("[data-gateway-action]").focus();
+      }, RM ? 20 : 1250);
+    }
     splash.classList.add("out", "gone");
-    document.body.classList.remove("locked");
-    ["top","rail","dock"].forEach(id => document.getElementById(id).classList.add("in"));
+    if (!hasMobileGateway()) document.body.classList.remove("locked");
+    document.getElementById("top").classList.add("in");
+    updateChrome();
     setTimeout(() => { splash.dispatchEvent(new Event("_stop")); splash.remove(); }, 1700);
   };
   setTimeout(end, RM ? 700 : 2900);
@@ -941,6 +1184,14 @@ img,svg{display:block;max-width:100%}
 
   /* ─── Riel: sección activa ──────────────────────────────────────── */
   const links = [...document.querySelectorAll(".rail a")];
+  const rail = document.getElementById("rail");
+  const dock = document.getElementById("dock");
+  const updateChrome = () => {
+    if (!ended) return;
+    const show = scrollY > 16;
+    rail.classList.toggle("in", show);
+    dock.classList.toggle("in", show);
+  };
   const secs  = ["pilares","programa","podcast","unete"]
     .map(id => document.getElementById(id)).filter(Boolean);
   let spyQ = false;
@@ -955,7 +1206,7 @@ img,svg{display:block;max-width:100%}
     links.forEach(a => a.classList.toggle("on", a.dataset.sec === cur));
   };
   const spyQueue = () => { if (!spyQ) { spyQ = true; requestAnimationFrame(spy); } };
-  addEventListener("scroll", spyQueue, {passive:true});
+  addEventListener("scroll", () => { updateChrome(); spyQueue(); }, {passive:true});
   addEventListener("resize", spyQueue, {passive:true});
   spy();
 
@@ -973,9 +1224,11 @@ img,svg{display:block;max-width:100%}
   };
   const openJoin = () => {
     lastFocus = document.activeElement;
+    decir("", false);
     join.classList.add("on");
     join.setAttribute("aria-hidden", "false");
     document.body.classList.add("locked");
+    join.querySelector(".jn-pn").scrollTop = 0;
     if (!campoTok.value) pedirToken();
     setTimeout(() => (join.querySelector('.opt[aria-checked="true"]') || opts[0]).focus(), 80);
   };
@@ -985,6 +1238,32 @@ img,svg{display:block;max-width:100%}
     document.body.classList.remove("locked");
     if (lastFocus) lastFocus.focus();
   };
+
+  /* ─── Portada de acceso móvil ─────────────────────────────────── */
+  const closeGateway = callback => {
+    gateway.classList.add("out");
+    gateway.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("locked");
+    themeColor.setAttribute("content", "#f2f4f7");
+    setTimeout(() => {
+      gateway.classList.remove("in", "out", "ready");
+      if (callback) callback();
+    }, RM ? 20 : 480);
+  };
+  gateway.querySelectorAll("[data-gateway-action]").forEach(link => {
+    link.addEventListener("click", event => {
+      event.preventDefault();
+      const action = link.dataset.gatewayAction;
+      closeGateway(() => {
+        if (action === "join") openJoin();
+        if (action === "events") document.getElementById("programa").scrollIntoView({behavior:RM ? "auto" : "smooth"});
+        if (action === "site") scrollTo({top:0,behavior:"auto"});
+      });
+    });
+  });
+  addEventListener("resize", () => {
+    if (!hasMobileGateway() && gateway.classList.contains("in")) closeGateway();
+  }, {passive:true});
 
   opts.forEach(o => o.addEventListener("click", () => setTipo(o.dataset.tipo)));
   document.querySelectorAll("[data-join]").forEach(b =>
@@ -1097,12 +1376,43 @@ img,svg{display:block;max-width:100%}
     burg.setAttribute("aria-expanded", false); document.body.classList.remove("locked");
   }));
 
-  /* ─── Filtro ────────────────────────────────────────────────────── */
-  document.getElementById("chips").addEventListener("click", e => {
-    const b = e.target.closest(".chip"); if (!b) return;
-    document.querySelectorAll("#chips .chip").forEach(c => c.setAttribute("aria-pressed", c === b));
-    document.querySelectorAll("#idx .row").forEach(r => r.classList.toggle("hide", b.dataset.f !== "all" && r.dataset.s !== b.dataset.f));
+  /* ─── Programa: filtro y divulgación progresiva en móvil ───────── */
+  const chips = document.getElementById("chips");
+  const programRows = [...document.querySelectorAll("#idx .row")];
+  const programMore = document.getElementById("program-more");
+  let programFilter = "all", programExpanded = false;
+
+  const renderProgram = () => {
+    const compact = innerWidth < 768;
+    let matchingIndex = 0, hiddenByLimit = 0;
+    programRows.forEach(row => {
+      const matches = programFilter === "all" || row.dataset.s === programFilter;
+      const pastLimit = compact && programFilter === "all" && !programExpanded && matchingIndex >= 5;
+      row.classList.toggle("hide", !matches || pastLimit);
+      if (matches) {
+        if (pastLimit) hiddenByLimit++;
+        matchingIndex++;
+      }
+    });
+    const canExpand = compact && programFilter === "all" && !programExpanded && hiddenByLimit > 0;
+    programMore.hidden = !canExpand;
+    programMore.setAttribute("aria-expanded", String(programExpanded));
+    programMore.querySelector("span").textContent = `Ver ${hiddenByLimit} programas más`;
+  };
+
+  chips.addEventListener("click", event => {
+    const button = event.target.closest(".chip"); if (!button) return;
+    programFilter = button.dataset.f;
+    programExpanded = false;
+    chips.querySelectorAll(".chip").forEach(chip => chip.setAttribute("aria-pressed", String(chip === button)));
+    renderProgram();
   });
+  programMore.addEventListener("click", () => {
+    programExpanded = true;
+    renderProgram();
+  });
+  addEventListener("resize", renderProgram, {passive:true});
+  renderProgram();
 })();
 </script>
 </body>

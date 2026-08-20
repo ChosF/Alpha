@@ -182,7 +182,7 @@ function Invitar() {
     setEnlace(null);
     try {
       const { token } = await invitar({ correo, nombre, rol });
-      setEnlace(`${window.location.origin}/panel/invitacion/${token}`);
+      setEnlace(`${window.location.origin}/dashboard/invitacion/${token}`);
       setCorreo("");
       setNombre("");
     } catch (e) {

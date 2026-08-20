@@ -26,7 +26,7 @@ export default function Acceso() {
     setError(null);
     try {
       await signIn("password", { email: correo, password: contrasena, flow: "signIn" });
-      router.push("/panel");
+      router.push("/dashboard");
     } catch {
       setError("Correo o contrasena incorrectos.");
       setOcupado(false);
@@ -38,7 +38,7 @@ export default function Acceso() {
       <div className="bg-[var(--color-ink)] text-white px-8 py-14 lg:px-16 lg:py-20 flex flex-col justify-between">
         <div>
           <span className="text-[26px] font-bold tracking-[-.04em]">Alpha</span>
-          <span className="ml-2.5 text-[10px] tracking-[.24em] uppercase text-white/45">Panel</span>
+          <span className="ml-2.5 text-[10px] tracking-[.24em] uppercase text-white/45">Dashboard</span>
         </div>
         <div className="mt-16 lg:mt-0">
           <p className="text-[10px] tracking-[.3em] uppercase text-white/45">Uso interno</p>
