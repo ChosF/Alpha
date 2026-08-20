@@ -16,11 +16,11 @@ import { MarcaAlpha } from "@/components/marca-alpha";
  * comprobar el rol en cada consulta.
  */
 const APARTADOS = [
-  { href: "/dashboard", texto: "Inicio", minimo: "lector" },
-  { href: "/dashboard/registros", texto: "Registros", minimo: "lector" },
-  { href: "/dashboard/correo", texto: "Correo", minimo: "editor" },
-  { href: "/dashboard/programa", texto: "Programa", minimo: "lector" },
-  { href: "/dashboard/usuarios", texto: "Usuarios", minimo: "admin" },
+  { href: "/dashboard", texto: "Inicio", minimo: "lector", icono: "inicio" },
+  { href: "/dashboard/registros", texto: "Registros", minimo: "lector", icono: "registros" },
+  { href: "/dashboard/correo", texto: "Correo", minimo: "editor", icono: "correo" },
+  { href: "/dashboard/programa", texto: "Programa", minimo: "lector", icono: "programa" },
+  { href: "/dashboard/usuarios", texto: "Usuarios", minimo: "admin", icono: "usuarios" },
 ] as const;
 
 const NIVEL = { lector: 1, editor: 2, admin: 3 } as const;
@@ -35,53 +35,83 @@ export function Navegacion() {
   );
 
   return (
-    <nav className="bg-[var(--color-ink)] text-[var(--color-ground)] lg:min-h-dvh lg:sticky lg:top-0 flex flex-col">
-      <div className="px-6 py-7 border-b border-[var(--hair-clara)]">
-        <Link href="/dashboard" className="flex items-center gap-3">
-          <MarcaAlpha className="h-auto w-[108px]" tono="blanco" />
-          <span className="text-[9px] tracking-[.2em] uppercase text-white/45">Dashboard</span>
+    <nav className="panel-nav bg-[var(--color-ink)] text-[var(--color-ground)] flex flex-col lg:sticky lg:top-0 lg:h-dvh lg:self-start lg:overflow-hidden">
+      <div className="panel-nav-marca px-5 py-6 lg:px-6 lg:py-7">
+        <Link href="/dashboard" className="group flex items-center justify-between gap-4">
+          <MarcaAlpha className="h-auto w-[112px]" tono="blanco" />
+          <span className="panel-nav-monograma" aria-hidden="true">A</span>
         </Link>
+        <p className="mt-5 hidden lg:block text-[9px] font-semibold tracking-[.28em] uppercase text-white/36">
+          Panel interno
+        </p>
       </div>
 
-      <ul className="flex-1 px-3 py-4 flex lg:flex-col gap-1 overflow-x-auto">
-        {visibles.map((a) => {
+      <ul className="panel-nav-lista flex min-h-0 flex-1 gap-1 overflow-x-auto px-3 py-3 lg:flex-col lg:overflow-x-hidden lg:overflow-y-auto lg:px-4 lg:py-5">
+        {visibles.map((a, indice) => {
           const activo = a.href === "/dashboard" ? ruta === "/dashboard" : ruta.startsWith(a.href);
           return (
             <li key={a.href}>
               <Link
                 href={a.href}
                 aria-current={activo ? "page" : undefined}
-                className={`flex items-center gap-3 px-3 py-2.5 text-[13px] whitespace-nowrap transition-colors duration-300 ${
-                  activo ? "bg-[var(--color-accent)] text-white" : "text-white/65 hover:text-white hover:bg-white/5"
+                className={`panel-nav-enlace group relative flex items-center gap-3 whitespace-nowrap px-3 py-3.5 text-[12px] font-medium ${
+                  activo ? "panel-nav-enlace-activo text-white" : "text-white/58 hover:text-white"
                 }`}
               >
-                <span className="w-3 h-px bg-current opacity-70" />
-                {a.texto}
+                <IconoApartado nombre={a.icono} />
+                <span className="flex-1">{a.texto}</span>
+                <span className={`panel-nav-indice cifra text-[8px] ${activo ? "text-white/65" : "text-white/25"}`}>
+                  {String(indice + 1).padStart(2, "0")}
+                </span>
               </Link>
             </li>
           );
         })}
       </ul>
 
-      <div className="px-6 py-5 border-t border-[var(--hair-clara)]">
-        {yo ? (
-          <>
-            <p className="text-[12px] font-medium truncate">{yo.nombre || yo.correo}</p>
-            <p className="text-[10px] tracking-[.18em] uppercase text-white/45 mt-1">
-              {ETIQUETAS[yo.rol] ?? yo.rol}
+      <div className="panel-nav-cuenta flex-none px-5 py-4 lg:px-6 lg:py-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="panel-nav-avatar" aria-hidden="true">
+            {(yo?.nombre || yo?.correo || "A").charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[11.5px] font-semibold text-white/92">
+              {yo ? yo.nombre || yo.correo : "Sin sesion"}
             </p>
-          </>
-        ) : (
-          <p className="text-[12px] text-white/45">Sin sesion</p>
-        )}
+            {yo ? (
+              <p className="mt-0.5 text-[8.5px] font-semibold tracking-[.18em] uppercase text-white/38">
+                {ETIQUETAS[yo.rol] ?? yo.rol}
+              </p>
+            ) : null}
+          </div>
+        </div>
         <button
           type="button"
           onClick={() => void signOut()}
-          className="mt-4 text-[11px] tracking-[.14em] uppercase text-white/55 hover:text-white transition-colors duration-300"
+          className="panel-nav-salir mt-4 flex w-full items-center justify-between text-[9px] font-semibold tracking-[.16em] uppercase text-white/42 hover:text-white"
         >
           Cerrar sesion
+          <span aria-hidden="true">↗</span>
         </button>
       </div>
     </nav>
+  );
+}
+
+function IconoApartado({ nombre }: { nombre: (typeof APARTADOS)[number]["icono"] }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      className="size-[17px] shrink-0 fill-none stroke-current stroke-[1.35]"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {nombre === "inicio" ? <path d="M3.25 8.5 10 3l6.75 5.5v7.25a1 1 0 0 1-1 1H4.25a1 1 0 0 1-1-1V8.5ZM7.5 16.75v-5h5v5" /> : null}
+      {nombre === "registros" ? <path d="M5 3.25h10v13.5H5zM7.75 7h4.5M7.75 10h4.5M7.75 13h2.75" /> : null}
+      {nombre === "correo" ? <path d="M3 5.25h14v9.5H3zM3.5 6l6.5 5 6.5-5" /> : null}
+      {nombre === "programa" ? <path d="M4 4.25h12v11.5H4zM7 2.75v3M13 2.75v3M4 8h12M7 11h2M11 11h2" /> : null}
+      {nombre === "usuarios" ? <path d="M10 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM4.25 16.5c.45-2.7 2.35-4.25 5.75-4.25s5.3 1.55 5.75 4.25" /> : null}
+    </svg>
   );
 }

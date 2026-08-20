@@ -665,6 +665,49 @@ export const tomar = mutation({
   },
 });
 
+export const eliminarHilo = mutation({
+  args: { id: v.id("mailThreads") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "editor");
+    const hilo = await ctx.db.get(args.id);
+    if (hilo === null) return null;
+
+    const mensajes = await ctx.db
+      .query("mailMessages")
+      .withIndex("by_thread_time", (q) => q.eq("threadId", args.id))
+      .collect();
+    const adjuntos = (
+      await Promise.all(
+        mensajes.map((mensaje) =>
+          ctx.db
+            .query("mailAttachments")
+            .withIndex("by_message", (q) => q.eq("messageId", mensaje._id))
+            .collect(),
+        ),
+      )
+    ).flat();
+
+    for (const adjunto of adjuntos) {
+      await ctx.storage.delete(adjunto.storageId);
+      await ctx.db.delete(adjunto._id);
+    }
+    for (const mensaje of mensajes) {
+      await ctx.db.delete(mensaje._id);
+    }
+    await ctx.db.delete(hilo._id);
+
+    await registrarEnBitacora(ctx, {
+      actor,
+      accion: "correo.eliminado",
+      entidad: "mailThreads",
+      entidadId: args.id,
+      detalle: `${mensajes.length} mensajes`,
+    });
+    return null;
+  },
+});
+
 export const registrarEntrada = internalMutation({
   args: {
     eventId: v.string(),

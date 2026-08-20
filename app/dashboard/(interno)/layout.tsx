@@ -8,9 +8,9 @@ import { Navegacion } from "./navegacion";
  */
 export default function PanelLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[228px_1fr]">
+    <div className="min-h-dvh lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
       <Navegacion />
-      <main className="px-5 py-10 sm:px-8 lg:px-12 lg:py-14 max-w-[1400px] w-full">
+      <main className="min-w-0 w-full max-w-[1480px] px-5 py-10 sm:px-8 lg:px-12 lg:py-14">
         {children}
       </main>
     </div>

@@ -153,13 +153,14 @@ export default function Correo() {
                   <li key={hilo._id}>
                     <button
                       type="button"
-                      className={`correo-fila w-full text-left px-5 sm:px-6 py-5 grid grid-cols-[28px_1fr_auto] gap-x-3 gap-y-2 ${
+                      aria-pressed={seleccionado === hilo._id}
+                      className={`correo-fila w-full text-left px-5 sm:px-6 py-4.5 grid grid-cols-[38px_1fr_auto] gap-x-3 gap-y-1.5 ${
                         seleccionado === hilo._id ? "correo-fila-activa" : ""
                       }`}
                       onClick={() => setSeleccionado(hilo._id)}
                     >
-                      <span className="cifra pt-0.5 text-[9px] text-[var(--color-n500)]">
-                        {String(indice + 1).padStart(2, "0")}
+                      <span className="correo-avatar row-span-3" aria-hidden="true">
+                        {(hilo.contactoNombre || hilo.contactoCorreo).charAt(0).toUpperCase()}
                       </span>
                       <span className="min-w-0">
                         <span className="flex items-center gap-2">
@@ -167,7 +168,7 @@ export default function Correo() {
                             {hilo.contactoNombre || hilo.contactoCorreo}
                           </span>
                           {hilo.noLeidos > 0 ? (
-                            <span className="grid min-w-5 h-5 place-items-center bg-[var(--color-accent)] px-1 cifra text-[9px] text-white">
+                            <span className="correo-no-leidos">
                               {hilo.noLeidos}
                             </span>
                           ) : null}
@@ -179,14 +180,18 @@ export default function Correo() {
                           {hilo.ultimoResumen}
                         </span>
                       </span>
-                      <span className="cifra text-[9px] text-[var(--color-n500)] whitespace-nowrap">
+                      <span className="cifra pt-0.5 text-[8.5px] text-[var(--color-n500)] whitespace-nowrap">
                         {FORMATO_HORA.format(new Date(hilo.ultimoMensajeEn))}
                       </span>
                       {hilo.asignadoNombre ? (
-                        <span className="col-start-2 text-[9px] tracking-[.12em] uppercase text-[var(--color-accent)]">
+                        <span className="col-start-2 text-[8.5px] font-medium tracking-[.1em] uppercase text-[var(--color-accent)]">
                           {hilo.asignadoNombre}
                         </span>
-                      ) : null}
+                      ) : (
+                        <span className="col-start-2 cifra text-[8px] text-[var(--color-n400)]">
+                          {String(indice + 1).padStart(2, "0")}
+                        </span>
+                      )}
                     </button>
                   </li>
                 ))}
@@ -218,6 +223,7 @@ export default function Correo() {
               <Conversacion
                 detalle={detalle}
                 volver={() => setSeleccionado(null)}
+                eliminado={() => setSeleccionado(null)}
               />
             )}
           </Bandeja>
@@ -241,13 +247,18 @@ export default function Correo() {
 function Conversacion({
   detalle,
   volver,
+  eliminado,
 }: {
   detalle: DetalleCorreo;
   volver: () => void;
+  eliminado: () => void;
 }) {
   const cambiarEstado = useMutation(api.correo.cambiarEstado);
   const tomar = useMutation(api.correo.tomar);
+  const eliminarHilo = useMutation(api.correo.eliminarHilo);
   const [error, setError] = useState<string | null>(null);
+  const [confirmando, setConfirmando] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
   const hilo = detalle.hilo;
 
   const aplicar = async (accion: () => Promise<unknown>) => {
@@ -259,116 +270,166 @@ function Conversacion({
     }
   };
 
+  const eliminar = async () => {
+    setEliminando(true);
+    setError(null);
+    try {
+      await eliminarHilo({ id: hilo._id });
+      eliminado();
+    } catch (e) {
+      setError(limpiarError(e));
+      setConfirmando(false);
+    } finally {
+      setEliminando(false);
+    }
+  };
+
   return (
-    <section className="min-h-[650px] flex flex-col">
-      <header className="px-5 py-5 sm:px-8 sm:py-7 border-b border-[var(--hair)]">
-        <button
-          type="button"
-          className="xl:hidden mb-5 text-[10px] tracking-[.14em] uppercase text-[var(--color-accent)]"
-          onClick={volver}
-        >
-          Volver a la bandeja
-        </button>
-        <div className="grid gap-5 sm:grid-cols-[1fr_auto] sm:items-start">
-          <div className="min-w-0">
-            <p className="rotulo">{hilo.contactoNombre || hilo.contactoCorreo}</p>
-            <h2 className="mt-3 text-[clamp(1.45rem,3vw,2.35rem)] font-semibold tracking-[-.045em] leading-[1.05]">
-              {hilo.asunto}
-            </h2>
-            <p className="mt-2 cifra text-[10px] text-[var(--color-n600)] break-all">
-              {hilo.contactoCorreo}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2 sm:justify-end">
+    <>
+      <section className="correo-conversacion min-h-[650px] flex flex-col">
+        <header className="border-b border-[var(--hair)]">
+          <div className="correo-toolbar flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
             <button
               type="button"
-              className="boton boton-linea px-3 py-2 text-[10px]"
-              onClick={() => void aplicar(() => tomar({ id: hilo._id, tomar: !hilo.asignadoA }))}
+              className="correo-icono-boton xl:hidden"
+              onClick={volver}
+              aria-label="Volver a la bandeja"
             >
-              {hilo.asignadoA ? "Liberar" : "Tomar"}
+              <IconoVolver />
             </button>
-            <select
-              aria-label="Estado de la conversacion"
-              className="entrada w-auto min-w-[118px] py-2 text-[11px]"
-              value={hilo.estado}
-              onChange={(event) =>
-                void aplicar(() =>
-                  cambiarEstado({ id: hilo._id, estado: event.target.value as EstadoHiloCorreo }),
-                )
-              }
-            >
-              {ESTADOS_HILO_CORREO.map((opcion) => (
-                <option key={opcion} value={opcion}>
-                  {ETIQUETAS[opcion]}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        {hilo.asignadoNombre ? (
-          <p className="mt-4 text-[10px] tracking-[.12em] uppercase text-[var(--color-accent)]">
-            Responsable: {hilo.asignadoNombre}
-          </p>
-        ) : null}
-        {error ? <div className="mt-3"><Aviso tono="error">{error}</Aviso></div> : null}
-      </header>
-
-      <ol className="flex-1 px-5 py-4 sm:px-8 sm:py-6">
-        {detalle.mensajes.map((mensaje) => (
-          <li
-            key={mensaje._id}
-            className={`correo-mensaje py-7 ${mensaje.direccion === "saliente" ? "correo-mensaje-saliente" : ""}`}
-          >
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <p className="text-[12px] font-semibold">
-                {mensaje.direccion === "entrante" ? mensaje.de : "Alpha CCM"}
-              </p>
-              <p className="cifra text-[9px] text-[var(--color-n500)]">
-                {fechaHora(mensaje.creadoEn)}
-              </p>
-            </div>
-            <p className="mt-1 cifra text-[9px] text-[var(--color-n500)] break-all">
-              {mensaje.direccion === "entrante"
-                ? `Para ${mensaje.para.join(", ")}`
-                : `Para ${mensaje.para.join(", ")} · ${ETIQUETAS[mensaje.estado] ?? mensaje.estado}`}
-            </p>
-            <div className="mt-5 whitespace-pre-wrap text-[13px] font-light leading-[1.85] text-[var(--color-cuerpo)]">
-              {mensaje.texto}
-            </div>
-            {mensaje.adjuntos.length > 0 ? (
-              <ul className="mt-5 grid gap-2 sm:grid-cols-2">
-                {mensaje.adjuntos.map((adjunto) => (
-                  <li key={adjunto._id}>
-                    {adjunto.url ? (
-                      <a
-                        href={adjunto.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="block bg-[var(--color-surface)] px-4 py-3 transition-transform duration-500 ease-[var(--E)] hover:-translate-y-0.5"
-                      >
-                        <span className="block truncate text-[11px] font-medium">{adjunto.nombre}</span>
-                        <span className="mt-1 block cifra text-[9px] text-[var(--color-n600)]">
-                          {tamanoArchivo(adjunto.tamano)} · {adjunto.tipoContenido}
-                        </span>
-                      </a>
-                    ) : (
-                      <span className="block bg-[var(--color-surface)] px-4 py-3 text-[11px] text-[var(--color-n600)]">
-                        {adjunto.nombre} no disponible
-                      </span>
-                    )}
-                  </li>
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="correo-accion"
+                onClick={() => void aplicar(() => tomar({ id: hilo._id, tomar: !hilo.asignadoA }))}
+              >
+                <IconoUsuario />
+                {hilo.asignadoA ? "Liberar" : "Tomar"}
+              </button>
+              <select
+                aria-label="Estado de la conversacion"
+                className="correo-estado"
+                value={hilo.estado}
+                onChange={(event) =>
+                  void aplicar(() =>
+                    cambiarEstado({ id: hilo._id, estado: event.target.value as EstadoHiloCorreo }),
+                  )
+                }
+              >
+                {ESTADOS_HILO_CORREO.map((opcion) => (
+                  <option key={opcion} value={opcion}>
+                    {ETIQUETAS[opcion]}
+                  </option>
                 ))}
-              </ul>
-            ) : null}
-            {mensaje.error ? (
-              <div className="mt-4"><Aviso tono="error">{mensaje.error}</Aviso></div>
-            ) : null}
-          </li>
-        ))}
-      </ol>
+              </select>
+              <button
+                type="button"
+                className="correo-icono-boton correo-eliminar"
+                onClick={() => setConfirmando(true)}
+                aria-label="Eliminar conversacion"
+                title="Eliminar conversacion"
+              >
+                <IconoPapelera />
+              </button>
+            </div>
+          </div>
+          <div className="px-5 pb-6 pt-7 sm:px-8 sm:pb-8">
+            <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
+              <h2 className="min-w-0 flex-1 text-[clamp(1.55rem,3vw,2.45rem)] font-semibold tracking-[-.045em] leading-[1.08]">
+                {hilo.asunto}
+              </h2>
+              <span className="correo-estado-etiqueta">{ETIQUETAS[hilo.estado]}</span>
+            </div>
+            <div className="mt-5 flex items-center gap-3">
+              <span className="correo-avatar correo-avatar-grande" aria-hidden="true">
+                {(hilo.contactoNombre || hilo.contactoCorreo).charAt(0).toUpperCase()}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[12.5px] font-semibold">
+                  {hilo.contactoNombre || hilo.contactoCorreo}
+                </p>
+                <p className="mt-0.5 truncate text-[10px] text-[var(--color-n600)]">
+                  {hilo.contactoCorreo}
+                  {hilo.asignadoNombre ? ` · Responsable: ${hilo.asignadoNombre}` : ""}
+                </p>
+              </div>
+            </div>
+            {error ? <div className="mt-4"><Aviso tono="error">{error}</Aviso></div> : null}
+          </div>
+        </header>
 
-      <Responder threadId={hilo._id} para={hilo.contactoCorreo} asunto={hilo.asunto} />
-    </section>
+        <ol className="correo-mensajes flex-1 px-4 py-4 sm:px-6 sm:py-6">
+          {detalle.mensajes.map((mensaje) => (
+            <li
+              key={mensaje._id}
+              className={`correo-mensaje ${mensaje.direccion === "saliente" ? "correo-mensaje-saliente" : ""}`}
+            >
+              <div className="correo-mensaje-cabecera">
+                <span className="correo-avatar" aria-hidden="true">
+                  {mensaje.direccion === "entrante"
+                    ? (hilo.contactoNombre || mensaje.de).charAt(0).toUpperCase()
+                    : "A"}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[12px] font-semibold">
+                    {mensaje.direccion === "entrante" ? mensaje.de : "Alpha CCM"}
+                  </p>
+                  <p className="mt-0.5 truncate text-[9.5px] text-[var(--color-n500)]">
+                    Para {mensaje.para.join(", ")}
+                    {mensaje.direccion === "saliente" ? ` · ${ETIQUETAS[mensaje.estado] ?? mensaje.estado}` : ""}
+                  </p>
+                </div>
+                <p className="cifra shrink-0 text-[8.5px] text-[var(--color-n500)]">
+                  {fechaHora(mensaje.creadoEn)}
+                </p>
+              </div>
+              <div className="correo-mensaje-cuerpo whitespace-pre-wrap text-[13px] font-light leading-[1.85] text-[var(--color-cuerpo)]">
+                {mensaje.texto}
+              </div>
+              {mensaje.adjuntos.length > 0 ? (
+                <ul className="correo-adjuntos grid gap-2 sm:grid-cols-2">
+                  {mensaje.adjuntos.map((adjunto) => (
+                    <li key={adjunto._id}>
+                      {adjunto.url ? (
+                        <a
+                          href={adjunto.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="correo-adjunto"
+                        >
+                          <span className="block truncate text-[11px] font-medium">{adjunto.nombre}</span>
+                          <span className="mt-1 block cifra text-[9px] text-[var(--color-n600)]">
+                            {tamanoArchivo(adjunto.tamano)} · {adjunto.tipoContenido}
+                          </span>
+                        </a>
+                      ) : (
+                        <span className="correo-adjunto block text-[11px] text-[var(--color-n600)]">
+                          {adjunto.nombre} no disponible
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {mensaje.error ? (
+                <div className="mt-4"><Aviso tono="error">{mensaje.error}</Aviso></div>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+
+        <Responder threadId={hilo._id} para={hilo.contactoCorreo} asunto={hilo.asunto} />
+      </section>
+
+      {confirmando ? (
+        <ConfirmarEliminacion
+          asunto={hilo.asunto}
+          ocupado={eliminando}
+          cancelar={() => setConfirmando(false)}
+          confirmar={() => void eliminar()}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -404,8 +465,8 @@ function Responder({
   };
 
   return (
-    <div className="m-3 mt-0 bg-[var(--color-surface)] p-[7px] sm:m-5 sm:mt-0">
-      <div className="bg-[var(--color-ground)] p-5 sm:p-6">
+    <div className="correo-respuesta m-3 mt-0 p-[7px] sm:m-5 sm:mt-0">
+      <div className="correo-respuesta-nucleo p-5 sm:p-6">
         <div className="flex items-center justify-between gap-4">
           <label htmlFor={`respuesta-${threadId}`} className="rotulo">Responder a {para}</label>
           <span className="cifra text-[9px] text-[var(--color-n500)]">contacto@alphaccm.org</span>
@@ -555,10 +616,74 @@ function CompositorNuevo({
   );
 }
 
+function ConfirmarEliminacion({
+  asunto,
+  ocupado,
+  cancelar,
+  confirmar,
+}: {
+  asunto: string;
+  ocupado: boolean;
+  cancelar: () => void;
+  confirmar: () => void;
+}) {
+  return (
+    <div className="correo-dialogo-fondo" role="presentation">
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="eliminar-correo-titulo"
+        aria-describedby="eliminar-correo-descripcion"
+        className="correo-dialogo"
+      >
+        <p className="cejilla">Accion permanente</p>
+        <h3 id="eliminar-correo-titulo" className="mt-3 text-[1.65rem] font-semibold tracking-[-.045em]">
+          Eliminar conversacion
+        </h3>
+        <p id="eliminar-correo-descripcion" className="mt-4 text-[12.5px] font-light leading-[1.75] text-[var(--color-cuerpo)]">
+          Se borraran el hilo "{asunto}", sus mensajes y todos los archivos adjuntos guardados.
+        </p>
+        <div className="mt-7 flex justify-end gap-2">
+          <button type="button" className="boton boton-linea" disabled={ocupado} onClick={cancelar}>
+            Cancelar
+          </button>
+          <button type="button" className="boton boton-peligro" disabled={ocupado} onClick={confirmar}>
+            {ocupado ? "Eliminando…" : "Eliminar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Flecha() {
   return (
     <svg viewBox="0 0 20 20" aria-hidden="true" className="size-4 fill-none stroke-current stroke-[1.35]">
       <path d="M4 10h11M11 6l4 4-4 4" />
+    </svg>
+  );
+}
+
+function IconoVolver() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="size-[17px] fill-none stroke-current stroke-[1.35]" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m8 5-5 5 5 5M3.5 10H17" />
+    </svg>
+  );
+}
+
+function IconoUsuario() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="size-[15px] fill-none stroke-current stroke-[1.35]" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 9a2.75 2.75 0 1 0 0-5.5A2.75 2.75 0 0 0 10 9ZM4.5 16.5c.4-3.1 2.15-4.75 5.5-4.75s5.1 1.65 5.5 4.75" />
+    </svg>
+  );
+}
+
+function IconoPapelera() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="size-[17px] fill-none stroke-current stroke-[1.35]" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4.5 6h11M8 3.5h4M6 6l.6 10.5h6.8L14 6M8.25 9v4.5M11.75 9v4.5" />
     </svg>
   );
 }

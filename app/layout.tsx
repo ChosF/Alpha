@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Poppins, JetBrains_Mono } from "next/font/google";
+import { Poppins, JetBrains_Mono, Montserrat } from "next/font/google";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import { ProveedorConvex } from "./proveedores";
 import "./globals.css";
@@ -20,6 +20,13 @@ const mono = JetBrains_Mono({
   display: "swap",
 });
 
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--fuente-montserrat",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Dashboard - Alpha",
   description: "Dashboard interno de la Sociedad Estudiantil Alpha.",
@@ -29,7 +36,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const documento = (
-    <html lang="es" className={`${poppins.variable} ${mono.variable}`}>
+    <html lang="es" className={`${poppins.variable} ${mono.variable} ${montserrat.variable}`}>
       <body>
         <ProveedorConvex>{children}</ProveedorConvex>
       </body>
