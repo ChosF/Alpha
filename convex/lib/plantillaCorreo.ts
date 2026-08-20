@@ -2,8 +2,9 @@ type OpcionesCorreoDashboard = {
   asunto: string;
   texto: string;
   remitente?: string;
-  sitio?: string;
 };
+
+const LOGO_CORREO = "https://alphaccm.org/alpha-mark-white.png?email=20260820";
 
 function firmaPara(remitente?: string): string[] {
   const correo = remitente?.trim().toLowerCase();
@@ -43,7 +44,6 @@ export function renderizarCorreoDashboard({
   asunto,
   texto,
   remitente,
-  sitio,
 }: OpcionesCorreoDashboard): string {
   const asuntoSeguro = escaparHtml(asunto);
   const preencabezado = escaparHtml(resumen(texto, 120));
@@ -54,11 +54,8 @@ export function renderizarCorreoDashboard({
         `<p class="message-copy" style="margin:0 0 20px;color:#33445D;font-size:16px;font-weight:400;line-height:1.75;">${parrafo.replaceAll("\n", "<br>")}</p>`,
     )
     .join("");
-  const raiz = sitio?.replace(/\/$/, "");
   const firma = firmaPara(remitente).map(escaparHtml).join("<br>");
-  const marca = raiz
-    ? `<td valign="middle" style="width:54px;"><img src="${escaparHtml(`${raiz}/alpha-mark-white.png`)}" width="48" alt="Alpha" style="width:48px;max-width:48px;height:auto;border:0;display:block;"></td>`
-    : "";
+  const marca = `<td valign="middle" style="width:54px;"><img src="${escaparHtml(LOGO_CORREO)}" width="48" height="33" alt="Alpha" style="width:48px;max-width:48px;height:33px;border:0;display:block;"></td>`;
 
   return `<!doctype html>
 <html lang="es">
@@ -102,7 +99,7 @@ export function renderizarCorreoDashboard({
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
                   ${marca}
-                  <td valign="middle" style="${raiz ? "padding-left:12px;" : ""}color:#FFFFFF;font-family:'Poppins',sans-serif;font-size:22px;font-weight:700;letter-spacing:-0.5px;">Alpha</td>
+                  <td valign="middle" style="padding-left:12px;color:#FFFFFF;font-family:'Poppins',sans-serif;font-size:22px;font-weight:700;letter-spacing:-0.5px;">Alpha</td>
                   <td valign="middle" align="right" style="color:#AFCFFF;font-size:10px;font-weight:600;letter-spacing:2px;white-space:nowrap;">2026 — 2027</td>
                 </tr>
               </table>

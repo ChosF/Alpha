@@ -573,7 +573,6 @@ export const enviar = mutation({
         asunto: asuntoEnvio,
         texto,
         remitente,
-        sitio: process.env.SITE_URL,
       }),
       replyTo: [remitente],
       ...(headers ? { headers } : {}),
@@ -1016,7 +1015,7 @@ export async function enviarInvitacionPorCorreo(
     to: args.correo,
     subject: asunto,
     text: textoConFirma(texto, auto),
-    html: renderizarCorreoDashboard({ asunto, texto, remitente: auto, sitio }),
+    html: renderizarCorreoDashboard({ asunto, texto, remitente: auto }),
     replyTo: [correoContacto()],
   });
   await ctx.db.insert("mailMessages", {

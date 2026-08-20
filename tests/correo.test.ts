@@ -13,10 +13,9 @@ describe("plantilla de correo del dashboard", () => {
       asunto: "Invitación a Networking Night",
       texto: "Hola,\n\nTe compartimos los detalles de la sesión.",
       remitente: "finanzas@alphaccm.org",
-      sitio: "https://alphaccm.org/",
     });
 
-    expect(html).toContain("https://alphaccm.org/alpha-mark-white.png");
+    expect(html).toContain("https://alphaccm.org/alpha-mark-white.png?email=20260820");
     expect(html).toContain("Coordinación de Finanzas,");
     expect(html).toContain("Puedes responder directamente a este correo.");
     expect(html).not.toContain("MENSAJE DE ALPHA");
