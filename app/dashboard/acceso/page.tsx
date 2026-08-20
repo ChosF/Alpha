@@ -16,18 +16,19 @@ import { MarcaAlpha } from "@/components/marca-alpha";
 export default function Acceso() {
   const { signIn } = useAuthActions();
   const router = useRouter();
-  const [correo, setCorreo] = useState("");
-  const [contrasena, setContrasena] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
 
-  const entrar = async (evento: React.FormEvent) => {
+  const entrar = async (evento: React.FormEvent<HTMLFormElement>) => {
     evento.preventDefault();
+    const datos = new FormData(evento.currentTarget);
+    const correo = String(datos.get("correo") ?? "");
+    const contrasena = String(datos.get("contrasena") ?? "");
     setOcupado(true);
     setError(null);
     try {
       await signIn("password", { email: correo, password: contrasena, flow: "signIn" });
-      router.push("/dashboard");
+      router.replace("/dashboard");
     } catch {
       setError("Correo o contrasena incorrectos.");
       setOcupado(false);
@@ -57,7 +58,7 @@ export default function Acceso() {
       </div>
 
       <div className="px-8 py-14 lg:px-16 lg:py-20 flex items-center">
-        <form onSubmit={(e) => void entrar(e)} className="w-full max-w-[380px]">
+        <form method="post" onSubmit={(e) => void entrar(e)} className="w-full max-w-[380px]">
           <h1 className="text-[24px] font-bold tracking-[-.03em]">Entrar</h1>
 
           <div className="mt-9 grid gap-7">
@@ -65,10 +66,9 @@ export default function Acceso() {
               <label htmlFor="correo">Correo</label>
               <input
                 id="correo"
+                name="correo"
                 className="entrada"
                 type="email"
-                value={correo}
-                onChange={(e) => setCorreo(e.target.value)}
                 autoComplete="username"
                 required
               />
@@ -77,10 +77,9 @@ export default function Acceso() {
               <label htmlFor="contrasena">Contrasena</label>
               <input
                 id="contrasena"
+                name="contrasena"
                 className="entrada"
                 type="password"
-                value={contrasena}
-                onChange={(e) => setContrasena(e.target.value)}
                 autoComplete="current-password"
                 required
               />

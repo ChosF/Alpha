@@ -6,26 +6,6 @@ import type { NextConfig } from "next";
  * compilador de Tailwind en navegador. Separar ambas por ruta evita relajar la
  * politica del panel, que es donde hay datos personales.
  */
-const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL ?? "";
-const convexOrigins = convexUrl
-  ? `${convexUrl} ${convexUrl.replace(/^https:/, "wss:")}`
-  : "";
-
-const cspPanel = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'none'",
-  "object-src 'none'",
-  "script-src 'self'",
-  // Next inyecta estilos en linea para el streaming de RSC; no hay forma de evitarlo.
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "font-src 'self' data:",
-  `connect-src 'self' ${convexOrigins}`.trim(),
-  "upgrade-insecure-requests",
-].join("; ");
-
 const cspLanding = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -83,7 +63,6 @@ const nextConfig: NextConfig = {
         source: "/dashboard/:path*",
         headers: [
           ...cabecerasComunes,
-          { key: "Content-Security-Policy", value: cspPanel },
           { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
           { key: "Cache-Control", value: "no-store, max-age=0" },
         ],

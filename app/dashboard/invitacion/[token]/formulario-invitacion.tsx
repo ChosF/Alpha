@@ -60,7 +60,7 @@ export function FormularioInvitacion({
         invitacion: token,
         flow: "signUp",
       });
-      router.push("/dashboard");
+      router.replace("/dashboard");
     } catch {
       setError("No se pudo crear la cuenta. La invitacion pudo caducar o ya se uso.");
       setOcupado(false);
@@ -99,7 +99,7 @@ export function FormularioInvitacion({
             </p>
           </div>
         ) : (
-          <form onSubmit={(e) => void crear(e)} className="mt-12">
+          <form method="post" onSubmit={(e) => void crear(e)} className="mt-12">
             <h1 className="text-[22px] font-bold tracking-[-.03em]">
               Hola, {invitacion.nombre || "bienvenida"}
             </h1>

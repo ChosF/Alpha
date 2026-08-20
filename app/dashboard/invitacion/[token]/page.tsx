@@ -1,4 +1,5 @@
 import { fetchQuery } from "convex/nextjs";
+import { redirect } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import { FormularioInvitacion } from "./formulario-invitacion";
 
@@ -10,15 +11,31 @@ export const dynamic = "force-dynamic";
  */
 export default async function Invitacion({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { token } = await params;
+  const consulta = await searchParams;
 
-  try {
-    const invitacion = await fetchQuery(api.usuarios.verificarInvitacion, { token });
-    return <FormularioInvitacion token={token} invitacion={invitacion} />;
-  } catch {
-    return <FormularioInvitacion token={token} invitacion={null} errorConsulta />;
+  if (consulta.contrasena !== undefined || consulta.repetida !== undefined) {
+    redirect(`/dashboard/invitacion/${token}`);
   }
+
+  let invitacion = null;
+  let errorConsulta = false;
+  try {
+    invitacion = await fetchQuery(api.usuarios.verificarInvitacion, { token });
+  } catch {
+    errorConsulta = true;
+  }
+
+  return (
+    <FormularioInvitacion
+      token={token}
+      invitacion={invitacion}
+      errorConsulta={errorConsulta}
+    />
+  );
 }
