@@ -266,13 +266,13 @@ body {
   transition:
     color 0.5s var(--E),
     border-color 0.5s var(--E),
-    transform 0.5s var(--E);
+    background 0.5s var(--E);
 }
 
 .panel-nav-marca a:hover .panel-nav-monograma {
   color: #fff;
   border-color: rgba(255, 255, 255, 0.42);
-  transform: rotate(90deg);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .panel-nav-enlace {
@@ -346,11 +346,9 @@ body {
 @keyframes correo-entrada {
   from {
     opacity: 0;
-    transform: translateY(18px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -367,6 +365,31 @@ body {
 
 .correo-entrada {
   animation: correo-entrada 0.75s var(--E) both;
+}
+
+.correo-panel {
+  height: clamp(580px, calc(100dvh - 210px), 840px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.correo-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(31, 95, 208, 0.3) transparent;
+}
+
+.correo-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.correo-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.correo-scroll::-webkit-scrollbar-thumb {
+  background: rgba(31, 95, 208, 0.24);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 .correo-compositor {
@@ -531,6 +554,12 @@ body {
   margin-left: 46px;
 }
 
+.correo-mensaje-cuerpo {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .correo-adjunto {
   display: block;
   padding: 11px 13px;
@@ -569,6 +598,8 @@ body {
 
 .correo-dialogo {
   width: min(100%, 480px);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
   padding: 28px;
   background: var(--color-ground);
   box-shadow:

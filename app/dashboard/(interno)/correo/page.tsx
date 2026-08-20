@@ -103,10 +103,10 @@ export default function Correo() {
         </div>
       ) : null}
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(330px,0.84fr)_minmax(520px,1.6fr)]">
-        <Bandeja className={seleccionado ? "hidden xl:block" : "block"}>
-          <section className="min-h-[650px]">
-            <div className="p-5 sm:p-6 border-b border-[var(--hair)]">
+      <div className="correo-workspace grid min-h-0 gap-4 xl:grid-cols-[minmax(330px,0.84fr)_minmax(520px,1.6fr)]">
+        <Bandeja className={`correo-panel ${seleccionado ? "hidden xl:block" : "block"}`}>
+          <section className="flex h-full min-h-0 flex-col">
+            <div className="flex-none p-5 sm:p-6 border-b border-[var(--hair)]">
               <div className="campo">
                 <label htmlFor="buscar-correo">Buscar en correo</label>
                 <input
@@ -136,74 +136,76 @@ export default function Correo() {
               </div>
             </div>
 
-            {hilos === undefined ? (
-              <Cargando que="las conversaciones" />
-            ) : hilos.length === 0 ? (
-              <Vacio
-                titulo="La bandeja esta limpia"
-                ayuda={
-                  busqueda || estado !== "abierto"
-                    ? "No hay conversaciones con estos filtros."
-                    : "Los mensajes enviados a contacto@alphaccm.org apareceran aqui."
-                }
-              />
-            ) : (
-              <ol className="correo-lista">
-                {hilos.map((hilo, indice) => (
-                  <li key={hilo._id}>
-                    <button
-                      type="button"
-                      aria-pressed={seleccionado === hilo._id}
-                      className={`correo-fila w-full text-left px-5 sm:px-6 py-4.5 grid grid-cols-[38px_1fr_auto] gap-x-3 gap-y-1.5 ${
-                        seleccionado === hilo._id ? "correo-fila-activa" : ""
-                      }`}
-                      onClick={() => setSeleccionado(hilo._id)}
-                    >
-                      <span className="correo-avatar row-span-3" aria-hidden="true">
-                        {(hilo.contactoNombre || hilo.contactoCorreo).charAt(0).toUpperCase()}
-                      </span>
-                      <span className="min-w-0">
-                        <span className="flex items-center gap-2">
-                          <span className={`truncate text-[13px] ${hilo.noLeidos ? "font-semibold" : "font-medium"}`}>
-                            {hilo.contactoNombre || hilo.contactoCorreo}
-                          </span>
-                          {hilo.noLeidos > 0 ? (
-                            <span className="correo-no-leidos">
-                              {hilo.noLeidos}
+            <div className="correo-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain">
+              {hilos === undefined ? (
+                <Cargando que="las conversaciones" />
+              ) : hilos.length === 0 ? (
+                <Vacio
+                  titulo="La bandeja esta limpia"
+                  ayuda={
+                    busqueda || estado !== "abierto"
+                      ? "No hay conversaciones con estos filtros."
+                      : "Los mensajes enviados a contacto@alphaccm.org apareceran aqui."
+                  }
+                />
+              ) : (
+                <ol className="correo-lista">
+                  {hilos.map((hilo, indice) => (
+                    <li key={hilo._id}>
+                      <button
+                        type="button"
+                        aria-pressed={seleccionado === hilo._id}
+                        className={`correo-fila w-full text-left px-5 sm:px-6 py-4.5 grid grid-cols-[38px_1fr_auto] gap-x-3 gap-y-1.5 ${
+                          seleccionado === hilo._id ? "correo-fila-activa" : ""
+                        }`}
+                        onClick={() => setSeleccionado(hilo._id)}
+                      >
+                        <span className="correo-avatar row-span-3" aria-hidden="true">
+                          {(hilo.contactoNombre || hilo.contactoCorreo).charAt(0).toUpperCase()}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-2">
+                            <span className={`truncate text-[13px] ${hilo.noLeidos ? "font-semibold" : "font-medium"}`}>
+                              {hilo.contactoNombre || hilo.contactoCorreo}
                             </span>
-                          ) : null}
+                            {hilo.noLeidos > 0 ? (
+                              <span className="correo-no-leidos">
+                                {hilo.noLeidos}
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="mt-1 block truncate text-[12px] text-[var(--color-cuerpo)]">
+                            {hilo.asunto}
+                          </span>
+                          <span className="mt-1 block truncate text-[11px] font-light text-[var(--color-n600)]">
+                            {hilo.ultimoResumen}
+                          </span>
                         </span>
-                        <span className="mt-1 block truncate text-[12px] text-[var(--color-cuerpo)]">
-                          {hilo.asunto}
+                        <span className="cifra pt-0.5 text-[8.5px] text-[var(--color-n500)] whitespace-nowrap">
+                          {FORMATO_HORA.format(new Date(hilo.ultimoMensajeEn))}
                         </span>
-                        <span className="mt-1 block truncate text-[11px] font-light text-[var(--color-n600)]">
-                          {hilo.ultimoResumen}
-                        </span>
-                      </span>
-                      <span className="cifra pt-0.5 text-[8.5px] text-[var(--color-n500)] whitespace-nowrap">
-                        {FORMATO_HORA.format(new Date(hilo.ultimoMensajeEn))}
-                      </span>
-                      {hilo.asignadoNombre ? (
-                        <span className="col-start-2 text-[8.5px] font-medium tracking-[.1em] uppercase text-[var(--color-accent)]">
-                          {hilo.asignadoNombre}
-                        </span>
-                      ) : (
-                        <span className="col-start-2 cifra text-[8px] text-[var(--color-n400)]">
-                          {String(indice + 1).padStart(2, "0")}
-                        </span>
-                      )}
-                    </button>
-                  </li>
-                ))}
-              </ol>
-            )}
+                        {hilo.asignadoNombre ? (
+                          <span className="col-start-2 text-[8.5px] font-medium tracking-[.1em] uppercase text-[var(--color-accent)]">
+                            {hilo.asignadoNombre}
+                          </span>
+                        ) : (
+                          <span className="col-start-2 cifra text-[8px] text-[var(--color-n400)]">
+                            {String(indice + 1).padStart(2, "0")}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
           </section>
         </Bandeja>
 
-        <div className={!seleccionado ? "hidden xl:block" : "block"}>
-          <Bandeja oscura={!seleccionado}>
+        <div className={`min-h-0 ${!seleccionado ? "hidden xl:block" : "block"}`}>
+          <Bandeja className="correo-panel" oscura={!seleccionado}>
             {!seleccionado ? (
-              <div className="min-h-[650px] grid content-between p-8 lg:p-12">
+              <div className="grid h-full content-between p-8 lg:p-12">
                 <p className="rotulo text-white/45">Correspondencia Alpha</p>
                 <div className="max-w-[34rem]">
                   <p className="text-[clamp(2rem,4vw,4rem)] font-semibold tracking-[-.055em] leading-[.98]">
@@ -286,8 +288,8 @@ function Conversacion({
 
   return (
     <>
-      <section className="correo-conversacion min-h-[650px] flex flex-col">
-        <header className="border-b border-[var(--hair)]">
+      <section className="correo-conversacion flex h-full min-h-0 flex-col overflow-hidden">
+        <header className="flex-none border-b border-[var(--hair)]">
           <div className="correo-toolbar flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
             <button
               type="button"
@@ -358,7 +360,7 @@ function Conversacion({
           </div>
         </header>
 
-        <ol className="correo-mensajes flex-1 px-4 py-4 sm:px-6 sm:py-6">
+        <ol className="correo-mensajes correo-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-6">
           {detalle.mensajes.map((mensaje) => (
             <li
               key={mensaje._id}
@@ -418,7 +420,9 @@ function Conversacion({
           ))}
         </ol>
 
-        <Responder threadId={hilo._id} para={hilo.contactoCorreo} asunto={hilo.asunto} />
+        <div className="flex-none">
+          <Responder threadId={hilo._id} para={hilo.contactoCorreo} asunto={hilo.asunto} />
+        </div>
       </section>
 
       {confirmando ? (
@@ -473,7 +477,7 @@ function Responder({
         </div>
         <textarea
           id={`respuesta-${threadId}`}
-          className="entrada mt-3 min-h-[118px] resize-y"
+          className="entrada mt-3 min-h-[118px] max-h-[220px] resize-y"
           value={texto}
           maxLength={20_000}
           onChange={(event) => setTexto(event.target.value)}
