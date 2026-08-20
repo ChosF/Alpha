@@ -2,6 +2,7 @@ import { Webhook } from "svix";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { resend } from "./correo";
+import { remitentesManuales } from "./lib/direccionesCorreo";
 
 type EventoEntrante = {
   type: "email.received";
@@ -62,8 +63,8 @@ export const manejarResend = httpAction(async (ctx, request) => {
   }
 
   if (esEventoEntrante(evento)) {
-    const destino = (process.env.ALPHA_CONTACT_EMAIL ?? "contacto@alphaccm.org").toLowerCase();
-    const corresponde = evento.data.to.some((correo) => correoPlano(correo) === destino);
+    const destinos = new Set(remitentesManuales());
+    const corresponde = evento.data.to.some((correo) => destinos.has(correoPlano(correo)));
     if (!corresponde) return new Response(null, { status: 204 });
 
     const recibidoEn = Date.parse(evento.data.created_at || evento.created_at);

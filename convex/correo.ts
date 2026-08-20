@@ -11,6 +11,7 @@ import {
   type MutationCtx,
 } from "./_generated/server";
 import { registrarEnBitacora } from "./lib/auditoria";
+import { correoContacto, esRemitenteManual, remitentesManuales } from "./lib/direccionesCorreo";
 import { CUOTAS, consumirLimite } from "./lib/limites";
 import { renderizarCorreoDashboard } from "./lib/plantillaCorreo";
 import { requiereRol } from "./lib/rbac";
@@ -31,10 +32,6 @@ export const resend: Resend = new Resend(components.resend, {
   testMode: process.env.RESEND_TEST_MODE !== "false",
   onEmailEvent: internal.correo.actualizarEstadoEnvio,
 });
-
-function correoContacto(): string {
-  return normalizarCorreo(process.env.ALPHA_CONTACT_EMAIL ?? "contacto@alphaccm.org");
-}
 
 function nombreDireccion(correo: string, nombre: string): string {
   return `${limpiarTexto(nombre, 80)} <${normalizarCorreo(correo)}>`;
@@ -328,6 +325,7 @@ export const configuracion = query({
     listo: v.boolean(),
     modoPrueba: v.boolean(),
     remitente: v.string(),
+    remitentes: v.array(v.string()),
     entrada: v.string(),
   }),
   handler: async (ctx) => {
@@ -336,6 +334,7 @@ export const configuracion = query({
       listo: Boolean(process.env.RESEND_API_KEY && process.env.RESEND_WEBHOOK_SECRET),
       modoPrueba: process.env.RESEND_TEST_MODE !== "false",
       remitente: correoContacto(),
+      remitentes: remitentesManuales(),
       entrada: correoContacto(),
     };
   },
@@ -479,6 +478,7 @@ export const enviar = mutation({
     clientRequestId: v.string(),
     threadId: v.optional(v.id("mailThreads")),
     para: v.optional(v.string()),
+    remitente: v.string(),
     asunto: v.string(),
     texto: v.string(),
   },
@@ -495,6 +495,11 @@ export const enviar = mutation({
 
     if (!process.env.RESEND_API_KEY) {
       throw new ConvexError("El correo todavia no esta configurado en Convex.");
+    }
+
+    const remitente = normalizarCorreo(args.remitente);
+    if (!esRemitenteManual(remitente)) {
+      throw new ConvexError("La direccion de envio no pertenece a Alpha.");
     }
 
     const limite = await consumirLimite(
@@ -562,7 +567,7 @@ export const enviar = mutation({
 
     const asuntoEnvio = ultimo && !/^re\s*:/i.test(asunto) ? `Re: ${asunto}` : asunto;
     const resendComponentId = await resend.sendEmail(ctx, {
-      from: nombreDireccion(correoContacto(), "Alpha CCM"),
+      from: nombreDireccion(remitente, "Alpha CCM"),
       to: para,
       subject: asuntoEnvio,
       text: texto,
@@ -571,14 +576,14 @@ export const enviar = mutation({
         texto,
         sitio: process.env.SITE_URL,
       }),
-      replyTo: [correoContacto()],
+      replyTo: [remitente],
       ...(headers ? { headers } : {}),
     });
 
     const messageId = await ctx.db.insert("mailMessages", {
       threadId,
       direccion: "saliente",
-      de: correoContacto(),
+      de: remitente,
       para: [para],
       cc: [],
       asunto,

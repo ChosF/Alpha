@@ -10,12 +10,15 @@ En Resend, agrega y verifica el dominio raiz `alphaccm.org`. El modulo usa estas
 | Direccion | Uso |
 | --- | --- |
 | `auto@alphaccm.org` | Invitaciones y avisos automaticos |
-| `contacto@alphaccm.org` | Bandeja publica, mensajes manuales y respuestas |
+| `contacto@alphaccm.org` | Bandeja publica y mensajes manuales generales |
+| `direccion@alphaccm.org` | Mensajes manuales de Direccion |
+| `finanzas@alphaccm.org` | Mensajes manuales de Finanzas |
 
 Agrega en Vercel DNS los valores exactos que muestre Resend para SPF, DKIM y el return path. Para
-recibir en `contacto@alphaccm.org`, la capacidad Receiving de `alphaccm.org` debe estar activa y la
-raiz del dominio debe tener el MX `inbound-smtp.us-east-1.amazonaws.com` con prioridad `10`. El MX
-de `send.alphaccm.org` sirve para rebotes de salida y no recibe mensajes dirigidos a la bandeja.
+recibir en las tres direcciones compartidas, la capacidad Receiving de `alphaccm.org` debe estar
+activa y la raiz del dominio debe tener el MX `inbound-smtp.us-east-1.amazonaws.com` con prioridad
+`10`. El MX de `send.alphaccm.org` sirve para rebotes de salida y no recibe mensajes dirigidos a la
+bandeja.
 
 Antes de agregar el MX, confirma que no exista otro proveedor de buzones en el dominio. Dos juegos
 de MX con prioridades incompatibles pueden repartir o bloquear el correo entrante.
@@ -76,12 +79,13 @@ Suscribe el mismo endpoint a estos eventos:
 - `email.clicked`
 
 El endpoint verifica la firma Svix antes de actuar. Los eventos de entrega actualizan el mensaje
-saliente. `email.received` crea un trabajo idempotente, obtiene el cuerpo mediante la API de Resend,
-copia los adjuntos permitidos a Convex Storage y coloca el mensaje en la bandeja.
+saliente. `email.received` acepta `contacto@`, `direccion@` y `finanzas@`, crea un trabajo
+idempotente, obtiene el cuerpo mediante la API de Resend, copia los adjuntos permitidos a Convex
+Storage y coloca el mensaje en la misma bandeja.
 
 ## 4. Comprobacion final
 
-1. Envia un mensaje externo a `contacto@alphaccm.org`.
+1. Envia un mensaje externo a cada una de las tres direcciones compartidas.
 2. Confirma que aparezca en `Dashboard -> Correo`.
 3. Abre la conversacion y responde desde el panel.
 4. Confirma que el estado pase de `En cola` a `Enviado` y despues a `Entregado`.
@@ -95,10 +99,11 @@ conversaciones anteriores.
 ## 5. Permisos y limites
 
 - Solo `editor` y `admin` pueden leer o enviar correo.
-- El remitente y `Reply-To` se fijan en el servidor. El navegador no los decide.
+- El servidor limita el remitente y `Reply-To` a `contacto@`, `direccion@` o `finanzas@`. El usuario
+  elige una de esas direcciones en el compositor.
 - Cada cuenta puede emitir hasta 40 correos por hora desde el compositor.
-- El webhook acepta solamente firmas validas y solo ingresa mensajes destinados a
-  `contacto@alphaccm.org`.
+- El webhook acepta solamente firmas validas y solo ingresa mensajes destinados a una direccion
+  compartida autorizada.
 - El panel muestra texto plano. Nunca renderiza el HTML recibido.
 - Cada adjunto entrante puede pesar hasta 10 MB y el total guardado por correo es de 18 MB.
 - Los reintentos entrantes tienen espera creciente y terminan despues de cinco fallos.

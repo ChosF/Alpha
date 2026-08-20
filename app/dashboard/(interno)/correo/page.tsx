@@ -1,6 +1,7 @@
 "use client";
 
-import { useDeferredValue, useEffect, useRef, useState } from "react";
+import { Suspense, useDeferredValue, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { api } from "@/convex/_generated/api";
@@ -25,6 +26,7 @@ const FORMATO_ARCHIVO = new Intl.NumberFormat("es-MX", {
 });
 
 type DetalleCorreo = NonNullable<FunctionReturnType<typeof api.correo.detalle>>;
+const REMITENTE_PREDETERMINADO = "contacto@alphaccm.org";
 
 function tamanoArchivo(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -39,10 +41,21 @@ function limpiarError(error: unknown): string {
 }
 
 export default function Correo() {
+  return (
+    <Suspense fallback={<Cargando que="el correo" />}>
+      <CorreoContenido />
+    </Suspense>
+  );
+}
+
+function CorreoContenido() {
+  const searchParams = useSearchParams();
+  const destinatarioEnUrl = searchParams.get("para")?.trim() ?? "";
   const [estado, setEstado] = useState<EstadoHiloCorreo | "todos">("abierto");
   const [busqueda, setBusqueda] = useState("");
   const [seleccionado, setSeleccionado] = useState<Id<"mailThreads"> | null>(null);
-  const [componiendo, setComponiendo] = useState(false);
+  const [componiendo, setComponiendo] = useState(Boolean(destinatarioEnUrl));
+  const [paraInicial, setParaInicial] = useState(destinatarioEnUrl);
   const busquedaDiferida = useDeferredValue(busqueda);
 
   const resumen = useQuery(api.correo.resumen, {});
@@ -63,11 +76,19 @@ export default function Correo() {
     }
   }, [detalle?.hilo._id, detalle?.hilo.noLeidos, marcarLeido]);
 
+  useEffect(() => {
+    if (!destinatarioEnUrl) return;
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("para");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [destinatarioEnUrl]);
+
   return (
     <div className="correo-entrada">
       <header className="mb-8 lg:mb-10 grid gap-7 lg:grid-cols-[1fr_auto] lg:items-end">
         <div>
-          <p className="cejilla">contacto@alphaccm.org</p>
+          <p className="cejilla">Bandeja compartida de Alpha</p>
           <div className="mt-3 flex flex-wrap items-end gap-x-5 gap-y-2">
             <h1 className="text-[clamp(2.2rem,5vw,4.8rem)] font-bold tracking-[-.06em] leading-[.88]">
               Correo
@@ -80,7 +101,10 @@ export default function Correo() {
         <button
           type="button"
           className="boton group justify-between min-w-[180px]"
-          onClick={() => setComponiendo(true)}
+          onClick={() => {
+            setParaInicial("");
+            setComponiendo(true);
+          }}
         >
           Nuevo correo
           <span className="grid size-7 place-items-center bg-white/12 transition-transform duration-500 ease-[var(--E)] group-hover:translate-x-0.5">
@@ -145,7 +169,7 @@ export default function Correo() {
                   ayuda={
                     busqueda || estado !== "abierto"
                       ? "No hay conversaciones con estos filtros."
-                      : "Los mensajes enviados a contacto@alphaccm.org apareceran aqui."
+                      : "Los mensajes enviados a contacto@, direccion@ o finanzas@ apareceran aqui."
                   }
                 />
               ) : (
@@ -224,6 +248,7 @@ export default function Correo() {
             ) : (
               <Conversacion
                 detalle={detalle}
+                remitentes={configuracion?.remitentes ?? [REMITENTE_PREDETERMINADO]}
                 volver={() => setSeleccionado(null)}
                 eliminado={() => setSeleccionado(null)}
               />
@@ -234,7 +259,12 @@ export default function Correo() {
 
       {componiendo ? (
         <CompositorNuevo
-          cerrar={() => setComponiendo(false)}
+          paraInicial={paraInicial}
+          remitentes={configuracion?.remitentes ?? [REMITENTE_PREDETERMINADO]}
+          cerrar={() => {
+            setComponiendo(false);
+            setParaInicial("");
+          }}
           enviado={(threadId) => {
             setComponiendo(false);
             setEstado("abierto");
@@ -248,10 +278,12 @@ export default function Correo() {
 
 function Conversacion({
   detalle,
+  remitentes,
   volver,
   eliminado,
 }: {
   detalle: DetalleCorreo;
+  remitentes: string[];
   volver: () => void;
   eliminado: () => void;
 }) {
@@ -437,6 +469,10 @@ function Conversacion({
           threadId={hilo._id}
           para={hilo.contactoCorreo}
           asunto={hilo.asunto}
+          remitentes={remitentes}
+          remitenteInicial={
+            [...detalle.mensajes].reverse().find((mensaje) => mensaje.direccion === "saliente")?.de
+          }
           cerrar={() => setRespondiendo(false)}
         />
       ) : null}
@@ -457,15 +493,24 @@ function Responder({
   threadId,
   para,
   asunto,
+  remitentes,
+  remitenteInicial,
   cerrar,
 }: {
   threadId: Id<"mailThreads">;
   para: string;
   asunto: string;
+  remitentes: string[];
+  remitenteInicial?: string;
   cerrar: () => void;
 }) {
   const enviar = useMutation(api.correo.enviar);
   const [texto, setTexto] = useState("");
+  const [remitente, setRemitente] = useState(
+    remitenteInicial && remitentes.includes(remitenteInicial)
+      ? remitenteInicial
+      : remitentes[0] ?? REMITENTE_PREDETERMINADO,
+  );
   const [ocupado, setOcupado] = useState(false);
   const [aviso, setAviso] = useState<{ tono: "error" | "exito"; texto: string } | null>(null);
   const requestId = useRef<string | null>(null);
@@ -475,7 +520,7 @@ function Responder({
     setAviso(null);
     requestId.current ??= crypto.randomUUID();
     try {
-      await enviar({ clientRequestId: requestId.current, threadId, asunto, texto });
+      await enviar({ clientRequestId: requestId.current, threadId, remitente, asunto, texto });
       setTexto("");
       requestId.current = null;
       cerrar();
@@ -497,7 +542,7 @@ function Responder({
         <div className="correo-respuesta-modal-nucleo">
           <div className="flex items-start justify-between gap-6">
             <div className="min-w-0">
-              <p className="cejilla">Desde contacto@alphaccm.org</p>
+              <p className="cejilla">Correo compartido de Alpha</p>
               <h3
                 id={`respuesta-titulo-${threadId}`}
                 className="mt-3 text-[clamp(1.7rem,4vw,2.6rem)] font-semibold tracking-[-.05em] leading-none"
@@ -514,6 +559,21 @@ function Responder({
             >
               ×
             </button>
+          </div>
+          <div className="campo mt-7 max-w-[22rem]">
+            <label htmlFor={`respuesta-remitente-${threadId}`}>Desde</label>
+            <select
+              id={`respuesta-remitente-${threadId}`}
+              className="entrada"
+              value={remitente}
+              onChange={(event) => setRemitente(event.target.value)}
+            >
+              {remitentes.map((correo) => (
+                <option key={correo} value={correo}>
+                  {correo}
+                </option>
+              ))}
+            </select>
           </div>
           <label htmlFor={`respuesta-${threadId}`} className="sr-only">Respuesta</label>
           <textarea
@@ -548,14 +608,19 @@ function Responder({
 }
 
 function CompositorNuevo({
+  paraInicial,
+  remitentes,
   cerrar,
   enviado,
 }: {
+  paraInicial: string;
+  remitentes: string[];
   cerrar: () => void;
   enviado: (threadId: Id<"mailThreads">) => void;
 }) {
   const enviar = useMutation(api.correo.enviar);
-  const [para, setPara] = useState("");
+  const [para, setPara] = useState(paraInicial);
+  const [remitente, setRemitente] = useState(remitentes[0] ?? REMITENTE_PREDETERMINADO);
   const [asunto, setAsunto] = useState("");
   const [texto, setTexto] = useState("");
   const [ocupado, setOcupado] = useState(false);
@@ -570,6 +635,7 @@ function CompositorNuevo({
       const resultado = await enviar({
         clientRequestId: requestId.current,
         para,
+        remitente,
         asunto,
         texto,
       });
@@ -593,7 +659,7 @@ function CompositorNuevo({
         <div className="bg-[var(--color-ground)] p-6 sm:p-9 max-h-[92dvh] overflow-y-auto">
           <div className="flex items-start justify-between gap-6">
             <div>
-              <p className="cejilla">Desde contacto@alphaccm.org</p>
+              <p className="cejilla">Correo compartido de Alpha</p>
               <h2 id="nuevo-correo-titulo" className="mt-3 text-[2rem] sm:text-[2.7rem] font-semibold tracking-[-.055em] leading-none">
                 Nuevo correo
               </h2>
@@ -609,6 +675,21 @@ function CompositorNuevo({
           </div>
 
           <div className="mt-8 grid gap-6">
+            <div className="campo">
+              <label htmlFor="nuevo-remitente">Desde</label>
+              <select
+                id="nuevo-remitente"
+                className="entrada"
+                value={remitente}
+                onChange={(event) => setRemitente(event.target.value)}
+              >
+                {remitentes.map((correo) => (
+                  <option key={correo} value={correo}>
+                    {correo}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="campo">
               <label htmlFor="nuevo-para">Para</label>
               <input
@@ -693,7 +774,7 @@ function ConfirmarEliminacion({
           Eliminar conversacion
         </h3>
         <p id="eliminar-correo-descripcion" className="mt-4 text-[12.5px] font-light leading-[1.75] text-[var(--color-cuerpo)]">
-          Se borraran el hilo "{asunto}", sus mensajes y todos los archivos adjuntos guardados.
+          Se borraran el hilo &quot;{asunto}&quot;, sus mensajes y todos los archivos adjuntos guardados.
         </p>
         <div className="mt-7 flex justify-end gap-2">
           <button type="button" className="boton boton-linea" disabled={ocupado} onClick={cancelar}>

@@ -225,6 +225,7 @@ function Ficha({
             <Dato titulo="Que quiere aportar" valor={registro.aporte ?? "—"} />
           </>
         )}
+        {puedeEditar ? <AccionesContacto registro={registro} /> : null}
       </dl>
 
       <div>
@@ -283,6 +284,78 @@ function Ficha({
         )}
       </div>
     </div>
+  );
+}
+
+function AccionesContacto({ registro }: { registro: Doc<"registrations"> }) {
+  const telefono = registro.telefono?.replace(/\D/g, "") ?? "";
+  const numero = telefono.length === 10 ? `52${telefono}` : telefono;
+  const mensaje = `¡Hola, ${registro.nombre}! Te damos la bienvenida a Alpha. Gracias por registrarte. Al equipo de Alpha le gustaría tener una entrevista contigo para conocerte mejor.`;
+  const clase =
+    "inline-flex min-h-9 items-center gap-2 border-b border-[var(--hair)] px-0.5 text-[10px] font-medium uppercase tracking-[.12em] text-[var(--color-n700)] transition-colors duration-300 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]";
+
+  return (
+    <div className="mt-1 flex flex-wrap gap-x-5 gap-y-2 border-t border-[var(--hair)] pt-4">
+      {numero ? (
+        <a
+          className={clase}
+          href={`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`Escribir a ${registro.nombre} por WhatsApp`}
+        >
+          <IconoWhatsapp />
+          WhatsApp
+        </a>
+      ) : (
+        <span
+          className={`${clase} cursor-not-allowed opacity-35 hover:border-[var(--hair)] hover:text-[var(--color-n700)]`}
+          aria-disabled="true"
+          title="Sin número registrado"
+        >
+          <IconoWhatsapp />
+          WhatsApp
+        </span>
+      )}
+      <a
+        className={clase}
+        href={`/dashboard/correo?para=${encodeURIComponent(registro.correo)}`}
+        aria-label={`Escribir a ${registro.nombre} por correo`}
+      >
+        <IconoCorreo />
+        Correo
+      </a>
+    </div>
+  );
+}
+
+function IconoWhatsapp() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      className="size-[15px] fill-none stroke-current stroke-[1.35]"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M16.3 9.7a6.3 6.3 0 0 1-9.4 5.5L3.5 16l.9-3.2A6.3 6.3 0 1 1 16.3 9.7Z" />
+      <path d="M7.1 6.7c.4 2.9 1.8 4.3 4.7 5 .4.1 1-.7 1.3-1.1M7.1 6.7c.2-.4.5-.8.8-.8M7.1 6.7c-.3.3-.5.7-.5 1.1" />
+    </svg>
+  );
+}
+
+function IconoCorreo() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      className="size-[15px] fill-none stroke-current stroke-[1.35]"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 5.25h14v9.5H3z" />
+      <path d="m3.5 6 6.5 5 6.5-5" />
+    </svg>
   );
 }
 

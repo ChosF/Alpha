@@ -18,7 +18,7 @@ Ciudad de Mexico. Next.js + Convex + TypeScript, para desplegar en Vercel.
 POST /api/registro     -> valida, limita y llama a Convex con un secreto de servidor
 GET  /api/registro/token -> token firmado que la ventana de registro adjunta al enviar
 /dashboard/*           -> dashboard interno, exige sesion
-/dashboard/correo      -> bandeja compartida y compositor de contacto@alphaccm.org
+/dashboard/correo      -> bandeja compartida y compositor con remitentes autorizados de alphaccm.org
 POST *.convex.site/resend-webhook -> correo entrante y estados de entrega de Resend
 ```
 

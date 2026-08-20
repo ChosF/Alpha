@@ -136,7 +136,7 @@ export default defineSchema({
     conteo: v.number(),
   }).index("by_clave", ["clave"]),
 
-  /** Conversaciones que entran y salen por contacto@alphaccm.org. */
+  /** Conversaciones que entran y salen por las direcciones compartidas de Alpha. */
   mailThreads: defineTable({
     asunto: v.string(),
     asuntoClave: v.string(),
