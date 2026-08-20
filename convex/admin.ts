@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
+import { enviarInvitacionPorCorreo } from "./correo";
 import { limpiarTexto, normalizarCorreo, sha256Hex } from "./lib/texto";
 import { ESTADOS_PROGRAMA, PILARES } from "./lib/validadores";
 
@@ -18,12 +19,17 @@ import { ESTADOS_PROGRAMA, PILARES } from "./lib/validadores";
  */
 export const sembrarAdmin = internalMutation({
   args: { correo: v.string(), nombre: v.string(), sitio: v.optional(v.string()) },
-  returns: v.object({ enlace: v.string(), expiraEn: v.number() }),
+  returns: v.object({ enlace: v.string(), expiraEn: v.number(), correoEnviado: v.boolean() }),
   handler: async (ctx, args) => {
     const correo = normalizarCorreo(args.correo);
+    const nombre = limpiarTexto(args.nombre, 80);
     const existentes = await ctx.db.query("users").collect();
-    if (existentes.some((u) => u.email === correo)) {
+    const cuentaExistente = existentes.find((u) => u.email === correo);
+    if (cuentaExistente?.activo) {
       throw new Error("Ese correo ya tiene cuenta.");
+    }
+    if (cuentaExistente !== undefined && cuentaExistente.rol !== "admin") {
+      throw new Error("Ese correo ya esta reservado para otro rol.");
     }
 
     const bytes = new Uint8Array(32);
@@ -38,25 +44,40 @@ export const sembrarAdmin = internalMutation({
     // La primera invitacion no tiene autor: se apunta a si misma una vez que
     // exista el usuario, pero el campo pide un id, asi que se usa el de un
     // administrador existente si lo hay.
-    const algunAdmin = existentes.find((u) => u.rol === "admin");
+    const algunAdmin = cuentaExistente ?? existentes.find((u) => u.rol === "admin");
     const creadaPor = algunAdmin?._id;
     if (creadaPor === undefined && existentes.length > 0) {
       throw new Error("Ya hay cuentas pero ningun administrador: revisa la base.");
     }
 
     const semilla =
+      cuentaExistente?._id ??
       creadaPor ??
       (await ctx.db.insert("users", {
         email: correo,
-        name: limpiarTexto(args.nombre, 80),
+        name: nombre,
         rol: "admin",
         activo: false, // se activa cuando complete el alta con su contrasena
         creadoEn: ahora,
       }));
 
+    if (cuentaExistente !== undefined) {
+      await ctx.db.patch(cuentaExistente._id, { name: nombre });
+    }
+
+    const anteriores = await ctx.db
+      .query("invites")
+      .withIndex("by_correo", (q) => q.eq("correo", correo))
+      .collect();
+    for (const anterior of anteriores) {
+      if (anterior.usadaEn === undefined && anterior.revocadaEn === undefined) {
+        await ctx.db.patch(anterior._id, { revocadaEn: ahora });
+      }
+    }
+
     await ctx.db.insert("invites", {
       correo,
-      nombre: limpiarTexto(args.nombre, 80),
+      nombre,
       rol: "admin",
       tokenHash: await sha256Hex(token),
       expiraEn,
@@ -64,8 +85,54 @@ export const sembrarAdmin = internalMutation({
       creadaEn: ahora,
     });
 
+    const actor = await ctx.db.get(semilla);
+    if (actor === null) throw new Error("No se pudo preparar el remitente de la invitacion.");
+
+    const correoEnviado = await enviarInvitacionPorCorreo(ctx, {
+      actor,
+      correo,
+      nombre,
+      token,
+      expiraEn,
+    });
+
     const sitio = (args.sitio ?? "http://localhost:3000").replace(/\/+$/, "");
-    return { enlace: `${sitio}/dashboard/invitacion/${token}`, expiraEn };
+    return { enlace: `${sitio}/dashboard/invitacion/${token}`, expiraEn, correoEnviado };
+  },
+});
+
+/** Reenvia una invitacion inicial cuyo token aun conserva el administrador. */
+export const reenviarInvitacionInicial = internalMutation({
+  args: { token: v.string() },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    if (!/^[0-9a-f]{64}$/.test(args.token)) return false;
+
+    const tokenHash = await sha256Hex(args.token);
+    const invitacion = await ctx.db
+      .query("invites")
+      .withIndex("by_tokenHash", (q) => q.eq("tokenHash", tokenHash))
+      .unique();
+
+    if (
+      invitacion === null ||
+      invitacion.usadaEn !== undefined ||
+      invitacion.revocadaEn !== undefined ||
+      invitacion.expiraEn < Date.now()
+    ) {
+      return false;
+    }
+
+    const actor = await ctx.db.get(invitacion.creadaPor);
+    if (actor === null) throw new Error("No se encontro al remitente de la invitacion.");
+
+    return await enviarInvitacionPorCorreo(ctx, {
+      actor,
+      correo: invitacion.correo,
+      nombre: invitacion.nombre,
+      token: args.token,
+      expiraEn: invitacion.expiraEn,
+    });
   },
 });
 

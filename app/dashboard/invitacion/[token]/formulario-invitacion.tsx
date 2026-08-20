@@ -1,0 +1,160 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthActions } from "@convex-dev/auth/react";
+import type { Rol } from "@/convex/lib/validadores";
+import { ETIQUETAS } from "@/convex/lib/validadores";
+import { validarContrasena, LARGO_MINIMO } from "@/convex/lib/contrasena";
+import { Aviso } from "@/components/panel/piezas";
+import { MarcaAlpha } from "@/components/marca-alpha";
+
+type InvitacionComprobada = {
+  correo: string;
+  nombre: string;
+  rol: Rol;
+};
+
+export function FormularioInvitacion({
+  token,
+  invitacion,
+  errorConsulta = false,
+}: {
+  token: string;
+  invitacion: InvitacionComprobada | null;
+  errorConsulta?: boolean;
+}) {
+  const { signIn } = useAuthActions();
+  const router = useRouter();
+  const [contrasena, setContrasena] = useState("");
+  const [repetida, setRepetida] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [ocupado, setOcupado] = useState(false);
+
+  const problema = contrasena === "" ? null : validarContrasena(contrasena);
+
+  const crear = async (evento: React.FormEvent) => {
+    evento.preventDefault();
+    if (invitacion === null) return;
+
+    if (problema !== null) {
+      setError(problema);
+      return;
+    }
+    if (contrasena !== repetida) {
+      setError("Las dos contrasenas no coinciden.");
+      return;
+    }
+
+    setOcupado(true);
+    setError(null);
+    try {
+      await signIn("password", {
+        email: invitacion.correo,
+        password: contrasena,
+        nombre: invitacion.nombre,
+        invitacion: token,
+        flow: "signUp",
+      });
+      router.push("/dashboard");
+    } catch {
+      setError("No se pudo crear la cuenta. La invitacion pudo caducar o ya se uso.");
+      setOcupado(false);
+    }
+  };
+
+  return (
+    <div className="min-h-dvh grid place-items-center px-6 py-16">
+      <div className="w-full max-w-[420px]">
+        <div className="flex items-center gap-4">
+          <MarcaAlpha className="h-auto w-[132px]" tono="navy" />
+          <span className="ml-2.5 text-[10px] tracking-[.24em] uppercase text-[var(--color-n500)]">
+            Dashboard
+          </span>
+        </div>
+
+        {errorConsulta ? (
+          <div className="mt-12">
+            <h1 className="text-[22px] font-bold tracking-[-.03em]">
+              No pudimos comprobar la invitacion
+            </h1>
+            <p className="mt-4 text-[13px] font-light leading-[1.75] text-[var(--color-cuerpo)]">
+              Recarga la pagina para intentarlo de nuevo. Si el problema continua, pide a un
+              administrador que revise el enlace.
+            </p>
+            <button className="boton mt-8" type="button" onClick={() => window.location.reload()}>
+              Reintentar
+            </button>
+          </div>
+        ) : invitacion === null ? (
+          <div className="mt-12">
+            <h1 className="text-[22px] font-bold tracking-[-.03em]">Esta invitacion ya no sirve</h1>
+            <p className="mt-4 text-[13px] font-light leading-[1.75] text-[var(--color-cuerpo)]">
+              Pudo caducar, ya se uso o fue revocada. Pide a un administrador que te envie una
+              nueva.
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={(e) => void crear(e)} className="mt-12">
+            <h1 className="text-[22px] font-bold tracking-[-.03em]">
+              Hola, {invitacion.nombre || "bienvenida"}
+            </h1>
+            <p className="mt-4 text-[13px] font-light leading-[1.75] text-[var(--color-cuerpo)]">
+              Vas a entrar como{" "}
+              <span className="text-[var(--color-ink)] font-medium">
+                {ETIQUETAS[invitacion.rol]}
+              </span>{" "}
+              con el correo <span className="cifra text-[12px]">{invitacion.correo}</span>. Elige
+              una contrasena para terminar.
+            </p>
+
+            <div className="mt-9 grid gap-7">
+              <div className="campo">
+                <label htmlFor="c1">Contrasena</label>
+                <input
+                  id="c1"
+                  className="entrada"
+                  type="password"
+                  value={contrasena}
+                  onChange={(e) => setContrasena(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                />
+                <p className="mt-2 text-[11px] leading-[1.6] text-[var(--color-n600)]">
+                  {problema ??
+                    `Minimo ${LARGO_MINIMO} caracteres, combinando mayusculas, minusculas, numeros o simbolos.`}
+                </p>
+              </div>
+              <div className="campo">
+                <label htmlFor="c2">Repitela</label>
+                <input
+                  id="c2"
+                  className="entrada"
+                  type="password"
+                  value={repetida}
+                  onChange={(e) => setRepetida(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="boton mt-9 w-full justify-center"
+              disabled={ocupado || problema !== null || contrasena === ""}
+            >
+              {ocupado ? "Creando cuenta..." : "Crear mi cuenta"}
+            </button>
+
+            {error ? (
+              <div className="mt-5">
+                <Aviso tono="error">{error}</Aviso>
+              </div>
+            ) : null}
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
