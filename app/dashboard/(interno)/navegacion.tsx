@@ -45,7 +45,7 @@ export function Navegacion() {
         </p>
       </div>
 
-      <ul className="panel-nav-lista flex min-h-0 flex-1 gap-1 overflow-x-auto px-3 py-3 lg:flex-col lg:overflow-x-hidden lg:overflow-y-auto lg:px-4 lg:py-5">
+      <ul className="panel-nav-lista flex min-h-0 flex-1 gap-1 overflow-x-auto px-3 py-3 lg:flex-col lg:overflow-hidden lg:px-4 lg:py-5">
         {visibles.map((a, indice) => {
           const activo = a.href === "/dashboard" ? ruta === "/dashboard" : ruta.startsWith(a.href);
           return (
