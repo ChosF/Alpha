@@ -240,17 +240,6 @@ body {
   box-shadow: 20px 0 56px -48px rgba(13, 33, 64, 0.85);
 }
 
-.panel-nav-fondo {
-  position: fixed;
-  inset: 0 auto 0 0;
-  z-index: 0;
-  width: 248px;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 8% 14%, rgba(42, 111, 232, 0.2), transparent 30%),
-    linear-gradient(160deg, #0d2140 0%, #0a1b35 100%);
-}
-
 .panel-nav::before {
   content: "";
   position: absolute;
