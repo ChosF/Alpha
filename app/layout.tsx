@@ -23,6 +23,7 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Dashboard - Alpha",
   description: "Dashboard interno de la Sociedad Estudiantil Alpha.",
+  icons: { icon: "/alpha-mark.png" },
   robots: { index: false, follow: false },
 };
 
