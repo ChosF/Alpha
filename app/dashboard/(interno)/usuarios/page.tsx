@@ -21,8 +21,8 @@ export default function Usuarios() {
     <>
       <Titulo cejilla="Mesa directiva">Usuarios</Titulo>
 
-      <div className="grid gap-4 lg:grid-cols-12">
-        <div className="lg:col-span-7">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-12">
+        <div className="min-w-0 lg:col-span-7">
           <Bandeja>
             {usuarios === undefined ? (
               <Cargando que="las cuentas" />
@@ -60,7 +60,7 @@ export default function Usuarios() {
           </div>
         </div>
 
-        <div className="lg:col-span-5">
+        <div className="min-w-0 lg:col-span-5">
           <Bandeja>
             <Invitar />
           </Bandeja>
@@ -111,10 +111,10 @@ function Fila({ usuario }: { usuario: UsuarioFila }) {
         {error ? <Aviso tono="error">{error}</Aviso> : null}
       </div>
 
-      <div className="flex items-center gap-3 justify-self-start sm:justify-self-end">
+      <div className="flex w-full min-w-0 flex-wrap items-center gap-3 justify-self-start sm:w-auto sm:flex-nowrap sm:justify-self-end">
         <select
           aria-label={`Rol de ${usuario.correo}`}
-          className="entrada text-[12px] w-auto"
+          className="entrada min-w-0 flex-1 text-[12px] sm:w-auto sm:flex-none"
           value={usuario.rol}
           onChange={(e) =>
             void intentar(() => cambiarRol({ id: usuario._id, rol: e.target.value as Rol }))
@@ -128,7 +128,7 @@ function Fila({ usuario }: { usuario: UsuarioFila }) {
         </select>
         <button
           type="button"
-          className={`boton ${usuario.activo ? "boton-peligro" : "boton-linea"} text-[11px] px-3 py-2`}
+          className={`boton shrink-0 ${usuario.activo ? "boton-peligro" : "boton-linea"} px-3 py-2 text-[11px]`}
           onClick={() =>
             void intentar(() => cambiarAcceso({ id: usuario._id, activo: !usuario.activo }))
           }
@@ -147,16 +147,18 @@ function Pendiente({
 }) {
   const revocar = useMutation(api.usuarios.revocarInvitacion);
   return (
-    <li className="fila py-3 flex items-center justify-between gap-4">
+    <li className="fila grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-3">
       <div className="min-w-0">
         <p className="text-[13px] truncate">{invitacion.nombre || invitacion.correo}</p>
-        <p className="cifra text-[11px] text-[var(--color-n600)] truncate">
-          {invitacion.correo} · {ETIQUETAS[invitacion.rol]} · vence {fecha(invitacion.expiraEn)}
-        </p>
+        <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px] text-[var(--color-n600)]">
+          <span className="cifra min-w-0 max-w-full truncate">{invitacion.correo}</span>
+          <span>{ETIQUETAS[invitacion.rol]}</span>
+          <span className="cifra">Vence {fecha(invitacion.expiraEn)}</span>
+        </div>
       </div>
       <button
         type="button"
-        className="text-[11px] tracking-[.12em] uppercase text-[var(--color-baja)]"
+        className="min-h-11 shrink-0 px-1 text-[10px] tracking-[.1em] uppercase text-[var(--color-baja)]"
         onClick={() => void revocar({ id: invitacion._id })}
       >
         Revocar
@@ -196,9 +198,9 @@ function Invitar() {
   };
 
   return (
-    <div className="p-7">
+    <div className="min-w-0 overflow-hidden p-5 sm:p-7">
       <p className="rotulo">Invitar a alguien</p>
-      <p className="mt-3 text-[12.5px] font-light leading-[1.7] text-[var(--color-cuerpo)]">
+      <p className="mt-3 break-words text-[12.5px] font-light leading-[1.7] text-[var(--color-cuerpo)]">
         El acceso dura 7 dias y funciona una sola vez. Con el correo configurado, Alpha lo envia
         desde auto@alphaccm.org. El enlace tambien aparece aqui como respaldo.
       </p>
@@ -253,7 +255,7 @@ function Invitar() {
 
       <button
         type="button"
-        className="boton mt-7"
+        className="boton mt-7 w-full sm:w-auto"
         onClick={() => void enviar()}
         disabled={ocupado || correo === "" || nombre === ""}
       >

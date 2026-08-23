@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "convex/react";
@@ -31,6 +31,11 @@ export function Navegacion() {
   const yo = useQuery(api.usuarios.yo, {});
   const { signOut } = useAuthActions();
   const [cuentaAbierta, setCuentaAbierta] = useState(false);
+  const [cuentaCerrando, setCuentaCerrando] = useState(false);
+  const temporizadorCuenta = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tabsMoviles = useRef<HTMLUListElement>(null);
+  const tabsInicializadas = useRef(false);
+  const rutaAnterior = useRef(ruta);
 
   const visibles = APARTADOS.filter((a) =>
     yo ? NIVEL[yo.rol] >= NIVEL[a.minimo] : a.minimo === "lector",
@@ -38,6 +43,75 @@ export function Navegacion() {
   const apartadoActual =
     visibles.find((a) => (a.href === "/dashboard" ? ruta === "/dashboard" : ruta.startsWith(a.href))) ??
     visibles[0];
+
+  const cerrarCuenta = useCallback(() => {
+    if (!cuentaAbierta) return;
+    setCuentaAbierta(false);
+    setCuentaCerrando(true);
+    if (temporizadorCuenta.current) clearTimeout(temporizadorCuenta.current);
+    temporizadorCuenta.current = setTimeout(
+      () => setCuentaCerrando(false),
+      duracionCss("--dropdown-close-dur", 150),
+    );
+  }, [cuentaAbierta]);
+
+  const alternarCuenta = () => {
+    if (cuentaAbierta) {
+      cerrarCuenta();
+      return;
+    }
+    if (temporizadorCuenta.current) clearTimeout(temporizadorCuenta.current);
+    setCuentaCerrando(false);
+    setCuentaAbierta(true);
+  };
+
+  useEffect(() => {
+    const cerrarConEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") cerrarCuenta();
+    };
+    window.addEventListener("keydown", cerrarConEscape);
+    return () => window.removeEventListener("keydown", cerrarConEscape);
+  }, [cerrarCuenta]);
+
+  useEffect(
+    () => () => {
+      if (temporizadorCuenta.current) clearTimeout(temporizadorCuenta.current);
+    },
+    [],
+  );
+
+  useLayoutEffect(() => {
+    const barra = tabsMoviles.current;
+    const indicador = barra?.querySelector<HTMLElement>(".panel-mobile-tabs-pill");
+    const tabActiva = barra?.querySelector<HTMLElement>(".panel-mobile-tab-activo");
+    if (!barra || !indicador || !tabActiva) return;
+
+    const moverIndicador = (animar: boolean) => {
+      const transicion = indicador.style.transition;
+      const cajaBarra = barra.getBoundingClientRect();
+      const cajaTab = tabActiva.getBoundingClientRect();
+      if (!animar) indicador.style.transition = "none";
+      indicador.style.width = `${cajaTab.width}px`;
+      indicador.style.transform = `translateX(${cajaTab.left - cajaBarra.left}px)`;
+      if (!animar) {
+        void indicador.offsetWidth;
+        indicador.style.transition = transicion;
+      }
+    };
+
+    const cuadro = requestAnimationFrame(() => {
+      const cambioRuta = tabsInicializadas.current && rutaAnterior.current !== ruta;
+      moverIndicador(cambioRuta);
+      tabsInicializadas.current = true;
+      rutaAnterior.current = ruta;
+    });
+    const reajustar = () => moverIndicador(false);
+    window.addEventListener("resize", reajustar);
+    return () => {
+      cancelAnimationFrame(cuadro);
+      window.removeEventListener("resize", reajustar);
+    };
+  }, [ruta, visibles.length]);
 
   return (
     <>
@@ -119,15 +193,20 @@ export function Navegacion() {
             aria-label={cuentaAbierta ? "Cerrar menú de cuenta" : "Abrir menú de cuenta"}
             aria-expanded={cuentaAbierta}
             aria-controls="panel-mobile-cuenta"
-            onClick={() => setCuentaAbierta((abierta) => !abierta)}
+            onClick={alternarCuenta}
             className={`panel-mobile-avatar ${cuentaAbierta ? "panel-mobile-avatar-activo" : ""}`}
           >
             {(yo?.nombre || yo?.correo || "A").charAt(0).toUpperCase()}
           </button>
         </div>
 
-        {cuentaAbierta ? (
-          <div id="panel-mobile-cuenta" className="panel-mobile-cuenta">
+        {cuentaAbierta || cuentaCerrando ? (
+          <div
+            id="panel-mobile-cuenta"
+            data-origin="top-right"
+            aria-hidden={cuentaCerrando || undefined}
+            className={`t-dropdown panel-mobile-cuenta ${cuentaAbierta ? "is-open" : ""} ${cuentaCerrando ? "is-closing" : ""}`}
+          >
             <div className="min-w-0">
               <p className="truncate text-[13px] font-semibold text-[var(--color-ink)]">
                 {yo ? yo.nombre || yo.correo : "Sin sesión"}
@@ -140,7 +219,10 @@ export function Navegacion() {
             </div>
             <button
               type="button"
-              onClick={() => void signOut()}
+              onClick={() => {
+                cerrarCuenta();
+                void signOut();
+              }}
               className="panel-mobile-salir"
             >
               Cerrar sesión
@@ -152,9 +234,12 @@ export function Navegacion() {
 
       <nav className="panel-mobile-tabs lg:hidden" aria-label="Secciones del panel">
         <ul
-          className="panel-mobile-tabs-core"
+          ref={tabsMoviles}
+          data-items={visibles.length}
+          className="t-tabs panel-mobile-tabs-core"
           style={{ gridTemplateColumns: `repeat(${visibles.length}, minmax(0, 1fr))` }}
         >
+          <li className="t-tabs-pill panel-mobile-tabs-pill" aria-hidden="true" />
           {visibles.map((a) => {
             const activo = a.href === "/dashboard" ? ruta === "/dashboard" : ruta.startsWith(a.href);
             return (
@@ -162,8 +247,8 @@ export function Navegacion() {
                 <Link
                   href={a.href}
                   aria-current={activo ? "page" : undefined}
-                  onClick={() => setCuentaAbierta(false)}
-                  className={`panel-mobile-tab ${activo ? "panel-mobile-tab-activo" : ""}`}
+                  onClick={cerrarCuenta}
+                  className={`t-tab panel-mobile-tab ${activo ? "panel-mobile-tab-activo" : ""}`}
                 >
                   <IconoApartado nombre={a.icono} />
                   <span>{a.texto}</span>
@@ -175,6 +260,13 @@ export function Navegacion() {
       </nav>
     </>
   );
+}
+
+function duracionCss(variable: string, respaldo: number) {
+  const valor = getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
+  const numero = Number.parseFloat(valor);
+  if (!Number.isFinite(numero)) return respaldo;
+  return valor.endsWith("s") && !valor.endsWith("ms") ? numero * 1000 : numero;
 }
 
 function IconoApartado({ nombre }: { nombre: (typeof APARTADOS)[number]["icono"] }) {

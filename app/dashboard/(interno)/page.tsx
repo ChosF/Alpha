@@ -147,56 +147,59 @@ export default function Inicio() {
         {/* Bitacora */}
         <Bandeja className="lg:col-span-12">
           <div className="p-5 sm:p-8">
-            <div className="flex items-center justify-between gap-4">
-              <p className="rotulo">Actividad del equipo</p>
+            <div className="t-acc panel-actividad" data-open={actividadVisible}>
               <button
                 type="button"
                 aria-expanded={actividadVisible}
                 aria-controls="actividad-lista"
                 onClick={() => setActividadVisible((visible) => !visible)}
-                className="group flex min-h-9 items-center gap-2 px-2 text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--color-n600)] transition-colors hover:text-[var(--color-accent)]"
+                className="t-acc-head panel-actividad-cabecera group"
               >
-                {actividadVisible ? "Ocultar" : "Mostrar"}
-                <span
-                  aria-hidden="true"
-                  className={`block size-2.5 border-b border-r border-current transition-transform duration-300 ${
-                    actividadVisible ? "rotate-[225deg] translate-y-0.5" : "rotate-45 -translate-y-0.5"
-                  }`}
-                />
+                <span className="rotulo">Actividad del equipo</span>
+                <span className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--color-n600)] transition-colors group-hover:text-[var(--color-accent)]">
+                  {actividadVisible ? "Ocultar" : "Mostrar"}
+                  <svg
+                    viewBox="0 0 16 16"
+                    aria-hidden="true"
+                    className="t-acc-chevron size-4 fill-none stroke-current stroke-[1.5]"
+                  >
+                    <path d="m4 6 4 4 4-4" />
+                  </svg>
+                </span>
               </button>
-            </div>
 
-            {actividadVisible ? (
-              <div id="actividad-lista">
-                {actividad === undefined ? (
-                  <p className="mt-5 text-[12px] text-[var(--color-n600)]">Cargando…</p>
-                ) : actividad.length === 0 ? (
-                  <p className="mt-5 text-[12px] text-[var(--color-n600)]">
-                    Todavia no hay movimientos registrados.
-                  </p>
-                ) : (
-                  <ul className="correo-scroll mt-5 max-h-[445px] overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable]">
-                    {actividad.map((linea) => (
-                      <li
-                        key={linea._id}
-                        className="fila grid grid-cols-1 sm:grid-cols-[130px_1fr_auto] gap-x-5 gap-y-1 py-3 items-baseline"
-                      >
-                        <span className="cifra text-[11px] text-[var(--color-n500)]">
-                          {fechaHora(linea.creadoEn)}
-                        </span>
-                        <span className="text-[12.5px]">
-                          <span className="text-[var(--color-n700)]">{linea.actorCorreo}</span>{" "}
-                          {linea.accion}
-                          {linea.detalle ? (
-                            <span className="text-[var(--color-n600)]"> · {linea.detalle}</span>
-                          ) : null}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+              <div className="t-acc-panel">
+                <div id="actividad-lista" className="t-acc-panel-inner panel-actividad-contenido">
+                  {actividad === undefined ? (
+                    <p className="mt-5 text-[12px] text-[var(--color-n600)]">Cargando…</p>
+                  ) : actividad.length === 0 ? (
+                    <p className="mt-5 text-[12px] text-[var(--color-n600)]">
+                      Todavia no hay movimientos registrados.
+                    </p>
+                  ) : (
+                    <ul className="correo-scroll mt-5 max-h-[445px] overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable]">
+                      {actividad.map((linea) => (
+                        <li
+                          key={linea._id}
+                          className="fila grid grid-cols-1 sm:grid-cols-[130px_1fr_auto] gap-x-5 gap-y-1 py-3 items-baseline"
+                        >
+                          <span className="cifra text-[11px] text-[var(--color-n500)]">
+                            {fechaHora(linea.creadoEn)}
+                          </span>
+                          <span className="text-[12.5px]">
+                            <span className="text-[var(--color-n700)]">{linea.actorCorreo}</span>{" "}
+                            {linea.accion}
+                            {linea.detalle ? (
+                              <span className="text-[var(--color-n600)]"> · {linea.detalle}</span>
+                            ) : null}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
-            ) : null}
+            </div>
           </div>
         </Bandeja>
       </div>

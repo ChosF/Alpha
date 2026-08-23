@@ -119,8 +119,11 @@ export default function Registros() {
                     </span>
                     <span className="min-w-0">
                       <span className="block text-[14px] font-medium truncate">{r.nombre}</span>
-                      <span className="block cifra text-[11px] text-[var(--color-n600)] truncate">
-                        {r.correo}
+                      <span className="mt-1 flex min-w-0 items-center gap-2">
+                        <span className="registro-tipo-movil sm:hidden">{ETIQUETAS[r.tipo]}</span>
+                        <span className="cifra min-w-0 truncate text-[11px] text-[var(--color-n600)]">
+                          {r.correo}
+                        </span>
                       </span>
                     </span>
                     <span className="hidden sm:block text-[12px] text-[var(--color-n700)] truncate">
