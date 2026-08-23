@@ -29,12 +29,12 @@ export default function Programa() {
 
   return (
     <>
-      <div className="flex flex-wrap items-end justify-between gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-0 sm:gap-6">
         <Titulo cejilla="Plan de trabajo">Programa</Titulo>
         {puedeEditar ? (
           <button
             type="button"
-            className="boton mb-8"
+            className="boton mb-6 w-full sm:mb-8 sm:w-auto"
             onClick={() => setEditando(editando === "nuevo" ? null : "nuevo")}
           >
             {editando === "nuevo" ? "Cancelar" : "Agregar programa"}

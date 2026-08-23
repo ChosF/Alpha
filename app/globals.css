@@ -62,6 +62,14 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+a,
+button,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
 ::selection {
   background: #d8e6ff;
   color: var(--color-ink);
@@ -241,6 +249,10 @@ body {
 }
 
 @media (min-width: 1024px) {
+  .panel-nav {
+    position: fixed;
+  }
+
   .panel-main {
     scrollbar-gutter: stable;
   }
@@ -327,6 +339,234 @@ body {
 
 .panel-nav-salir:hover {
   transform: translateX(2px);
+}
+
+/*
+ * Mobile app shell. La barra superior conserva la marca y el contexto; las
+ * secciones viven abajo, dentro de la zona natural del pulgar. El escritorio
+ * mantiene el riel fijo y su propietario de scroll sin cambios.
+ */
+@keyframes panel-mobile-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes panel-cuenta-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.panel-mobile-header,
+.panel-mobile-tabs {
+  font-family: var(--font-nav);
+}
+
+.panel-mobile-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: max(10px, env(safe-area-inset-top)) 12px 10px;
+  background: rgba(242, 244, 247, 0.9);
+  box-shadow: 0 16px 40px -34px rgba(13, 33, 64, 0.72);
+  backdrop-filter: blur(16px) saturate(145%);
+}
+
+.panel-mobile-header-core {
+  display: grid;
+  min-height: 46px;
+  grid-template-columns: minmax(78px, 1fr) auto minmax(78px, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-mobile-logo {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.panel-mobile-contexto {
+  display: grid;
+  min-width: 0;
+  justify-items: center;
+  line-height: 1;
+}
+
+.panel-mobile-contexto span {
+  color: var(--color-n600);
+  font-size: 7.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.panel-mobile-contexto strong {
+  margin-top: 5px;
+  color: var(--color-ink);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.panel-mobile-avatar {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  justify-self: end;
+  place-items: center;
+  background: var(--color-ink);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 12px 26px -19px rgba(13, 33, 64, 0.8);
+  color: white;
+  font: 600 11px/1 var(--font-nav);
+  touch-action: manipulation;
+  transition:
+    background 0.48s var(--E),
+    transform 0.48s var(--E);
+}
+
+.panel-mobile-avatar:active {
+  transform: scale(0.94);
+}
+
+.panel-mobile-avatar-activo {
+  background: var(--color-accent);
+}
+
+.panel-mobile-cuenta {
+  position: absolute;
+  top: calc(100% + 1px);
+  right: 12px;
+  width: min(330px, calc(100vw - 24px));
+  padding: 18px;
+  background: var(--color-ground);
+  box-shadow:
+    0 0 0 5px var(--color-surface),
+    inset 0 0 0 1px var(--hair-2),
+    0 34px 72px -38px rgba(13, 33, 64, 0.64);
+  animation: panel-cuenta-entrada 0.48s var(--E) both;
+}
+
+.panel-mobile-salir {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding: 0 13px;
+  background: var(--color-ink);
+  color: white;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  transition:
+    background 0.48s var(--E),
+    transform 0.48s var(--E);
+}
+
+.panel-mobile-salir:active {
+  background: var(--color-accent);
+  transform: scale(0.985);
+}
+
+.panel-mobile-tabs {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  padding: 8px 10px max(8px, env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+
+.panel-mobile-tabs-core {
+  display: grid;
+  width: min(100%, 520px);
+  margin-inline: auto;
+  padding: 5px;
+  background: rgba(230, 234, 240, 0.9);
+  box-shadow:
+    inset 0 0 0 1px rgba(13, 33, 64, 0.07),
+    0 22px 54px -27px rgba(13, 33, 64, 0.62);
+  backdrop-filter: blur(16px) saturate(145%);
+  pointer-events: auto;
+}
+
+.panel-mobile-tab {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 57px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: var(--color-n700);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1;
+  touch-action: manipulation;
+  transition:
+    color 0.52s var(--E),
+    background 0.52s var(--E),
+    transform 0.52s var(--E);
+}
+
+.panel-mobile-tab::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 18px;
+  height: 2px;
+  background: var(--color-accent-alto);
+  opacity: 0;
+  transform: translateX(-50%) scaleX(0.35);
+  transition:
+    opacity 0.52s var(--E),
+    transform 0.52s var(--E);
+}
+
+.panel-mobile-tab svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.52s var(--E);
+}
+
+.panel-mobile-tab:active {
+  transform: scale(0.96);
+}
+
+.panel-mobile-tab-activo {
+  background: var(--color-ink);
+  color: white;
+}
+
+.panel-mobile-tab-activo::before {
+  opacity: 1;
+  transform: translateX(-50%) scaleX(1);
+}
+
+.panel-mobile-tab-activo svg {
+  color: #afcfff;
+  transform: translateY(-1px);
 }
 
 @keyframes correo-entrada {
@@ -611,23 +851,68 @@ body {
 }
 
 @media (max-width: 1023px) {
-  .panel-nav-cuenta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 18px;
+  .panel-shell {
+    overscroll-behavior-y: none;
+    background:
+      linear-gradient(90deg, transparent calc(25% - 1px), var(--hair-2) 25%, transparent calc(25% + 1px)),
+      var(--color-ground);
+    background-size: 100% 100%;
   }
 
-  .panel-nav-salir {
-    width: auto;
-    margin-top: 0;
-    gap: 12px;
+  .panel-main > * {
+    animation: panel-mobile-entrada 0.68s var(--E) both;
+  }
+
+  .panel-main > :nth-child(2) {
+    animation-delay: 0.06s;
+  }
+
+  .correo-panel {
+    height: clamp(460px, calc(100dvh - 236px), 720px);
   }
 }
 
 @media (max-width: 767px) {
-  .panel-nav-cuenta {
-    padding-block: 13px;
+  body {
+    min-height: 100dvh;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .panel-main .bandeja {
+    padding: 5px;
+  }
+
+  .panel-main .boton {
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .panel-main .rotulo {
+    letter-spacing: 0.2em;
+  }
+
+  .panel-main .cejilla {
+    font-size: 8.5px;
+    letter-spacing: 0.23em;
+  }
+
+  .panel-main .fila:hover,
+  .correo-fila:hover {
+    background: transparent;
+    transform: none;
+  }
+
+  .entrada {
+    font-size: 16px;
+  }
+
+  .correo-workspace {
+    gap: 10px;
+  }
+
+  .correo-panel {
+    height: max(420px, calc(100dvh - 230px));
   }
 
   .correo-mensaje {
@@ -641,5 +926,40 @@ body {
   .correo-mensaje-cuerpo,
   .correo-adjuntos {
     margin-left: 0;
+  }
+
+  .correo-dialogo-fondo {
+    padding:
+      max(12px, env(safe-area-inset-top))
+      12px
+      max(12px, env(safe-area-inset-bottom));
+  }
+
+  .correo-dialogo {
+    max-height: calc(100dvh - max(24px, env(safe-area-inset-top)) - max(24px, env(safe-area-inset-bottom)));
+    padding: 22px;
+  }
+}
+
+@media (max-width: 359px) {
+  .panel-mobile-header-core {
+    grid-template-columns: minmax(68px, 1fr) auto minmax(68px, 1fr);
+  }
+
+  .panel-mobile-logo svg {
+    width: 78px;
+  }
+
+  .panel-mobile-contexto span {
+    display: none;
+  }
+
+  .panel-mobile-contexto strong {
+    margin-top: 0;
+    font-size: 10px;
+  }
+
+  .panel-mobile-tab {
+    font-size: 7.75px;
   }
 }

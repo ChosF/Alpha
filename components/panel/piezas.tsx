@@ -30,9 +30,9 @@ export function Bandeja({
 
 export function Titulo({ cejilla, children }: { cejilla?: string; children: ReactNode }) {
   return (
-    <div className="mb-8">
+    <div className="panel-titulo mb-6 sm:mb-8">
       {cejilla ? <p className="cejilla">{cejilla}</p> : null}
-      <h1 className="mt-3 text-[clamp(1.6rem,3vw,2.4rem)] font-bold tracking-[-.03em] leading-[1.05]">
+      <h1 className="mt-2.5 text-[clamp(1.65rem,7vw,2.4rem)] font-bold tracking-[-.04em] leading-[1.05] sm:mt-3">
         {children}
       </h1>
     </div>

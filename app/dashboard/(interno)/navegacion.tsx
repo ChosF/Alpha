@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "convex/react";
@@ -29,71 +30,150 @@ export function Navegacion() {
   const ruta = usePathname();
   const yo = useQuery(api.usuarios.yo, {});
   const { signOut } = useAuthActions();
+  const [cuentaAbierta, setCuentaAbierta] = useState(false);
 
   const visibles = APARTADOS.filter((a) =>
     yo ? NIVEL[yo.rol] >= NIVEL[a.minimo] : a.minimo === "lector",
   );
+  const apartadoActual =
+    visibles.find((a) => (a.href === "/dashboard" ? ruta === "/dashboard" : ruta.startsWith(a.href))) ??
+    visibles[0];
 
   return (
-    <nav className="panel-nav bg-[var(--color-ink)] text-[var(--color-ground)] flex flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-10 lg:h-dvh lg:w-[248px] lg:overflow-hidden">
-      <div className="panel-nav-marca px-5 py-6 lg:px-6 lg:py-7">
-        <Link href="/dashboard" className="group flex items-center">
-          <MarcaAlpha className="h-auto w-[112px]" tono="blanco" />
-        </Link>
-        <p className="mt-5 hidden lg:block text-[9px] font-semibold tracking-[.28em] uppercase text-white/36">
-          Panel interno
-        </p>
-      </div>
-
-      <ul className="panel-nav-lista flex min-h-0 flex-1 gap-1 overflow-x-auto px-3 py-3 lg:flex-col lg:overflow-hidden lg:px-4 lg:py-5">
-        {visibles.map((a, indice) => {
-          const activo = a.href === "/dashboard" ? ruta === "/dashboard" : ruta.startsWith(a.href);
-          return (
-            <li key={a.href}>
-              <Link
-                href={a.href}
-                aria-current={activo ? "page" : undefined}
-                className={`panel-nav-enlace group relative flex items-center gap-3 whitespace-nowrap px-3 py-3.5 text-[12px] font-medium ${
-                  activo ? "panel-nav-enlace-activo text-white" : "text-white/58 hover:text-white"
-                }`}
-              >
-                <IconoApartado nombre={a.icono} />
-                <span className="flex-1">{a.texto}</span>
-                <span className={`panel-nav-indice cifra text-[8px] ${activo ? "text-white/65" : "text-white/25"}`}>
-                  {String(indice + 1).padStart(2, "0")}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-
-      <div className="panel-nav-cuenta flex-none px-5 py-4 lg:px-6 lg:py-5">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="panel-nav-avatar" aria-hidden="true">
-            {(yo?.nombre || yo?.correo || "A").charAt(0).toUpperCase()}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[11.5px] font-semibold text-white/92">
-              {yo ? yo.nombre || yo.correo : "Sin sesion"}
-            </p>
-            {yo ? (
-              <p className="mt-0.5 text-[8.5px] font-semibold tracking-[.18em] uppercase text-white/38">
-                {ETIQUETAS[yo.rol] ?? yo.rol}
-              </p>
-            ) : null}
-          </div>
+    <>
+      <aside className="panel-nav hidden bg-[var(--color-ink)] text-[var(--color-ground)] lg:fixed lg:inset-y-0 lg:left-0 lg:z-10 lg:flex lg:h-dvh lg:w-[248px] lg:flex-col lg:overflow-hidden">
+        <div className="panel-nav-marca px-6 py-7">
+          <Link href="/dashboard" className="group flex items-center">
+            <MarcaAlpha className="h-auto w-[112px]" tono="blanco" />
+          </Link>
+          <p className="mt-5 text-[9px] font-semibold tracking-[.28em] uppercase text-white/36">
+            Panel interno
+          </p>
         </div>
-        <button
-          type="button"
-          onClick={() => void signOut()}
-          className="panel-nav-salir mt-4 flex w-full items-center justify-between text-[9px] font-semibold tracking-[.16em] uppercase text-white/42 hover:text-white"
+
+        <nav aria-label="Secciones del panel" className="flex min-h-0 flex-1 flex-col">
+          <ul className="panel-nav-lista flex min-h-0 flex-1 flex-col gap-1 overflow-hidden px-4 py-5">
+            {visibles.map((a, indice) => {
+              const activo = a.href === "/dashboard" ? ruta === "/dashboard" : ruta.startsWith(a.href);
+              return (
+                <li key={a.href}>
+                  <Link
+                    href={a.href}
+                    aria-current={activo ? "page" : undefined}
+                    className={`panel-nav-enlace group relative flex items-center gap-3 whitespace-nowrap px-3 py-3.5 text-[12px] font-medium ${
+                      activo ? "panel-nav-enlace-activo text-white" : "text-white/58 hover:text-white"
+                    }`}
+                  >
+                    <IconoApartado nombre={a.icono} />
+                    <span className="flex-1">{a.texto}</span>
+                    <span
+                      className={`panel-nav-indice cifra text-[8px] ${activo ? "text-white/65" : "text-white/25"}`}
+                    >
+                      {String(indice + 1).padStart(2, "0")}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        <div className="panel-nav-cuenta flex-none px-6 py-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="panel-nav-avatar" aria-hidden="true">
+              {(yo?.nombre || yo?.correo || "A").charAt(0).toUpperCase()}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[11.5px] font-semibold text-white/92">
+                {yo ? yo.nombre || yo.correo : "Sin sesión"}
+              </p>
+              {yo ? (
+                <p className="mt-0.5 text-[8.5px] font-semibold tracking-[.18em] uppercase text-white/38">
+                  {ETIQUETAS[yo.rol] ?? yo.rol}
+                </p>
+              ) : null}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => void signOut()}
+            className="panel-nav-salir mt-4 flex w-full items-center justify-between text-[9px] font-semibold tracking-[.16em] uppercase text-white/42 hover:text-white"
+          >
+            Cerrar sesión
+            <span aria-hidden="true">↗</span>
+          </button>
+        </div>
+      </aside>
+
+      <header className="panel-mobile-header lg:hidden">
+        <div className="panel-mobile-header-core">
+          <Link href="/dashboard" aria-label="Ir al inicio" className="panel-mobile-logo">
+            <MarcaAlpha className="h-auto w-[88px]" tono="navy" />
+          </Link>
+          <div className="panel-mobile-contexto" aria-live="polite">
+            <span>Panel interno</span>
+            <strong>{apartadoActual?.texto ?? "Alpha"}</strong>
+          </div>
+          <button
+            type="button"
+            aria-label={cuentaAbierta ? "Cerrar menú de cuenta" : "Abrir menú de cuenta"}
+            aria-expanded={cuentaAbierta}
+            aria-controls="panel-mobile-cuenta"
+            onClick={() => setCuentaAbierta((abierta) => !abierta)}
+            className={`panel-mobile-avatar ${cuentaAbierta ? "panel-mobile-avatar-activo" : ""}`}
+          >
+            {(yo?.nombre || yo?.correo || "A").charAt(0).toUpperCase()}
+          </button>
+        </div>
+
+        {cuentaAbierta ? (
+          <div id="panel-mobile-cuenta" className="panel-mobile-cuenta">
+            <div className="min-w-0">
+              <p className="truncate text-[13px] font-semibold text-[var(--color-ink)]">
+                {yo ? yo.nombre || yo.correo : "Sin sesión"}
+              </p>
+              {yo ? (
+                <p className="mt-1 truncate text-[10px] text-[var(--color-n600)]">
+                  {ETIQUETAS[yo.rol] ?? yo.rol} · {yo.correo}
+                </p>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              className="panel-mobile-salir"
+            >
+              Cerrar sesión
+              <span aria-hidden="true">↗</span>
+            </button>
+          </div>
+        ) : null}
+      </header>
+
+      <nav className="panel-mobile-tabs lg:hidden" aria-label="Secciones del panel">
+        <ul
+          className="panel-mobile-tabs-core"
+          style={{ gridTemplateColumns: `repeat(${visibles.length}, minmax(0, 1fr))` }}
         >
-          Cerrar sesion
-          <span aria-hidden="true">↗</span>
-        </button>
-      </div>
-    </nav>
+          {visibles.map((a) => {
+            const activo = a.href === "/dashboard" ? ruta === "/dashboard" : ruta.startsWith(a.href);
+            return (
+              <li key={a.href} className="min-w-0">
+                <Link
+                  href={a.href}
+                  aria-current={activo ? "page" : undefined}
+                  onClick={() => setCuentaAbierta(false)}
+                  className={`panel-mobile-tab ${activo ? "panel-mobile-tab-activo" : ""}`}
+                >
+                  <IconoApartado nombre={a.icono} />
+                  <span>{a.texto}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </>
   );
 }
 

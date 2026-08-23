@@ -86,11 +86,11 @@ function CorreoContenido() {
 
   return (
     <div className="correo-entrada">
-      <header className="mb-8 lg:mb-10 grid gap-7 lg:grid-cols-[1fr_auto] lg:items-end">
+      <header className="correo-cabecera mb-6 sm:mb-8 lg:mb-10 grid gap-4 sm:gap-7 lg:grid-cols-[1fr_auto] lg:items-end">
         <div>
           <p className="cejilla">Bandeja compartida de Alpha</p>
           <div className="mt-3 flex flex-wrap items-end gap-x-5 gap-y-2">
-            <h1 className="text-[clamp(2.2rem,5vw,4.8rem)] font-bold tracking-[-.06em] leading-[.88]">
+            <h1 className="text-[clamp(1.75rem,10vw,4.8rem)] font-bold tracking-[-.06em] leading-[.88]">
               Correo
             </h1>
             <p className="pb-1 cifra text-[12px] text-[var(--color-n600)]">
@@ -100,7 +100,7 @@ function CorreoContenido() {
         </div>
         <button
           type="button"
-          className="boton group justify-between min-w-[180px]"
+          className="boton group w-full justify-between sm:w-auto sm:min-w-[180px]"
           onClick={() => {
             setParaInicial("");
             setComponiendo(true);

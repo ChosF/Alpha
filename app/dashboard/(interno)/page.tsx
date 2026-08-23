@@ -40,7 +40,7 @@ export default function Inicio() {
       <div className="grid gap-4 lg:grid-cols-12">
         {/* Cifra principal */}
         <Bandeja oscura className="lg:col-span-5">
-          <div className="p-8 lg:p-10 min-h-[220px] flex flex-col justify-between">
+          <div className="min-h-[184px] p-5 sm:min-h-[220px] sm:p-8 lg:p-10 flex flex-col justify-between">
             <p className="rotulo text-white/50">Registros totales</p>
             <div>
               <p className="cifra text-[clamp(3rem,7vw,5rem)] font-bold leading-none">
@@ -56,7 +56,7 @@ export default function Inicio() {
 
         {/* Altas por semana */}
         <Bandeja className="lg:col-span-7">
-          <div className="p-8 lg:p-10 min-h-[220px] flex flex-col justify-between">
+          <div className="min-h-[204px] p-5 sm:min-h-[220px] sm:p-8 lg:p-10 flex flex-col justify-between">
             <p className="rotulo">Altas por semana</p>
             <div className="mt-6 flex items-end gap-2 h-[110px]">
               {datos.porSemana.map((semana, i) => (
@@ -85,7 +85,7 @@ export default function Inicio() {
 
         {/* Estados */}
         <Bandeja className="lg:col-span-4">
-          <div className="p-8">
+          <div className="p-5 sm:p-8">
             <p className="rotulo">Atencion</p>
             <ul className="mt-5">
               {ESTADOS_REGISTRO.map((estado) => (
@@ -102,9 +102,9 @@ export default function Inicio() {
 
         {/* Canales */}
         <Bandeja className="lg:col-span-3">
-          <div className="p-8">
+          <div className="p-5 sm:p-8">
             <p className="rotulo">Canales elegidos</p>
-            <div className="mt-6 grid gap-5">
+            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-1 sm:gap-5">
               <div>
                 <p className="cifra text-[28px] font-semibold leading-none">{datos.conCorreo}</p>
                 <p className="mt-1.5 text-[12px] text-[var(--color-n600)]">Avisos por correo</p>
@@ -119,7 +119,7 @@ export default function Inicio() {
 
         {/* Areas pedidas por aliados */}
         <Bandeja className="lg:col-span-5">
-          <div className="p-8">
+          <div className="p-5 sm:p-8">
             <p className="rotulo">Areas que piden los aliados</p>
             <ul className="mt-5 grid gap-2.5">
               {areasOrdenadas.map((area) => {
@@ -146,7 +146,7 @@ export default function Inicio() {
 
         {/* Bitacora */}
         <Bandeja className="lg:col-span-12">
-          <div className="p-8">
+          <div className="p-5 sm:p-8">
             <div className="flex items-center justify-between gap-4">
               <p className="rotulo">Actividad del equipo</p>
               <button
@@ -179,7 +179,7 @@ export default function Inicio() {
                     {actividad.map((linea) => (
                       <li
                         key={linea._id}
-                        className="fila grid grid-cols-[auto_1fr] sm:grid-cols-[130px_1fr_auto] gap-x-5 gap-y-1 py-3 items-baseline"
+                        className="fila grid grid-cols-1 sm:grid-cols-[130px_1fr_auto] gap-x-5 gap-y-1 py-3 items-baseline"
                       >
                         <span className="cifra text-[11px] text-[var(--color-n500)]">
                           {fechaHora(linea.creadoEn)}

@@ -39,7 +39,7 @@ export default function Registros() {
 
   return (
     <>
-      <div className="flex flex-wrap items-end justify-between gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-0 sm:gap-6">
         <Titulo cejilla="Convocatoria">Registros</Titulo>
         {yo?.rol === "admin" ? <BotonExportar tipo={tipo} estado={estado} /> : null}
       </div>
@@ -448,7 +448,7 @@ function BotonExportar({ tipo, estado }: { tipo: TipoRegistro | ""; estado: Esta
 
   return (
     <div
-      className={`relative mb-8 h-10 overflow-hidden border border-[var(--hair)] bg-transparent transition-[width,background-color] duration-300 ease-[var(--E)] motion-reduce:transition-none ${
+      className={`relative mb-6 h-11 overflow-hidden border border-[var(--hair)] bg-transparent transition-[width,background-color] duration-300 ease-[var(--E)] motion-reduce:transition-none sm:mb-8 sm:h-10 ${
         abierto ? "w-[152px] bg-[var(--color-surface)]" : "w-[108px]"
       }`}
     >

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins, JetBrains_Mono, Montserrat } from "next/font/google";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import { ProveedorConvex } from "./proveedores";
@@ -30,8 +30,22 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: "Dashboard - Alpha",
   description: "Dashboard interno de la Sociedad Estudiantil Alpha.",
+  applicationName: "Alpha Admin",
+  appleWebApp: {
+    capable: true,
+    title: "Alpha Admin",
+    statusBarStyle: "default",
+  },
   icons: { icon: "/alpha-mark.png" },
   robots: { index: false, follow: false },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#f2f4f7",
+  colorScheme: "light",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
