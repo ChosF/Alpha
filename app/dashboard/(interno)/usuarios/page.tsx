@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { ETIQUETAS, ROLES, type Rol } from "@/convex/lib/validadores";
 import { Aviso, Bandeja, Cargando, Titulo, fecha } from "@/components/panel/piezas";
+import { SelectorPersonalizado } from "@/components/panel/selector-personalizado";
 
 /**
  * Usuarios del panel.
@@ -112,20 +113,17 @@ function Fila({ usuario }: { usuario: UsuarioFila }) {
       </div>
 
       <div className="flex w-full min-w-0 flex-wrap items-center gap-3 justify-self-start sm:w-auto sm:flex-nowrap sm:justify-self-end">
-        <select
+        <SelectorPersonalizado
+          id={`rol-${usuario._id}`}
           aria-label={`Rol de ${usuario.correo}`}
-          className="entrada min-w-0 flex-1 text-[12px] sm:w-auto sm:flex-none"
-          value={usuario.rol}
-          onChange={(e) =>
-            void intentar(() => cambiarRol({ id: usuario._id, rol: e.target.value as Rol }))
+          className="min-w-[7.5rem] flex-1 sm:w-[8.5rem] sm:flex-none"
+          variante="compacto"
+          valor={usuario.rol}
+          opciones={ROLES.map((rol) => ({ valor: rol, etiqueta: ETIQUETAS[rol] }))}
+          alCambiar={(rol) =>
+            void intentar(() => cambiarRol({ id: usuario._id, rol: rol as Rol }))
           }
-        >
-          {ROLES.map((r) => (
-            <option key={r} value={r}>
-              {ETIQUETAS[r]}
-            </option>
-          ))}
-        </select>
+        />
         <button
           type="button"
           className={`boton shrink-0 ${usuario.activo ? "boton-peligro" : "boton-linea"} px-3 py-2 text-[11px]`}
@@ -231,18 +229,15 @@ function Invitar() {
         </div>
         <div className="campo">
           <label htmlFor="i-rol">Rol</label>
-          <select
+          <SelectorPersonalizado
             id="i-rol"
-            className="entrada"
-            value={rol}
-            onChange={(e) => setRol(e.target.value as Rol)}
-          >
-            {ROLES.map((r) => (
-              <option key={r} value={r}>
-                {ETIQUETAS[r]}
-              </option>
-            ))}
-          </select>
+            valor={rol}
+            opciones={ROLES.map((opcion) => ({
+              valor: opcion,
+              etiqueta: ETIQUETAS[opcion],
+            }))}
+            alCambiar={(opcion) => setRol(opcion as Rol)}
+          />
           <p className="mt-2 text-[11px] text-[var(--color-n600)] leading-[1.6]">
             {rol === "admin"
               ? "Todo, incluido invitar, cambiar roles y exportar la lista."

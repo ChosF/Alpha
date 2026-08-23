@@ -12,6 +12,7 @@ import {
   type Pilar,
 } from "@/convex/lib/validadores";
 import { Aviso, Bandeja, Cargando, Marca, Titulo, Vacio } from "@/components/panel/piezas";
+import { SelectorPersonalizado } from "@/components/panel/selector-personalizado";
 
 /**
  * Programa de trabajo.
@@ -212,33 +213,27 @@ function Formulario({
         </div>
         <div className="campo">
           <label htmlFor="p-pilar">Pilar</label>
-          <select
+          <SelectorPersonalizado
             id="p-pilar"
-            className="entrada"
-            value={pilar}
-            onChange={(e) => setPilar(e.target.value as Pilar)}
-          >
-            {PILARES.map((p) => (
-              <option key={p} value={p}>
-                {ETIQUETAS[p]}
-              </option>
-            ))}
-          </select>
+            valor={pilar}
+            opciones={PILARES.map((opcion) => ({
+              valor: opcion,
+              etiqueta: ETIQUETAS[opcion],
+            }))}
+            alCambiar={(opcion) => setPilar(opcion as Pilar)}
+          />
         </div>
         <div className="campo">
           <label htmlFor="p-estado">Estado</label>
-          <select
+          <SelectorPersonalizado
             id="p-estado"
-            className="entrada"
-            value={estado}
-            onChange={(e) => setEstado(e.target.value as EstadoPrograma)}
-          >
-            {ESTADOS_PROGRAMA.map((e) => (
-              <option key={e} value={e}>
-                {ETIQUETAS[e]}
-              </option>
-            ))}
-          </select>
+            valor={estado}
+            opciones={ESTADOS_PROGRAMA.map((opcion) => ({
+              valor: opcion,
+              etiqueta: ETIQUETAS[opcion],
+            }))}
+            alCambiar={(opcion) => setEstado(opcion as EstadoPrograma)}
+          />
         </div>
         <div className="campo sm:col-span-2">
           <label htmlFor="p-notas">Notas internas</label>

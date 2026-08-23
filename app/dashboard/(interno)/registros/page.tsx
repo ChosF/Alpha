@@ -14,6 +14,7 @@ import {
 import { construirCsv } from "@/lib/csv";
 import { construirXlsx } from "@/lib/xlsx";
 import { Aviso, Bandeja, Cargando, Marca, Titulo, Vacio, fecha } from "@/components/panel/piezas";
+import { SelectorPersonalizado } from "@/components/panel/selector-personalizado";
 
 /**
  * Registros.
@@ -59,35 +60,33 @@ export default function Registros() {
         </div>
         <div className="campo">
           <label htmlFor="f-tipo">Tipo</label>
-          <select
+          <SelectorPersonalizado
             id="f-tipo"
-            className="entrada"
-            value={tipo}
-            onChange={(e) => setTipo(e.target.value as TipoRegistro | "")}
-          >
-            <option value="">Todos</option>
-            {TIPOS_REGISTRO.map((t) => (
-              <option key={t} value={t}>
-                {ETIQUETAS[t]}
-              </option>
-            ))}
-          </select>
+            valor={tipo}
+            opciones={[
+              { valor: "", etiqueta: "Todos" },
+              ...TIPOS_REGISTRO.map((opcion) => ({
+                valor: opcion,
+                etiqueta: ETIQUETAS[opcion],
+              })),
+            ]}
+            alCambiar={(opcion) => setTipo(opcion as TipoRegistro | "")}
+          />
         </div>
         <div className="campo">
           <label htmlFor="f-estado">Estado</label>
-          <select
+          <SelectorPersonalizado
             id="f-estado"
-            className="entrada"
-            value={estado}
-            onChange={(e) => setEstado(e.target.value as EstadoRegistro | "")}
-          >
-            <option value="">Todos</option>
-            {ESTADOS_REGISTRO.map((e) => (
-              <option key={e} value={e}>
-                {ETIQUETAS[e]}
-              </option>
-            ))}
-          </select>
+            valor={estado}
+            opciones={[
+              { valor: "", etiqueta: "Todos" },
+              ...ESTADOS_REGISTRO.map((opcion) => ({
+                valor: opcion,
+                etiqueta: ETIQUETAS[opcion],
+              })),
+            ]}
+            alCambiar={(opcion) => setEstado(opcion as EstadoRegistro | "")}
+          />
         </div>
       </div>
 
@@ -237,18 +236,15 @@ function Ficha({
           <>
             <div className="campo">
               <label htmlFor={`estado-${registro._id}`}>Estado</label>
-              <select
+              <SelectorPersonalizado
                 id={`estado-${registro._id}`}
-                className="entrada"
-                value={registro.estado}
-                onChange={(e) => void alCambiarEstado(e.target.value as EstadoRegistro)}
-              >
-                {ESTADOS_REGISTRO.map((e) => (
-                  <option key={e} value={e}>
-                    {ETIQUETAS[e]}
-                  </option>
-                ))}
-              </select>
+                valor={registro.estado}
+                opciones={ESTADOS_REGISTRO.map((opcion) => ({
+                  valor: opcion,
+                  etiqueta: ETIQUETAS[opcion],
+                }))}
+                alCambiar={(opcion) => void alCambiarEstado(opcion as EstadoRegistro)}
+              />
             </div>
 
             <div className="campo mt-6">

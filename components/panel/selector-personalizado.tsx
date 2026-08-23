@@ -21,6 +21,8 @@ type SelectorPersonalizadoProps = {
   alCambiar: (valor: string) => void;
   ariaLabel?: string;
   deshabilitado?: boolean;
+  variante?: "campo" | "compacto";
+  className?: string;
 };
 
 export function SelectorPersonalizado({
@@ -30,6 +32,8 @@ export function SelectorPersonalizado({
   alCambiar,
   ariaLabel,
   deshabilitado = false,
+  variante = "campo",
+  className = "",
 }: SelectorPersonalizadoProps) {
   const idReact = useId().replaceAll(":", "");
   const idLista = `${id}-opciones-${idReact}`;
@@ -114,7 +118,7 @@ export function SelectorPersonalizado({
   return (
     <div
       ref={contenedor}
-      className="selector-personalizado"
+      className={`selector-personalizado selector-personalizado-${variante} ${className}`.trim()}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) cerrar();
       }}

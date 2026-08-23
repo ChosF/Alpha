@@ -827,22 +827,22 @@ function Conversacion({
                 <IconoUsuario />
                 {hilo.asignadoA ? "Liberar" : "Tomar"}
               </button>
-              <select
+              <SelectorPersonalizado
+                id={`estado-hilo-${hilo._id}`}
                 aria-label="Estado de la conversacion"
-                className="correo-estado"
-                value={hilo.estado}
-                onChange={(event) =>
+                className="correo-estado-selector"
+                variante="compacto"
+                valor={hilo.estado}
+                opciones={ESTADOS_HILO_CORREO.map((opcion) => ({
+                  valor: opcion,
+                  etiqueta: ETIQUETAS[opcion],
+                }))}
+                alCambiar={(opcion) =>
                   void aplicar(() =>
-                    cambiarEstado({ id: hilo._id, estado: event.target.value as EstadoHiloCorreo }),
+                    cambiarEstado({ id: hilo._id, estado: opcion as EstadoHiloCorreo }),
                   )
                 }
-              >
-                {ESTADOS_HILO_CORREO.map((opcion) => (
-                  <option key={opcion} value={opcion}>
-                    {ETIQUETAS[opcion]}
-                  </option>
-                ))}
-              </select>
+              />
               <button
                 type="button"
                 className="correo-icono-boton correo-eliminar"

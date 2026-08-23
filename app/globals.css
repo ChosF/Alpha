@@ -301,6 +301,7 @@ textarea {
 
 .selector-personalizado {
   position: relative;
+  width: 100%;
   min-width: 0;
 }
 
@@ -348,6 +349,35 @@ textarea {
 
 .selector-personalizado-disparador[data-open] svg {
   transform: rotate(180deg);
+}
+
+.selector-personalizado-compacto .selector-personalizado-disparador {
+  min-height: 36px;
+  gap: 7px;
+  padding: 0 7px;
+  font: 600 10px/1 var(--font-nav);
+  letter-spacing: 0.02em;
+}
+
+.selector-personalizado-compacto .selector-personalizado-disparador svg {
+  width: 14px;
+  height: 14px;
+}
+
+.selector-personalizado-compacto .selector-personalizado-lista.t-dropdown {
+  top: calc(100% + 6px);
+  padding: 4px;
+}
+
+.selector-personalizado-compacto .selector-personalizado-opcion {
+  min-height: 36px;
+  padding: 8px 9px;
+  font: 600 10px/1.2 var(--font-nav);
+}
+
+.selector-personalizado-compacto .selector-personalizado-marca {
+  width: 13px;
+  height: 13px;
 }
 
 .selector-personalizado-lista.t-dropdown {
@@ -1040,14 +1070,18 @@ textarea {
 }
 
 .correo-icono-boton,
-.correo-accion,
-.correo-estado {
+.correo-accion {
   min-height: 36px;
   color: var(--color-n700);
   transition:
     color 0.42s var(--E),
     background 0.42s var(--E),
     transform 0.42s var(--E);
+}
+
+.correo-estado-selector {
+  width: 7.5rem;
+  flex: none;
 }
 
 .correo-icono-boton {
@@ -1071,14 +1105,6 @@ textarea {
   padding: 0 11px;
   font: 600 9.5px/1 var(--font-nav);
   letter-spacing: 0.04em;
-}
-
-.correo-estado {
-  border: 0;
-  border-bottom: 1px solid var(--hair);
-  background: transparent;
-  padding: 0 22px 0 8px;
-  font: 600 9.5px/1 var(--font-nav);
 }
 
 .correo-eliminar:hover {
