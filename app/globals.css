@@ -384,10 +384,12 @@ textarea {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  left: 0;
+  left: auto;
   z-index: 60;
-  width: 100%;
+  width: max(100%, 10rem);
+  max-width: calc(100vw - 24px);
   max-height: min(280px, 42dvh);
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 5px;
   border: 1px solid var(--hair-2);
@@ -398,7 +400,7 @@ textarea {
     0 26px 56px -30px rgba(13, 33, 64, 0.62);
   color: var(--color-ink);
   transform: translateY(-4px) scale(0.98);
-  transform-origin: top center;
+  transform-origin: top right;
 }
 
 .selector-personalizado-lista.t-dropdown.is-open {
