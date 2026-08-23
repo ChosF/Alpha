@@ -32,17 +32,41 @@ export function Navegacion() {
   const { signOut } = useAuthActions();
   const [cuentaAbierta, setCuentaAbierta] = useState(false);
   const [cuentaCerrando, setCuentaCerrando] = useState(false);
+  const [navegacionAnticipada, setNavegacionAnticipada] = useState<{
+    desde: string;
+    hacia: string;
+  } | null>(null);
   const temporizadorCuenta = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tabsMoviles = useRef<HTMLUListElement>(null);
   const tabsInicializadas = useRef(false);
   const rutaAnterior = useRef(ruta);
+  const rutaVisual = navegacionAnticipada?.desde === ruta ? navegacionAnticipada.hacia : ruta;
 
   const visibles = APARTADOS.filter((a) =>
     yo ? NIVEL[yo.rol] >= NIVEL[a.minimo] : a.minimo === "lector",
   );
   const apartadoActual =
-    visibles.find((a) => (a.href === "/dashboard" ? ruta === "/dashboard" : ruta.startsWith(a.href))) ??
+    visibles.find((a) =>
+      a.href === "/dashboard" ? rutaVisual === "/dashboard" : rutaVisual.startsWith(a.href),
+    ) ??
     visibles[0];
+
+  const moverIndicador = useCallback((tabActiva: HTMLElement, animar: boolean) => {
+    const barra = tabsMoviles.current;
+    const indicador = barra?.querySelector<HTMLElement>(".panel-mobile-tabs-pill");
+    if (!barra || !indicador) return;
+
+    const transicion = indicador.style.transition;
+    const cajaBarra = barra.getBoundingClientRect();
+    const cajaTab = tabActiva.getBoundingClientRect();
+    if (!animar) indicador.style.transition = "none";
+    indicador.style.width = `${cajaTab.width}px`;
+    indicador.style.transform = `translateX(${cajaTab.left - cajaBarra.left}px)`;
+    if (!animar) {
+      void indicador.offsetWidth;
+      indicador.style.transition = transicion;
+    }
+  }, []);
 
   const cerrarCuenta = useCallback(() => {
     if (!cuentaAbierta) return;
@@ -82,36 +106,25 @@ export function Navegacion() {
 
   useLayoutEffect(() => {
     const barra = tabsMoviles.current;
-    const indicador = barra?.querySelector<HTMLElement>(".panel-mobile-tabs-pill");
     const tabActiva = barra?.querySelector<HTMLElement>(".panel-mobile-tab-activo");
-    if (!barra || !indicador || !tabActiva) return;
-
-    const moverIndicador = (animar: boolean) => {
-      const transicion = indicador.style.transition;
-      const cajaBarra = barra.getBoundingClientRect();
-      const cajaTab = tabActiva.getBoundingClientRect();
-      if (!animar) indicador.style.transition = "none";
-      indicador.style.width = `${cajaTab.width}px`;
-      indicador.style.transform = `translateX(${cajaTab.left - cajaBarra.left}px)`;
-      if (!animar) {
-        void indicador.offsetWidth;
-        indicador.style.transition = transicion;
-      }
-    };
+    if (!barra || !tabActiva) return;
 
     const cuadro = requestAnimationFrame(() => {
-      const cambioRuta = tabsInicializadas.current && rutaAnterior.current !== ruta;
-      moverIndicador(cambioRuta);
+      const cambioRuta = tabsInicializadas.current && rutaAnterior.current !== rutaVisual;
+      moverIndicador(tabActiva, cambioRuta);
       tabsInicializadas.current = true;
-      rutaAnterior.current = ruta;
+      rutaAnterior.current = rutaVisual;
     });
-    const reajustar = () => moverIndicador(false);
+    const reajustar = () => {
+      const tabActual = barra.querySelector<HTMLElement>(".panel-mobile-tab-activo");
+      if (tabActual) moverIndicador(tabActual, false);
+    };
     window.addEventListener("resize", reajustar);
     return () => {
       cancelAnimationFrame(cuadro);
       window.removeEventListener("resize", reajustar);
     };
-  }, [ruta, visibles.length]);
+  }, [moverIndicador, rutaVisual, visibles.length]);
 
   return (
     <>
@@ -241,13 +254,24 @@ export function Navegacion() {
         >
           <li className="t-tabs-pill panel-mobile-tabs-pill" aria-hidden="true" />
           {visibles.map((a) => {
-            const activo = a.href === "/dashboard" ? ruta === "/dashboard" : ruta.startsWith(a.href);
+            const activoReal =
+              a.href === "/dashboard" ? ruta === "/dashboard" : ruta.startsWith(a.href);
+            const activo =
+              a.href === "/dashboard"
+                ? rutaVisual === "/dashboard"
+                : rutaVisual.startsWith(a.href);
+            const anticipar = () => setNavegacionAnticipada({ desde: ruta, hacia: a.href });
             return (
               <li key={a.href} className="min-w-0">
                 <Link
                   href={a.href}
-                  aria-current={activo ? "page" : undefined}
-                  onClick={cerrarCuenta}
+                  prefetch
+                  aria-current={activoReal ? "page" : undefined}
+                  onPointerDown={anticipar}
+                  onClick={() => {
+                    anticipar();
+                    cerrarCuenta();
+                  }}
                   className={`t-tab panel-mobile-tab ${activo ? "panel-mobile-tab-activo" : ""}`}
                 >
                   <IconoApartado nombre={a.icono} />

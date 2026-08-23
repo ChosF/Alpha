@@ -56,7 +56,7 @@
   --dropdown-open-dur: var(--duration-fast);
   --dropdown-close-dur: var(--duration-quick);
   --dropdown-ease: var(--ease-smooth-out);
-  --tabs-dur: var(--duration-fast);
+  --tabs-dur: var(--duration-quick);
   --tabs-ease: var(--ease-smooth-out);
   --acc-dur: var(--duration-medium);
   --acc-ease: var(--ease-smooth-out);
@@ -299,6 +299,136 @@ textarea {
     visibility 0s linear var(--dropdown-close-dur);
 }
 
+.selector-personalizado {
+  position: relative;
+  min-width: 0;
+}
+
+.selector-personalizado-disparador {
+  display: grid;
+  width: 100%;
+  min-height: 51px;
+  grid-template-columns: minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--color-n300);
+  background: transparent;
+  color: var(--color-ink);
+  font: 400 16px/1.25 var(--font-body);
+  text-align: left;
+  touch-action: manipulation;
+  transition:
+    border-color var(--duration-quick) var(--ease-smooth-out),
+    color var(--duration-quick) var(--ease-smooth-out);
+}
+
+.selector-personalizado-disparador:focus-visible {
+  border-color: var(--color-accent);
+  outline: 2px solid rgba(31, 95, 208, 0.2);
+  outline-offset: 3px;
+}
+
+.selector-personalizado-valor {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selector-personalizado-disparador svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+  transition: transform var(--duration-quick) var(--ease-smooth-out);
+}
+
+.selector-personalizado-disparador[data-open] svg {
+  transform: rotate(180deg);
+}
+
+.selector-personalizado-lista.t-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  left: 0;
+  z-index: 60;
+  width: 100%;
+  max-height: min(280px, 42dvh);
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid var(--hair-2);
+  border-radius: 0;
+  background: var(--color-ground);
+  box-shadow:
+    0 0 0 4px var(--color-surface),
+    0 26px 56px -30px rgba(13, 33, 64, 0.62);
+  color: var(--color-ink);
+  transform: translateY(-4px) scale(0.98);
+  transform-origin: top center;
+}
+
+.selector-personalizado-lista.t-dropdown.is-open {
+  transform: translateY(0) scale(1);
+}
+
+.selector-personalizado-lista.t-dropdown.is-closing {
+  transform: translateY(-2px) scale(0.99);
+}
+
+.selector-personalizado-opcion {
+  display: grid;
+  width: 100%;
+  min-height: 48px;
+  grid-template-columns: minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--hair-2);
+  color: var(--color-n700);
+  font: 500 13px/1.35 var(--font-body);
+  text-align: left;
+  touch-action: manipulation;
+  transition:
+    background var(--duration-quick) var(--ease-smooth-out),
+    color var(--duration-quick) var(--ease-smooth-out);
+}
+
+.selector-personalizado-opcion:last-child {
+  border-bottom: 0;
+}
+
+.selector-personalizado-opcion:hover,
+.selector-personalizado-opcion:focus-visible {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  outline: none;
+}
+
+.selector-personalizado-opcion[data-selected] {
+  background: var(--color-ink);
+  color: white;
+}
+
+.selector-personalizado-marca {
+  display: grid;
+  width: 16px;
+  height: 16px;
+  place-items: center;
+  border: 1px solid currentColor;
+  opacity: 0.55;
+}
+
+.selector-personalizado-opcion[data-selected] .selector-personalizado-marca {
+  border-color: var(--color-accent-alto);
+  background: var(--color-accent-alto);
+  box-shadow: inset 0 0 0 4px var(--color-ink);
+  opacity: 1;
+}
+
 .t-tabs {
   position: relative;
   display: inline-flex;
@@ -523,7 +653,7 @@ textarea {
 @keyframes panel-mobile-entrada {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -731,14 +861,14 @@ textarea {
   opacity: 0;
   transform: translateX(-50%) scaleX(0.35);
   transition:
-    opacity 0.52s var(--E),
-    transform 0.52s var(--E);
+    opacity var(--duration-quick) var(--ease-smooth-out),
+    transform var(--duration-quick) var(--ease-smooth-out);
 }
 
 .panel-mobile-tab svg {
   width: 18px;
   height: 18px;
-  transition: transform 0.52s var(--E);
+  transition: transform var(--duration-quick) var(--ease-smooth-out);
 }
 
 .panel-mobile-tab:active {
@@ -1292,11 +1422,7 @@ textarea {
   }
 
   .panel-main > * {
-    animation: panel-mobile-entrada var(--duration-slow) var(--ease-smooth-out) both;
-  }
-
-  .panel-main > :nth-child(2) {
-    animation-delay: 0.06s;
+    animation: panel-mobile-entrada var(--duration-quick) var(--ease-smooth-out) both;
   }
 
   .correo-panel {

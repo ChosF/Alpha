@@ -20,6 +20,7 @@ import {
   type EstadoHiloCorreo,
 } from "@/convex/lib/validadores";
 import { Aviso, Bandeja, Cargando, Vacio, fechaHora } from "@/components/panel/piezas";
+import { SelectorPersonalizado } from "@/components/panel/selector-personalizado";
 
 const FORMATO_HORA = new Intl.DateTimeFormat("es-MX", {
   day: "2-digit",
@@ -1046,18 +1047,12 @@ function Responder({
           </div>
           <div className="campo mt-7 max-w-[22rem]">
             <label htmlFor={`respuesta-remitente-${threadId}`}>Desde</label>
-            <select
+            <SelectorPersonalizado
               id={`respuesta-remitente-${threadId}`}
-              className="entrada"
-              value={remitente}
-              onChange={(event) => setRemitente(event.target.value)}
-            >
-              {remitentes.map((correo) => (
-                <option key={correo} value={correo}>
-                  {correo}
-                </option>
-              ))}
-            </select>
+              valor={remitente}
+              opciones={remitentes.map((correo) => ({ valor: correo, etiqueta: correo }))}
+              alCambiar={setRemitente}
+            />
           </div>
           <div className="mt-7">
             <EditorCorreo id={`respuesta-${threadId}`} onChange={setContenido} autoFocus />
@@ -1167,18 +1162,12 @@ function CompositorNuevo({
           <div className="mt-8 grid gap-6">
             <div className="campo">
               <label htmlFor="nuevo-remitente">Desde</label>
-              <select
+              <SelectorPersonalizado
                 id="nuevo-remitente"
-                className="entrada"
-                value={remitente}
-                onChange={(event) => setRemitente(event.target.value)}
-              >
-                {remitentes.map((correo) => (
-                  <option key={correo} value={correo}>
-                    {correo}
-                  </option>
-                ))}
-              </select>
+                valor={remitente}
+                opciones={remitentes.map((correo) => ({ valor: correo, etiqueta: correo }))}
+                alCambiar={setRemitente}
+              />
             </div>
             <div className="campo">
               <label htmlFor="nuevo-para">Para</label>
