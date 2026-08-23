@@ -115,11 +115,11 @@ function Fila({ usuario }: { usuario: UsuarioFila }) {
       <div className="flex w-full min-w-0 flex-wrap items-center gap-3 justify-self-start sm:w-auto sm:flex-nowrap sm:justify-self-end">
         <SelectorPersonalizado
           id={`rol-${usuario._id}`}
-          aria-label={`Rol de ${usuario.correo}`}
+          ariaLabel={`Rol de ${usuario.correo}`}
           className="min-w-[7.5rem] flex-1 sm:w-[8.5rem] sm:flex-none"
           variante="compacto"
           valor={usuario.rol}
-          opciones={ROLES.map((rol) => ({ valor: rol, etiqueta: ETIQUETAS[rol] }))}
+          opciones={ROLES.map((rol) => ({ valor: rol, etiqueta: ETIQUETAS[rol] ?? rol }))}
           alCambiar={(rol) =>
             void intentar(() => cambiarRol({ id: usuario._id, rol: rol as Rol }))
           }
@@ -234,7 +234,7 @@ function Invitar() {
             valor={rol}
             opciones={ROLES.map((opcion) => ({
               valor: opcion,
-              etiqueta: ETIQUETAS[opcion],
+              etiqueta: ETIQUETAS[opcion] ?? opcion,
             }))}
             alCambiar={(opcion) => setRol(opcion as Rol)}
           />

@@ -829,13 +829,13 @@ function Conversacion({
               </button>
               <SelectorPersonalizado
                 id={`estado-hilo-${hilo._id}`}
-                aria-label="Estado de la conversacion"
+                ariaLabel="Estado de la conversacion"
                 className="correo-estado-selector"
                 variante="compacto"
                 valor={hilo.estado}
                 opciones={ESTADOS_HILO_CORREO.map((opcion) => ({
                   valor: opcion,
-                  etiqueta: ETIQUETAS[opcion],
+                  etiqueta: ETIQUETAS[opcion] ?? opcion,
                 }))}
                 alCambiar={(opcion) =>
                   void aplicar(() =>

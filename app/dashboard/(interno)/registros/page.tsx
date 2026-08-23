@@ -67,7 +67,7 @@ export default function Registros() {
               { valor: "", etiqueta: "Todos" },
               ...TIPOS_REGISTRO.map((opcion) => ({
                 valor: opcion,
-                etiqueta: ETIQUETAS[opcion],
+                etiqueta: ETIQUETAS[opcion] ?? opcion,
               })),
             ]}
             alCambiar={(opcion) => setTipo(opcion as TipoRegistro | "")}
@@ -82,7 +82,7 @@ export default function Registros() {
               { valor: "", etiqueta: "Todos" },
               ...ESTADOS_REGISTRO.map((opcion) => ({
                 valor: opcion,
-                etiqueta: ETIQUETAS[opcion],
+                etiqueta: ETIQUETAS[opcion] ?? opcion,
               })),
             ]}
             alCambiar={(opcion) => setEstado(opcion as EstadoRegistro | "")}
@@ -241,7 +241,7 @@ function Ficha({
                 valor={registro.estado}
                 opciones={ESTADOS_REGISTRO.map((opcion) => ({
                   valor: opcion,
-                  etiqueta: ETIQUETAS[opcion],
+                  etiqueta: ETIQUETAS[opcion] ?? opcion,
                 }))}
                 alCambiar={(opcion) => void alCambiarEstado(opcion as EstadoRegistro)}
               />

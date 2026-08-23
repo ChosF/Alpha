@@ -218,7 +218,7 @@ function Formulario({
             valor={pilar}
             opciones={PILARES.map((opcion) => ({
               valor: opcion,
-              etiqueta: ETIQUETAS[opcion],
+              etiqueta: ETIQUETAS[opcion] ?? opcion,
             }))}
             alCambiar={(opcion) => setPilar(opcion as Pilar)}
           />
@@ -230,7 +230,7 @@ function Formulario({
             valor={estado}
             opciones={ESTADOS_PROGRAMA.map((opcion) => ({
               valor: opcion,
-              etiqueta: ETIQUETAS[opcion],
+              etiqueta: ETIQUETAS[opcion] ?? opcion,
             }))}
             alCambiar={(opcion) => setEstado(opcion as EstadoPrograma)}
           />
