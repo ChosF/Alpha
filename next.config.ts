@@ -2,8 +2,8 @@ import type { NextConfig } from "next";
 
 /**
  * El panel corre con una CSP estricta; la landing necesita una mas permisiva
- * porque es HTML artesanal con <script> y <style> en linea, Google Fonts y el
- * compilador de Tailwind en navegador. Separar ambas por ruta evita relajar la
+ * porque es HTML artesanal con <script> y <style> en linea y Google Fonts.
+ * Tailwind se compila durante el build y se sirve desde este dominio. Separar ambas por ruta evita relajar la
  * politica del panel, que es donde hay datos personales.
  */
 const cspLanding = [
@@ -12,7 +12,7 @@ const cspLanding = [
   "form-action 'self'",
   "frame-ancestors 'none'",
   "object-src 'none'",
-  "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+  "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob:",
   "font-src 'self' data: https://fonts.gstatic.com",

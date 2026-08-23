@@ -1,6 +1,10 @@
 import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
-import { enviarInvitacionPorCorreo } from "./correo";
+import {
+  enviarInvitacionPorCorreo,
+  redactarEnlacesInvitacion,
+  tokensEnEnlacesInvitacion,
+} from "./correo";
 import { limpiarTexto, normalizarCorreo, sha256Hex } from "./lib/texto";
 import { ESTADOS_PROGRAMA, PILARES } from "./lib/validadores";
 
@@ -133,6 +137,82 @@ export const reenviarInvitacionInicial = internalMutation({
       token: args.token,
       expiraEn: invitacion.expiraEn,
     });
+  },
+});
+
+/**
+ * Revoca invitaciones cuyo enlace quedo guardado en la bandeja y retira esas
+ * copias. Es idempotente para poder ejecutarla con seguridad tras desplegar.
+ */
+export const remediarInvitacionesExpuestas = internalMutation({
+  args: {},
+  returns: v.object({
+    invitacionesRevocadas: v.number(),
+    mensajesSaneados: v.number(),
+    hilosSaneados: v.number(),
+  }),
+  handler: async (ctx) => {
+    const mensajes = await ctx.db.query("mailMessages").collect();
+    const hilos = new Set<string>();
+    const tokens = new Set<string>();
+    let mensajesSaneados = 0;
+
+    for (const mensaje of mensajes) {
+      const fuentes = [
+        mensaje.texto,
+        mensaje.html ?? "",
+        ...(mensaje.segmentos?.map((segmento) => segmento.texto) ?? []),
+      ];
+      const encontrados = fuentes.flatMap(tokensEnEnlacesInvitacion);
+      if (encontrados.length === 0) continue;
+
+      encontrados.forEach((token) => tokens.add(token));
+      const html = mensaje.html ? redactarEnlacesInvitacion(mensaje.html) : undefined;
+      const segmentos = mensaje.segmentos?.map((segmento) => ({
+        ...segmento,
+        texto: redactarEnlacesInvitacion(segmento.texto),
+      }));
+      await ctx.db.patch(mensaje._id, {
+        texto: redactarEnlacesInvitacion(mensaje.texto),
+        ...(html !== undefined ? { html } : {}),
+        ...(segmentos !== undefined ? { segmentos } : {}),
+      });
+      hilos.add(mensaje.threadId);
+      mensajesSaneados += 1;
+    }
+
+    let invitacionesRevocadas = 0;
+    const ahora = Date.now();
+    for (const token of tokens) {
+      const tokenHash = await sha256Hex(token);
+      const invitacion = await ctx.db
+        .query("invites")
+        .withIndex("by_tokenHash", (q) => q.eq("tokenHash", tokenHash))
+        .unique();
+      if (
+        invitacion &&
+        invitacion.usadaEn === undefined &&
+        invitacion.revocadaEn === undefined
+      ) {
+        await ctx.db.patch(invitacion._id, { revocadaEn: ahora });
+        invitacionesRevocadas += 1;
+      }
+    }
+
+    let hilosSaneados = 0;
+    for (const threadId of hilos) {
+      const id = ctx.db.normalizeId("mailThreads", threadId);
+      if (!id) continue;
+      const hilo = await ctx.db.get(id);
+      if (!hilo) continue;
+      await ctx.db.patch(id, {
+        ultimoResumen: "Invitacion enviada. El enlace personal se retiro de la bandeja.",
+        actualizadoEn: ahora,
+      });
+      hilosSaneados += 1;
+    }
+
+    return { invitacionesRevocadas, mensajesSaneados, hilosSaneados };
   },
 });
 

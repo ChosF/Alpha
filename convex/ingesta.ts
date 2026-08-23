@@ -49,7 +49,9 @@ export const registrar = action({
 
     const resultado = await ctx.runMutation(internal.ingesta.guardar, { datos: args.datos });
     const debeRecibirCorreo =
-      resultado.ok && (args.datos.tipo === "aliado" || args.datos.canales.correo);
+      resultado.ok &&
+      resultado.creado &&
+      (args.datos.tipo === "aliado" || args.datos.canales.correo);
 
     if (debeRecibirCorreo) {
       try {
@@ -67,13 +69,19 @@ export const registrar = action({
       }
     }
 
-    return resultado;
+    return resultado.ok
+      ? { ok: true }
+      : { ok: false, ...(resultado.motivo ? { motivo: resultado.motivo } : {}) };
   },
 });
 
 export const guardar = internalMutation({
   args: { datos: datosRegistro },
-  returns: v.object({ ok: v.boolean(), motivo: v.optional(v.string()) }),
+  returns: v.object({
+    ok: v.boolean(),
+    creado: v.boolean(),
+    motivo: v.optional(v.string()),
+  }),
   handler: async (ctx, { datos }) => {
     const correo = normalizarCorreo(datos.correo);
     const ahora = Date.now();
@@ -102,7 +110,7 @@ export const guardar = internalMutation({
       CUOTAS.registroPorIp.ventanaMs,
     );
     if (!limiteIp.permitido) {
-      return { ok: false, motivo: "limite" };
+      return { ok: false, creado: false, motivo: "limite" };
     }
 
     // Segundo limite, esta vez por correo: frena el reenvio del mismo
@@ -115,7 +123,7 @@ export const guardar = internalMutation({
       CUOTAS.registroPorCorreo.ventanaMs,
     );
     if (!limite.permitido) {
-      return { ok: false, motivo: "limite" };
+      return { ok: false, creado: false, motivo: "limite" };
     }
 
     const comun = {
@@ -136,16 +144,17 @@ export const guardar = internalMutation({
       actualizadoEn: ahora,
     };
 
-    // Un correo, un registro. Si vuelve a enviarlo, se actualizan sus datos en
-    // vez de crear un duplicado que despues Comunicacion tendria que depurar.
+    // Un correo, un registro. Conocer una direccion no prueba que quien envia
+    // el formulario sea su titular, asi que un duplicado nunca puede modificar
+    // datos ya guardados. La respuesta sigue siendo exitosa para no revelar si
+    // el correo existe.
     const existente = await ctx.db
       .query("registrations")
       .withIndex("by_correo", (q) => q.eq("correo", correo))
       .unique();
 
     if (existente !== null) {
-      await ctx.db.patch(existente._id, comun);
-      return { ok: true };
+      return { ok: true, creado: false };
     }
 
     await ctx.db.insert("registrations", {
@@ -155,6 +164,6 @@ export const guardar = internalMutation({
       creadoEn: ahora,
     });
 
-    return { ok: true };
+    return { ok: true, creado: true };
   },
 });

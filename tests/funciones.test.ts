@@ -68,18 +68,24 @@ describe("ingesta del formulario publico", () => {
     expect(filas[0]?.ipHash).toBe("hash-ip");
   });
 
-  it("un mismo correo actualiza en vez de duplicar", async () => {
+  it("un mismo correo no duplica ni permite sobrescribir datos", async () => {
     const t = convexTest(schema, modulos);
     await t.action(api.ingesta.registrar, { secreto: SECRETO, datos: datosBase });
     await t.action(api.ingesta.registrar, {
       secreto: SECRETO,
-      datos: { ...datosBase, semestre: "4.º semestre" },
+      datos: {
+        ...datosBase,
+        nombre: "Nombre manipulado",
+        carrera: "Otra carrera",
+        semestre: "4.º semestre",
+      },
     });
 
     const filas = await t.run(async (ctx) => ctx.db.query("registrations").collect());
     expect(filas).toHaveLength(1);
+    expect(filas[0]?.nombre).toBe("Mariela Reyes");
     expect(filas[0]?.carrera).toBe("LAF");
-    expect(filas[0]?.semestre).toBe("4.º semestre");
+    expect(filas[0]?.semestre).toBe("3.er semestre");
   });
 
   it("un aliado conserva su telefono obligatorio, pero no los canales de miembro", async () => {
@@ -229,6 +235,77 @@ describe("invitaciones", () => {
     await expect(
       t.query(api.usuarios.verificarInvitacion, { token: "a".repeat(64) }),
     ).resolves.toBeNull();
+  });
+
+  it("revoca y retira invitaciones que quedaron copiadas en la bandeja", async () => {
+    const t = convexTest(schema, modulos);
+    const { userId } = await comoUsuario(t, "admin");
+    const token = "b".repeat(64);
+    const enlace = `https://alphaccm.org/dashboard/invitacion/${token}`;
+    const ids = await t.run(async (ctx) => {
+      const inviteId = await ctx.db.insert("invites", {
+        correo: "pendiente@tec.mx",
+        nombre: "Pendiente",
+        rol: "editor",
+        tokenHash: await crypto.subtle
+          .digest("SHA-256", new TextEncoder().encode(token))
+          .then((buffer) =>
+            Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, "0")).join(""),
+          ),
+        expiraEn: Date.now() + 60_000,
+        creadaPor: userId,
+        creadaEn: Date.now(),
+      });
+      const threadId = await ctx.db.insert("mailThreads", {
+        asunto: "Tu acceso al panel de Alpha",
+        asuntoClave: "tu acceso al panel de alpha",
+        contactoCorreo: "pendiente@tec.mx",
+        estado: "resuelto",
+        noLeidos: 0,
+        ultimoMensajeEn: Date.now(),
+        ultimoResumen: enlace,
+        asignadoA: userId,
+        creadoEn: Date.now(),
+        actualizadoEn: Date.now(),
+      });
+      const messageId = await ctx.db.insert("mailMessages", {
+        threadId,
+        direccion: "saliente",
+        de: "auto@alphaccm.org",
+        para: ["pendiente@tec.mx"],
+        cc: [],
+        asunto: "Tu acceso al panel de Alpha",
+        texto: `Abre ${enlace}`,
+        estado: "enviado",
+        referencias: [],
+        creadoEn: Date.now(),
+      });
+      return { inviteId, threadId, messageId };
+    });
+
+    await expect(
+      t.mutation(internal.admin.remediarInvitacionesExpuestas, {}),
+    ).resolves.toEqual({
+      invitacionesRevocadas: 1,
+      mensajesSaneados: 1,
+      hilosSaneados: 1,
+    });
+    const estado = await t.run(async (ctx) => ({
+      invitacion: await ctx.db.get(ids.inviteId),
+      hilo: await ctx.db.get(ids.threadId),
+      mensaje: await ctx.db.get(ids.messageId),
+    }));
+    expect(estado.invitacion?.revocadaEn).toBeTypeOf("number");
+    expect(estado.mensaje?.texto).not.toContain(token);
+    expect(estado.hilo?.ultimoResumen).not.toContain(token);
+
+    await expect(
+      t.mutation(internal.admin.remediarInvitacionesExpuestas, {}),
+    ).resolves.toEqual({
+      invitacionesRevocadas: 0,
+      mensajesSaneados: 0,
+      hilosSaneados: 0,
+    });
   });
 
   it("no se puede invitar a alguien que ya tiene cuenta", async () => {

@@ -4,6 +4,10 @@ import { describe, expect, it } from "vitest";
 import schema from "@/convex/schema";
 import { internal } from "@/convex/_generated/api";
 import { renderizarCorreoDashboard, textoConFirma } from "@/convex/lib/plantillaCorreo";
+import {
+  redactarEnlacesInvitacion,
+  tokensEnEnlacesInvitacion,
+} from "@/convex/correo";
 
 const modulos = import.meta.glob("../convex/**/*.ts");
 
@@ -61,6 +65,16 @@ describe("plantilla de correo del dashboard", () => {
     expect(textoConFirma("Gracias por escribirnos.", "finanzas@alphaccm.org")).toBe(
       "Gracias por escribirnos.\n\nCoordinación de Finanzas,\nSociedad Estudiantil Alpha\nTecnológico de Monterrey, Campus Ciudad de México",
     );
+  });
+});
+
+describe("copias de invitacion en la bandeja", () => {
+  it("oculta el token pero permite localizarlo para revocacion", () => {
+    const token = "a".repeat(64);
+    const texto = `Abre https://alphaccm.org/dashboard/invitacion/${token}`;
+    expect(tokensEnEnlacesInvitacion(texto)).toEqual([token]);
+    expect(redactarEnlacesInvitacion(texto)).not.toContain(token);
+    expect(redactarEnlacesInvitacion(texto)).toContain("se omitio de esta copia");
   });
 });
 

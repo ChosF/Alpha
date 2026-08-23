@@ -7,16 +7,20 @@ import { cp, mkdir, readdir, rm, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import postcss from "postcss";
+import tailwindcss from "@tailwindcss/postcss";
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const origenHtml = path.join(raiz, "Landing", "alpha-b-reticula.html");
+const origenTailwind = path.join(raiz, "Landing", "tailwind.css");
 const origenAssets = path.join(raiz, "Landing", "assets");
 const destinoDir = path.join(raiz, "public", "landing");
 const destinoHtml = path.join(destinoDir, "alpha.html");
+const destinoCss = path.join(destinoDir, "alpha.css");
 const destinoPublico = path.join(raiz, "public");
 
-if (!existsSync(origenHtml)) {
-  console.error(`sync-landing: no existe ${origenHtml}`);
+if (!existsSync(origenHtml) || !existsSync(origenTailwind)) {
+  console.error("sync-landing: faltan la landing o su fuente local de Tailwind");
   process.exit(1);
 }
 
@@ -28,6 +32,17 @@ await mkdir(destinoDir, { recursive: true });
 // y los archivos se copian dentro de esta carpeta publica.
 const html = await readFile(origenHtml, "utf8");
 await writeFile(destinoHtml, html, "utf8");
+
+// Las utilidades se compilan durante desarrollo y build. El navegador recibe
+// CSS local y no ejecuta un compilador mutable de terceros.
+const fuenteTailwind = await readFile(origenTailwind, "utf8");
+const css = await postcss([
+  tailwindcss({ base: raiz, optimize: true }),
+]).process(fuenteTailwind, {
+  from: origenTailwind,
+  to: destinoCss,
+});
+await writeFile(destinoCss, css.css, "utf8");
 
 // El dashboard reutiliza exactamente la tipografia y las variantes aprobadas
 // del lockup que vive en la landing. Se extraen desde la misma fuente para no
@@ -62,6 +77,6 @@ for (const nombre of usados) {
 
 const omitidos = disponibles.length - usados.length;
 console.log(
-  `sync-landing: ${path.relative(raiz, destinoHtml)} + ${usados.length} archivos` +
+  `sync-landing: ${path.relative(raiz, destinoHtml)} + CSS local + ${usados.length} archivos` +
     (omitidos > 0 ? ` (${omitidos} sin usar, omitidos)` : ""),
 );

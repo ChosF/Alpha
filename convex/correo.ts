@@ -42,6 +42,24 @@ const CADUCIDAD_CARGA_MS = 24 * 60 * 60 * 1000;
 const VENTANA_HILO_MS = 180 * 24 * 60 * 60 * 1000;
 const CORREO_VALIDO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const ENLACE_COMUNIDAD = "https://chat.whatsapp.com/CDRLe4FEHZN0jrdf2WkH8n";
+const AVISO_ENLACE_INVITACION =
+  "[El enlace personal se envio al destinatario y se omitio de esta copia.]";
+
+function patronEnlaceInvitacion(): RegExp {
+  return /\bhttps?:\/\/[^\s\"'<>]+\/dashboard\/invitacion\/([0-9a-f]{64})\b/gi;
+}
+
+/** Retira enlaces de alta antes de guardar una copia visible para el equipo. */
+export function redactarEnlacesInvitacion(texto: string): string {
+  return texto.replace(patronEnlaceInvitacion(), AVISO_ENLACE_INVITACION);
+}
+
+/** Extrae los tokens expuestos para que la remediacion pueda revocarlos. */
+export function tokensEnEnlacesInvitacion(texto: string): string[] {
+  return Array.from(texto.matchAll(patronEnlaceInvitacion()), (coincidencia) =>
+    (coincidencia[1] ?? "").toLowerCase(),
+  ).filter(Boolean);
+}
 
 const segmentoCorreoValidador = v.object({
   texto: v.string(),
@@ -1524,7 +1542,8 @@ export async function enviarInvitacionPorCorreo(
 
   const enlace = `${sitio}/dashboard/invitacion/${args.token}`;
   const vence = new Date(args.expiraEn).toISOString().slice(0, 10);
-  const texto = `Hola ${args.nombre},\n\nTe invitaron al panel interno de Alpha. El enlace es personal, funciona una sola vez y vence el ${vence}.\n\n${enlace}\n\nSi no esperabas esta invitacion, puedes ignorar este mensaje.`;
+  const textoEnvio = `Hola ${args.nombre},\n\nTe invitaron al panel interno de Alpha. El enlace es personal, funciona una sola vez y vence el ${vence}.\n\n${enlace}\n\nSi no esperabas esta invitacion, puedes ignorar este mensaje.`;
+  const textoBandeja = redactarEnlacesInvitacion(textoEnvio);
   const ahora = Date.now();
   const asunto = "Tu acceso al panel de Alpha";
   const threadId = await ctx.db.insert("mailThreads", {
@@ -1535,7 +1554,7 @@ export async function enviarInvitacionPorCorreo(
     estado: "resuelto",
     noLeidos: 0,
     ultimoMensajeEn: ahora,
-    ultimoResumen: resumenTexto(texto),
+    ultimoResumen: resumenTexto(textoBandeja),
     asignadoA: args.actor._id,
     creadoEn: ahora,
     actualizadoEn: ahora,
@@ -1545,8 +1564,8 @@ export async function enviarInvitacionPorCorreo(
     from: nombreDireccion(auto, "Alpha CCM"),
     to: args.correo,
     subject: asunto,
-    text: textoConFirma(texto, auto),
-    html: renderizarCorreoDashboard({ asunto, texto, remitente: auto }),
+    text: textoConFirma(textoEnvio, auto),
+    html: renderizarCorreoDashboard({ asunto, texto: textoEnvio, remitente: auto }),
     replyTo: [correoContacto()],
   });
   await ctx.db.insert("mailMessages", {
@@ -1556,7 +1575,7 @@ export async function enviarInvitacionPorCorreo(
     para: [args.correo],
     cc: [],
     asunto,
-    texto,
+    texto: textoBandeja,
     estado: "en_cola",
     resendComponentId,
     referencias: [],
