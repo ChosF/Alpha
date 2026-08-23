@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { AREAS, ETIQUETAS, ESTADOS_REGISTRO } from "@/convex/lib/validadores";
@@ -12,8 +13,9 @@ import { Bandeja, Cargando, Titulo, fechaHora } from "@/components/panel/piezas"
  * El resto se ordena por lo que exige accion: cuantos siguen sin contactar.
  */
 export default function Inicio() {
+  const [actividadVisible, setActividadVisible] = useState(true);
   const datos = useQuery(api.metricas.resumen, {});
-  const actividad = useQuery(api.metricas.actividad, { limite: 12 });
+  const actividad = useQuery(api.metricas.actividad, { limite: 50 });
 
   if (datos === undefined) {
     return (
@@ -145,34 +147,56 @@ export default function Inicio() {
         {/* Bitacora */}
         <Bandeja className="lg:col-span-12">
           <div className="p-8">
-            <p className="rotulo">Actividad del equipo</p>
-            {actividad === undefined ? (
-              <p className="mt-5 text-[12px] text-[var(--color-n600)]">Cargando…</p>
-            ) : actividad.length === 0 ? (
-              <p className="mt-5 text-[12px] text-[var(--color-n600)]">
-                Todavia no hay movimientos registrados.
-              </p>
-            ) : (
-              <ul className="mt-5">
-                {actividad.map((linea) => (
-                  <li
-                    key={linea._id}
-                    className="fila grid grid-cols-[auto_1fr] sm:grid-cols-[130px_1fr_auto] gap-x-5 gap-y-1 py-3 items-baseline"
-                  >
-                    <span className="cifra text-[11px] text-[var(--color-n500)]">
-                      {fechaHora(linea.creadoEn)}
-                    </span>
-                    <span className="text-[12.5px]">
-                      <span className="text-[var(--color-n700)]">{linea.actorCorreo}</span>{" "}
-                      {linea.accion}
-                      {linea.detalle ? (
-                        <span className="text-[var(--color-n600)]"> · {linea.detalle}</span>
-                      ) : null}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <div className="flex items-center justify-between gap-4">
+              <p className="rotulo">Actividad del equipo</p>
+              <button
+                type="button"
+                aria-expanded={actividadVisible}
+                aria-controls="actividad-lista"
+                onClick={() => setActividadVisible((visible) => !visible)}
+                className="group flex min-h-9 items-center gap-2 px-2 text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--color-n600)] transition-colors hover:text-[var(--color-accent)]"
+              >
+                {actividadVisible ? "Ocultar" : "Mostrar"}
+                <span
+                  aria-hidden="true"
+                  className={`block size-2.5 border-b border-r border-current transition-transform duration-300 ${
+                    actividadVisible ? "rotate-[225deg] translate-y-0.5" : "rotate-45 -translate-y-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {actividadVisible ? (
+              <div id="actividad-lista">
+                {actividad === undefined ? (
+                  <p className="mt-5 text-[12px] text-[var(--color-n600)]">Cargando…</p>
+                ) : actividad.length === 0 ? (
+                  <p className="mt-5 text-[12px] text-[var(--color-n600)]">
+                    Todavia no hay movimientos registrados.
+                  </p>
+                ) : (
+                  <ul className="correo-scroll mt-5 max-h-[445px] overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable]">
+                    {actividad.map((linea) => (
+                      <li
+                        key={linea._id}
+                        className="fila grid grid-cols-[auto_1fr] sm:grid-cols-[130px_1fr_auto] gap-x-5 gap-y-1 py-3 items-baseline"
+                      >
+                        <span className="cifra text-[11px] text-[var(--color-n500)]">
+                          {fechaHora(linea.creadoEn)}
+                        </span>
+                        <span className="text-[12.5px]">
+                          <span className="text-[var(--color-n700)]">{linea.actorCorreo}</span>{" "}
+                          {linea.accion}
+                          {linea.detalle ? (
+                            <span className="text-[var(--color-n600)]"> · {linea.detalle}</span>
+                          ) : null}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ) : null}
           </div>
         </Bandeja>
       </div>
