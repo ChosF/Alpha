@@ -87,6 +87,32 @@ export const manejarResend = httpAction(async (ctx, request) => {
     typeof (evento as { type?: unknown }).type === "string" &&
     (evento as { type: string }).type.startsWith("email.")
   ) {
+    const eventoCorreo = evento as {
+      type: string;
+      data?: {
+        email_id?: unknown;
+        message_id?: unknown;
+        bounce?: { message?: unknown };
+        failed?: { reason?: unknown };
+      };
+    };
+    if (typeof eventoCorreo.data?.email_id === "string") {
+      const error =
+        typeof eventoCorreo.data.bounce?.message === "string"
+          ? eventoCorreo.data.bounce.message
+          : typeof eventoCorreo.data.failed?.reason === "string"
+            ? eventoCorreo.data.failed.reason
+            : undefined;
+      const actualizado = await ctx.runMutation(internal.correo.actualizarEstadoEnvioDirecto, {
+        resendEmailId: eventoCorreo.data.email_id,
+        tipo: eventoCorreo.type,
+        ...(typeof eventoCorreo.data.message_id === "string"
+          ? { internetMessageId: eventoCorreo.data.message_id }
+          : {}),
+        ...(error ? { error } : {}),
+      });
+      if (actualizado) return new Response(null, { status: 201 });
+    }
     const reconstruida = new Request(request.url, {
       method: "POST",
       headers: request.headers,

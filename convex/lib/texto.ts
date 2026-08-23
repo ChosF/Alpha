@@ -53,6 +53,14 @@ export function limpiarMultilinea(valor: string, maximo: number): string {
     .slice(0, maximo);
 }
 
+/**
+ * Limpia un fragmento de texto enriquecido sin quitar los espacios de sus bordes.
+ * Los bordes importan porque varios fragmentos contiguos forman una sola frase.
+ */
+export function limpiarFragmentoMultilinea(valor: string, maximo: number): string {
+  return quitarPeligrosos(valor).replace(/\r\n?/g, "\n").slice(0, maximo);
+}
+
 /** Minusculas, sin espacios. Es la forma canonica con la que se de-duplica. */
 export function normalizarCorreo(correo: string): string {
   return quitarPeligrosos(correo).trim().toLowerCase();

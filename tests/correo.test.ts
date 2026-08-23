@@ -41,6 +41,22 @@ describe("plantilla de correo del dashboard", () => {
     expect(html).toContain("Presidencia y Vicepresidencia,");
   });
 
+  it("conserva negritas y cursivas sin aceptar HTML del compositor", () => {
+    const html = renderizarCorreoDashboard({
+      asunto: "Seguimiento",
+      texto: "Dato importante y fecha tentativa.",
+      segmentos: [
+        { texto: "Dato importante", negrita: true, cursiva: false },
+        { texto: " y ", negrita: false, cursiva: false },
+        { texto: "fecha tentativa", negrita: false, cursiva: true },
+        { texto: ".", negrita: false, cursiva: false },
+      ],
+    });
+
+    expect(html).toContain('<strong style="font-weight:600;">Dato importante</strong>');
+    expect(html).toContain('<em style="font-style:italic;">fecha tentativa</em>');
+  });
+
   it("agrega la firma del remitente al texto plano", () => {
     expect(textoConFirma("Gracias por escribirnos.", "finanzas@alphaccm.org")).toBe(
       "Gracias por escribirnos.\n\nCoordinación de Finanzas,\nSociedad Estudiantil Alpha\nTecnológico de Monterrey, Campus Ciudad de México",
@@ -69,6 +85,7 @@ describe("ingesta de correo entrante", () => {
     await t.mutation(internal.correo.guardarEntrada, {
       jobId: jobId!,
       texto: "Hola, me interesa colaborar con Alpha.",
+      html: '<div style="font-family: Georgia"><strong>Hola</strong>, me interesa colaborar.</div>',
       referencias: [],
       adjuntos: [],
     });
@@ -90,6 +107,7 @@ describe("ingesta de correo entrante", () => {
       direccion: "entrante",
       estado: "recibido",
       providerInboundId: "email_entrada_1",
+      html: '<div style="font-family: Georgia"><strong>Hola</strong>, me interesa colaborar.</div>',
     });
     expect(estado.trabajos[0]?.estado).toBe("completado");
   });

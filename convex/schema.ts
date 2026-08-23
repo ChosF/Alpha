@@ -154,7 +154,7 @@ export default defineSchema({
     .index("by_estado_ultimo", ["estado", "ultimoMensajeEn"])
     .index("by_contacto_ultimo", ["contactoCorreo", "ultimoMensajeEn"]),
 
-  /** Mensajes. El panel renderiza siempre `texto`, nunca HTML de terceros. */
+  /** Mensajes de la bandeja. El HTML entrante solo se muestra dentro de un iframe aislado. */
   mailMessages: defineTable({
     threadId: v.id("mailThreads"),
     direccion: direccionMensajeCorreoValidador,
@@ -163,6 +163,16 @@ export default defineSchema({
     cc: v.array(v.string()),
     asunto: v.string(),
     texto: v.string(),
+    segmentos: v.optional(
+      v.array(
+        v.object({
+          texto: v.string(),
+          negrita: v.boolean(),
+          cursiva: v.boolean(),
+        }),
+      ),
+    ),
+    html: v.optional(v.string()),
     estado: estadoMensajeCorreoValidador,
     clientRequestId: v.optional(v.string()),
     resendComponentId: v.optional(v.string()),
@@ -180,7 +190,8 @@ export default defineSchema({
     .index("by_client_request", ["clientRequestId"])
     .index("by_resend_component", ["resendComponentId"])
     .index("by_provider_inbound", ["providerInboundId"])
-    .index("by_internet_message", ["internetMessageId"]),
+    .index("by_internet_message", ["internetMessageId"])
+    .index("by_resend_email", ["resendEmailId"]),
 
   /** Adjuntos entrantes copiados a Convex Storage antes de que caduque su URL. */
   mailAttachments: defineTable({
@@ -190,8 +201,21 @@ export default defineSchema({
     nombre: v.string(),
     tipoContenido: v.string(),
     tamano: v.number(),
+    contentId: v.optional(v.string()),
+    disposicion: v.optional(v.union(v.literal("inline"), v.literal("attachment"))),
     creadoEn: v.number(),
   }).index("by_message", ["messageId"]),
+
+  /** Cargas salientes aun no consumidas por un envio. Caducan automaticamente. */
+  mailAttachmentDrafts: defineTable({
+    actorId: v.id("users"),
+    storageId: v.optional(v.id("_storage")),
+    nombre: v.optional(v.string()),
+    tipoContenido: v.optional(v.string()),
+    tamano: v.optional(v.number()),
+    creadoEn: v.number(),
+  })
+    .index("by_actor_created", ["actorId", "creadoEn"]),
 
   /** Trabajo idempotente para convertir un webhook entrante en un mensaje. */
   mailInboundJobs: defineTable({

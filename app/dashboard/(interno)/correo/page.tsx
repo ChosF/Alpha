@@ -1,8 +1,16 @@
 "use client";
 
-import { Suspense, useDeferredValue, useEffect, useRef, useState } from "react";
+import {
+  Suspense,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useSearchParams } from "next/navigation";
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -26,7 +34,30 @@ const FORMATO_ARCHIVO = new Intl.NumberFormat("es-MX", {
 });
 
 type DetalleCorreo = NonNullable<FunctionReturnType<typeof api.correo.detalle>>;
+type MensajeCorreo = DetalleCorreo["mensajes"][number];
+type AdjuntoCorreo = MensajeCorreo["adjuntos"][number];
+type SegmentoCorreo = NonNullable<MensajeCorreo["segmentos"]>[number];
+type ContenidoEditor = { texto: string; segmentos: SegmentoCorreo[] };
+type ArchivoSalida = {
+  localId: string;
+  borradorId?: Id<"mailAttachmentDrafts">;
+  nombre: string;
+  tipoContenido: string;
+  tamano: number;
+  estado: "subiendo" | "listo" | "error";
+  error?: string;
+};
 const REMITENTE_PREDETERMINADO = "contacto@alphaccm.org";
+const MAX_ADJUNTO_BYTES = 10 * 1024 * 1024;
+const MAX_TOTAL_ADJUNTOS_BYTES = 18 * 1024 * 1024;
+const MAX_ADJUNTOS = 10;
+const IMAGENES_PREVISUALIZABLES = new Set([
+  "image/avif",
+  "image/gif",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
 
 function tamanoArchivo(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -38,6 +69,460 @@ function limpiarError(error: unknown): string {
   if (!(error instanceof Error)) return "No se pudo completar la operacion.";
   const marca = error.message.lastIndexOf("Error: ");
   return (marca === -1 ? error.message : error.message.slice(marca + 7)).split("\n")[0] ?? error.message;
+}
+
+function agregarSegmento(
+  segmentos: SegmentoCorreo[],
+  texto: string,
+  negrita: boolean,
+  cursiva: boolean,
+) {
+  if (!texto) return;
+  const anterior = segmentos.at(-1);
+  if (anterior && anterior.negrita === negrita && anterior.cursiva === cursiva) {
+    anterior.texto += texto;
+  } else {
+    segmentos.push({ texto, negrita, cursiva });
+  }
+}
+
+function contenidoDesdeEditor(editor: HTMLElement): ContenidoEditor {
+  const segmentos: SegmentoCorreo[] = [];
+  const bloques = new Set(["DIV", "P", "LI", "H1", "H2", "H3", "BLOCKQUOTE"]);
+
+  const recorrer = (nodo: Node, negrita: boolean, cursiva: boolean) => {
+    if (nodo.nodeType === Node.TEXT_NODE) {
+      agregarSegmento(segmentos, nodo.textContent ?? "", negrita, cursiva);
+      return;
+    }
+    if (!(nodo instanceof HTMLElement)) return;
+    const etiqueta = nodo.tagName;
+    if (etiqueta === "BR") {
+      agregarSegmento(segmentos, "\n", negrita, cursiva);
+      return;
+    }
+    const esBloque = bloques.has(etiqueta);
+    if (esBloque && segmentos.length && !segmentos.at(-1)!.texto.endsWith("\n")) {
+      agregarSegmento(segmentos, "\n", negrita, cursiva);
+    }
+    const peso = negrita || etiqueta === "B" || etiqueta === "STRONG";
+    const inclinacion = cursiva || etiqueta === "I" || etiqueta === "EM";
+    nodo.childNodes.forEach((hijo) => recorrer(hijo, peso, inclinacion));
+    if (esBloque && !segmentos.at(-1)?.texto.endsWith("\n")) {
+      agregarSegmento(segmentos, "\n", peso, inclinacion);
+    }
+  };
+
+  editor.childNodes.forEach((nodo) => recorrer(nodo, false, false));
+  if (segmentos[0]) segmentos[0].texto = segmentos[0].texto.replace(/^\s+/, "");
+  if (segmentos.at(-1)) segmentos.at(-1)!.texto = segmentos.at(-1)!.texto.replace(/\s+$/, "");
+  const limpios = segmentos.filter((segmento) => segmento.texto.length > 0);
+  return { texto: limpios.map((segmento) => segmento.texto).join(""), segmentos: limpios };
+}
+
+function EditorCorreo({
+  id,
+  onChange,
+  autoFocus = false,
+}: {
+  id: string;
+  onChange: (contenido: ContenidoEditor) => void;
+  autoFocus?: boolean;
+}) {
+  const editor = useRef<HTMLDivElement>(null);
+  const [activo, setActivo] = useState({ negrita: false, cursiva: false });
+
+  const sincronizar = () => {
+    if (!editor.current) return;
+    let contenido = contenidoDesdeEditor(editor.current);
+    if (contenido.texto.length > 20_000) {
+      editor.current.textContent = contenido.texto.slice(0, 20_000);
+      contenido = contenidoDesdeEditor(editor.current);
+    }
+    onChange(contenido);
+    setActivo({
+      negrita: document.queryCommandState("bold"),
+      cursiva: document.queryCommandState("italic"),
+    });
+  };
+
+  const aplicar = (comando: "bold" | "italic") => {
+    editor.current?.focus();
+    document.execCommand(comando);
+    sincronizar();
+  };
+
+  return (
+    <div className="correo-editor-marco">
+      <div className="correo-editor-barra" role="toolbar" aria-label="Formato del mensaje">
+        <button
+          type="button"
+          className={activo.negrita ? "correo-formato-activo" : ""}
+          aria-label="Negritas"
+          aria-pressed={activo.negrita}
+          title="Negritas (Ctrl+B)"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => aplicar("bold")}
+        >
+          <strong>B</strong>
+        </button>
+        <button
+          type="button"
+          className={activo.cursiva ? "correo-formato-activo" : ""}
+          aria-label="Cursivas"
+          aria-pressed={activo.cursiva}
+          title="Cursivas (Ctrl+I)"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => aplicar("italic")}
+        >
+          <em>I</em>
+        </button>
+        <span>Formato</span>
+      </div>
+      <div
+        id={id}
+        ref={editor}
+        className="correo-editor"
+        contentEditable
+        role="textbox"
+        aria-multiline="true"
+        aria-label="Mensaje"
+        data-placeholder="Escribe el mensaje."
+        suppressContentEditableWarning
+        onInput={sincronizar}
+        onKeyUp={sincronizar}
+        onMouseUp={sincronizar}
+        onPaste={(event) => {
+          event.preventDefault();
+          document.execCommand("insertText", false, event.clipboardData.getData("text/plain"));
+        }}
+        autoFocus={autoFocus}
+      />
+    </div>
+  );
+}
+
+function useArchivosSalida() {
+  const crearCarga = useMutation(api.correo.crearCargaAdjunto);
+  const completarCarga = useMutation(api.correo.completarCargaAdjunto);
+  const descartarCarga = useMutation(api.correo.descartarCargaAdjunto);
+  const [archivos, setArchivos] = useState<ArchivoSalida[]>([]);
+
+  const actualizar = (localId: string, cambio: Partial<ArchivoSalida>) => {
+    setArchivos((actuales) =>
+      actuales.map((archivo) => (archivo.localId === localId ? { ...archivo, ...cambio } : archivo)),
+    );
+  };
+
+  const agregar = async (seleccionados: FileList | null) => {
+    if (!seleccionados?.length) return;
+    let cantidad = archivos.filter((archivo) => archivo.estado !== "error").length;
+    let total = archivos.reduce(
+      (suma, archivo) => suma + (archivo.estado === "error" ? 0 : archivo.tamano),
+      0,
+    );
+
+    for (const file of Array.from(seleccionados)) {
+      const localId = crypto.randomUUID();
+      if (cantidad >= MAX_ADJUNTOS) {
+        setArchivos((actuales) => [
+          ...actuales,
+          {
+            localId,
+            nombre: file.name,
+            tipoContenido: file.type || "application/octet-stream",
+            tamano: file.size,
+            estado: "error",
+            error: "Maximo 10 archivos por correo.",
+          },
+        ]);
+        continue;
+      }
+      if (file.size <= 0 || file.size > MAX_ADJUNTO_BYTES || total + file.size > MAX_TOTAL_ADJUNTOS_BYTES) {
+        setArchivos((actuales) => [
+          ...actuales,
+          {
+            localId,
+            nombre: file.name,
+            tipoContenido: file.type || "application/octet-stream",
+            tamano: file.size,
+            estado: "error",
+            error: file.size > MAX_ADJUNTO_BYTES ? "El archivo supera 10 MB." : "El total supera 18 MB.",
+          },
+        ]);
+        continue;
+      }
+
+      cantidad += 1;
+      total += file.size;
+      setArchivos((actuales) => [
+        ...actuales,
+        {
+          localId,
+          nombre: file.name,
+          tipoContenido: file.type || "application/octet-stream",
+          tamano: file.size,
+          estado: "subiendo",
+        },
+      ]);
+
+      let borradorId: Id<"mailAttachmentDrafts"> | undefined;
+      try {
+        const carga = await crearCarga({});
+        borradorId = carga.id;
+        actualizar(localId, { borradorId });
+        const respuesta = await fetch(carga.url, {
+          method: "POST",
+          headers: { "Content-Type": file.type || "application/octet-stream" },
+          body: file,
+        });
+        if (!respuesta.ok) throw new Error("No se pudo subir el archivo.");
+        const datos = (await respuesta.json()) as { storageId?: string };
+        if (!datos.storageId) throw new Error("Convex no devolvio el archivo.");
+        const completo = await completarCarga({
+          id: carga.id,
+          storageId: datos.storageId as Id<"_storage">,
+          nombre: file.name,
+        });
+        if (!completo.ok) throw new Error(completo.error);
+        actualizar(localId, {
+          borradorId: carga.id,
+          nombre: completo.nombre,
+          tipoContenido: completo.tipoContenido,
+          tamano: completo.tamano,
+          estado: "listo",
+          error: undefined,
+        });
+      } catch (error) {
+        if (borradorId) void descartarCarga({ id: borradorId });
+        actualizar(localId, { estado: "error", error: limpiarError(error) });
+      }
+    }
+  };
+
+  const quitar = async (archivo: ArchivoSalida) => {
+    setArchivos((actuales) => actuales.filter((actual) => actual.localId !== archivo.localId));
+    if (archivo.borradorId) await descartarCarga({ id: archivo.borradorId });
+  };
+
+  const descartarTodos = () => {
+    for (const archivo of archivos) {
+      if (archivo.borradorId) void descartarCarga({ id: archivo.borradorId });
+    }
+    setArchivos([]);
+  };
+
+  return {
+    archivos,
+    agregar,
+    quitar,
+    descartarTodos,
+    idsListos: archivos.flatMap((archivo) =>
+      archivo.estado === "listo" && archivo.borradorId ? [archivo.borradorId] : [],
+    ),
+    subiendo: archivos.some((archivo) => archivo.estado === "subiendo"),
+  };
+}
+
+function AdjuntosSalida({ gestor }: { gestor: ReturnType<typeof useArchivosSalida> }) {
+  const input = useRef<HTMLInputElement>(null);
+  return (
+    <div className="correo-adjuntar">
+      <input
+        ref={input}
+        className="sr-only"
+        type="file"
+        multiple
+        onChange={(event) => {
+          void gestor.agregar(event.target.files);
+          event.target.value = "";
+        }}
+      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <button type="button" className="correo-adjuntar-boton" onClick={() => input.current?.click()}>
+          <IconoClip />
+          Adjuntar archivos o fotos
+        </button>
+        <span className="cifra text-[8.5px] text-[var(--color-n500)]">10 MB c/u · 18 MB total</span>
+      </div>
+      {gestor.archivos.length ? (
+        <ul className="correo-cargas">
+          {gestor.archivos.map((archivo) => (
+            <li key={archivo.localId} data-estado={archivo.estado}>
+              <span className="correo-carga-icono">{archivo.estado === "subiendo" ? "···" : extensionArchivo(archivo.nombre)}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[11px] font-medium">{archivo.nombre}</span>
+                <span className="mt-1 block text-[9px] text-[var(--color-n600)]">
+                  {archivo.error ?? `${tamanoArchivo(archivo.tamano)} · ${archivo.estado === "listo" ? "Listo" : "Subiendo"}`}
+                </span>
+              </span>
+              {archivo.estado !== "subiendo" ? (
+                <button type="button" aria-label={`Quitar ${archivo.nombre}`} onClick={() => void gestor.quitar(archivo)}>×</button>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+function extensionArchivo(nombre: string): string {
+  const extension = nombre.split(".").pop()?.slice(0, 4).toUpperCase();
+  return extension && extension !== nombre.toUpperCase() ? extension : "DOC";
+}
+
+function TextoMensaje({ mensaje }: { mensaje: MensajeCorreo }) {
+  if (!mensaje.segmentos?.length) return <>{mensaje.texto}</>;
+  return (
+    <>
+      {mensaje.segmentos.map((segmento, indice) => {
+        let contenido: ReactNode = segmento.texto;
+        if (segmento.cursiva) contenido = <em>{contenido}</em>;
+        if (segmento.negrita) contenido = <strong>{contenido}</strong>;
+        return <span key={`${indice}-${segmento.texto.length}`}>{contenido}</span>;
+      })}
+    </>
+  );
+}
+
+function sanitizarHtmlCorreo(html: string, cidUrls: Map<string, string>): string {
+  const documento = new DOMParser().parseFromString(html, "text/html");
+  documento
+    .querySelectorAll("script,iframe,object,embed,form,input,button,textarea,select,option,meta,base,link,video,audio,source,track")
+    .forEach((elemento) => elemento.remove());
+
+  documento.querySelectorAll("*").forEach((elemento) => {
+    for (const atributo of Array.from(elemento.attributes)) {
+      const nombre = atributo.name.toLowerCase();
+      if (
+        nombre.startsWith("on") ||
+        nombre.endsWith(":href") ||
+        ["href", "srcset", "action", "formaction", "ping"].includes(nombre)
+      ) {
+        elemento.removeAttribute(atributo.name);
+        continue;
+      }
+      if (nombre === "src") {
+        const valor = atributo.value.trim();
+        if (valor.toLowerCase().startsWith("cid:")) {
+          const clave = valor.slice(4).replace(/^<|>$/g, "").toLowerCase();
+          const url = cidUrls.get(clave);
+          if (url) elemento.setAttribute("src", url);
+          else elemento.removeAttribute("src");
+        } else if (!/^data:image\/(?:avif|gif|jpeg|png|webp);/i.test(valor)) {
+          elemento.removeAttribute("src");
+        }
+      }
+      if (nombre === "style") {
+        elemento.setAttribute(
+          "style",
+          atributo.value
+            .replace(/url\([^)]*\)/gi, "none")
+            .replace(/expression\([^)]*\)/gi, "")
+            .replace(/behavior\s*:/gi, "blocked:"),
+        );
+      }
+    }
+  });
+  documento.querySelectorAll("style").forEach((estilo) => {
+    estilo.textContent = (estilo.textContent ?? "")
+      .replace(/@import[^;]+;/gi, "")
+      .replace(/url\([^)]*\)/gi, "none");
+  });
+
+  const csp = documento.createElement("meta");
+  csp.httpEquiv = "Content-Security-Policy";
+  csp.content = "default-src 'none'; img-src blob: data:; style-src 'unsafe-inline'; font-src data:; form-action 'none'; base-uri 'none'; frame-src 'none'";
+  documento.head.prepend(csp);
+  const estilos = documento.createElement("style");
+  estilos.textContent = "html,body{margin:0;padding:0;max-width:100%;background:#fff;color:#26364d;overflow-wrap:anywhere}body{padding:18px;font-family:Arial,sans-serif;font-size:14px;line-height:1.55}img{max-width:100%;height:auto}table{max-width:100%!important}a{color:#1f5fd0;text-decoration:underline;pointer-events:none}";
+  documento.head.append(estilos);
+  return `<!doctype html>${documento.documentElement.outerHTML}`;
+}
+
+function CorreoHtml({ html, adjuntos, titulo }: { html: string; adjuntos: AdjuntoCorreo[]; titulo: string }) {
+  const [documento, setDocumento] = useState<string | null>(null);
+  const inline = useMemo(
+    () => adjuntos.filter((adjunto) => adjunto.contentId && IMAGENES_PREVISUALIZABLES.has(adjunto.tipoContenido)),
+    [adjuntos],
+  );
+  const clave = inline.map((adjunto) => `${adjunto._id}:${adjunto.contentId}`).join("|");
+
+  useEffect(() => {
+    let activo = true;
+    const urls: string[] = [];
+    void (async () => {
+      const pares = await Promise.all(
+        inline.map(async (adjunto) => {
+          const respuesta = await fetch(`/api/correo/adjuntos/${adjunto._id}`, { cache: "no-store" });
+          if (!respuesta.ok) return null;
+          const url = URL.createObjectURL(await respuesta.blob());
+          urls.push(url);
+          return [adjunto.contentId!.replace(/^<|>$/g, "").toLowerCase(), url] as const;
+        }),
+      );
+      if (activo) setDocumento(sanitizarHtmlCorreo(html, new Map(pares.filter((par) => par !== null))));
+    })();
+    return () => {
+      activo = false;
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [html, clave, inline]);
+
+  if (!documento) return <div className="correo-html-cargando">Preparando el diseño del correo…</div>;
+  return (
+    <iframe
+      className="correo-html-frame"
+      title={`Contenido de ${titulo}`}
+      sandbox=""
+      referrerPolicy="no-referrer"
+      srcDoc={documento}
+    />
+  );
+}
+
+function CuerpoMensaje({ mensaje }: { mensaje: MensajeCorreo }) {
+  const [vista, setVista] = useState<"diseno" | "texto">(mensaje.html ? "diseno" : "texto");
+  return (
+    <div className="correo-mensaje-cuerpo text-[13px] font-light leading-[1.85] text-[var(--color-cuerpo)]">
+      {mensaje.html ? (
+        <div className="correo-vista-selector">
+          <button type="button" aria-pressed={vista === "diseno"} onClick={() => setVista("diseno")}>Diseño original</button>
+          <button type="button" aria-pressed={vista === "texto"} onClick={() => setVista("texto")}>Texto simple</button>
+          <span>Imágenes remotas bloqueadas</span>
+        </div>
+      ) : null}
+      {vista === "diseno" && mensaje.html ? (
+        <CorreoHtml html={mensaje.html} adjuntos={mensaje.adjuntos} titulo={mensaje.asunto} />
+      ) : (
+        <div className="whitespace-pre-wrap"><TextoMensaje mensaje={mensaje} /></div>
+      )}
+    </div>
+  );
+}
+
+function AdjuntoMensaje({ adjunto }: { adjunto: AdjuntoCorreo }) {
+  const url = `/api/correo/adjuntos/${adjunto._id}`;
+  const esImagen = IMAGENES_PREVISUALIZABLES.has(adjunto.tipoContenido);
+  return (
+    <a href={url} download={adjunto.nombre} className={`correo-adjunto ${esImagen ? "correo-adjunto-imagen" : ""}`}>
+      {esImagen ? (
+        // The source is an authenticated, short-lived response and cannot use Next image optimization.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={url} alt="" loading="lazy" />
+      ) : (
+        <span className="correo-adjunto-extension">{extensionArchivo(adjunto.nombre)}</span>
+      )}
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[11px] font-medium">{adjunto.nombre}</span>
+        <span className="mt-1 block cifra text-[9px] text-[var(--color-n600)]">
+          {tamanoArchivo(adjunto.tamano)} · {adjunto.tipoContenido}
+        </span>
+      </span>
+      <IconoDescarga />
+    </a>
+  );
 }
 
 export default function Correo() {
@@ -418,31 +903,11 @@ function Conversacion({
                   {fechaHora(mensaje.creadoEn)}
                 </p>
               </div>
-              <div className="correo-mensaje-cuerpo whitespace-pre-wrap text-[13px] font-light leading-[1.85] text-[var(--color-cuerpo)]">
-                {mensaje.texto}
-              </div>
+              <CuerpoMensaje mensaje={mensaje} />
               {mensaje.adjuntos.length > 0 ? (
                 <ul className="correo-adjuntos grid gap-2 sm:grid-cols-2">
                   {mensaje.adjuntos.map((adjunto) => (
-                    <li key={adjunto._id}>
-                      {adjunto.url ? (
-                        <a
-                          href={adjunto.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="correo-adjunto"
-                        >
-                          <span className="block truncate text-[11px] font-medium">{adjunto.nombre}</span>
-                          <span className="mt-1 block cifra text-[9px] text-[var(--color-n600)]">
-                            {tamanoArchivo(adjunto.tamano)} · {adjunto.tipoContenido}
-                          </span>
-                        </a>
-                      ) : (
-                        <span className="correo-adjunto block text-[11px] text-[var(--color-n600)]">
-                          {adjunto.nombre} no disponible
-                        </span>
-                      )}
-                    </li>
+                    <li key={adjunto._id}><AdjuntoMensaje adjunto={adjunto} /></li>
                   ))}
                 </ul>
               ) : null}
@@ -504,8 +969,10 @@ function Responder({
   remitenteInicial?: string;
   cerrar: () => void;
 }) {
-  const enviar = useMutation(api.correo.enviar);
-  const [texto, setTexto] = useState("");
+  const enviarSimple = useMutation(api.correo.enviar);
+  const enviarConAdjuntos = useAction(api.correoActions.enviarConAdjuntos);
+  const [contenido, setContenido] = useState<ContenidoEditor>({ texto: "", segmentos: [] });
+  const adjuntos = useArchivosSalida();
   const [remitente, setRemitente] = useState(
     remitenteInicial && remitentes.includes(remitenteInicial)
       ? remitenteInicial
@@ -520,8 +987,19 @@ function Responder({
     setAviso(null);
     requestId.current ??= crypto.randomUUID();
     try {
-      await enviar({ clientRequestId: requestId.current, threadId, remitente, asunto, texto });
-      setTexto("");
+      const datos = {
+        clientRequestId: requestId.current,
+        threadId,
+        remitente,
+        asunto,
+        texto: contenido.texto,
+        segmentos: contenido.segmentos,
+      };
+      if (adjuntos.idsListos.length) {
+        await enviarConAdjuntos({ ...datos, adjuntos: adjuntos.idsListos });
+      } else {
+        await enviarSimple(datos);
+      }
       requestId.current = null;
       cerrar();
     } catch (error) {
@@ -529,6 +1007,11 @@ function Responder({
     } finally {
       setOcupado(false);
     }
+  };
+
+  const cancelar = () => {
+    adjuntos.descartarTodos();
+    cerrar();
   };
 
   return (
@@ -555,7 +1038,8 @@ function Responder({
               type="button"
               className="correo-icono-boton bg-[var(--color-surface)] text-[20px]"
               aria-label="Cerrar respuesta"
-              onClick={cerrar}
+              disabled={ocupado || adjuntos.subiendo}
+              onClick={cancelar}
             >
               ×
             </button>
@@ -575,26 +1059,20 @@ function Responder({
               ))}
             </select>
           </div>
-          <label htmlFor={`respuesta-${threadId}`} className="sr-only">Respuesta</label>
-          <textarea
-            id={`respuesta-${threadId}`}
-            className="entrada correo-respuesta-texto mt-7 resize-y"
-            value={texto}
-            maxLength={20_000}
-            onChange={(event) => setTexto(event.target.value)}
-            placeholder="Escribe una respuesta clara y directa."
-            autoFocus
-          />
+          <div className="mt-7">
+            <EditorCorreo id={`respuesta-${threadId}`} onChange={setContenido} autoFocus />
+          </div>
+          <AdjuntosSalida gestor={adjuntos} />
           <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
             {aviso ? <Aviso tono={aviso.tono}>{aviso.texto}</Aviso> : <span />}
             <div className="ml-auto flex gap-2">
-              <button type="button" className="boton boton-linea" disabled={ocupado} onClick={cerrar}>
+              <button type="button" className="boton boton-linea" disabled={ocupado || adjuntos.subiendo} onClick={cancelar}>
                 Cancelar
               </button>
               <button
                 type="button"
                 className="boton"
-                disabled={ocupado || texto.trim() === ""}
+                disabled={ocupado || adjuntos.subiendo || contenido.texto.trim() === ""}
                 onClick={() => void responder()}
               >
                 {ocupado ? "Enviando…" : "Enviar respuesta"}
@@ -618,11 +1096,13 @@ function CompositorNuevo({
   cerrar: () => void;
   enviado: (threadId: Id<"mailThreads">) => void;
 }) {
-  const enviar = useMutation(api.correo.enviar);
+  const enviarSimple = useMutation(api.correo.enviar);
+  const enviarConAdjuntos = useAction(api.correoActions.enviarConAdjuntos);
   const [para, setPara] = useState(paraInicial);
   const [remitente, setRemitente] = useState(remitentes[0] ?? REMITENTE_PREDETERMINADO);
   const [asunto, setAsunto] = useState("");
-  const [texto, setTexto] = useState("");
+  const [contenido, setContenido] = useState<ContenidoEditor>({ texto: "", segmentos: [] });
+  const adjuntos = useArchivosSalida();
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestId = useRef<string | null>(null);
@@ -632,13 +1112,17 @@ function CompositorNuevo({
     setError(null);
     requestId.current ??= crypto.randomUUID();
     try {
-      const resultado = await enviar({
+      const datos = {
         clientRequestId: requestId.current,
         para,
         remitente,
         asunto,
-        texto,
-      });
+        texto: contenido.texto,
+        segmentos: contenido.segmentos,
+      };
+      const resultado = adjuntos.idsListos.length
+        ? await enviarConAdjuntos({ ...datos, adjuntos: adjuntos.idsListos })
+        : await enviarSimple(datos);
       requestId.current = null;
       enviado(resultado.threadId);
     } catch (e) {
@@ -646,6 +1130,11 @@ function CompositorNuevo({
     } finally {
       setOcupado(false);
     }
+  };
+
+  const cancelar = () => {
+    adjuntos.descartarTodos();
+    cerrar();
   };
 
   return (
@@ -668,7 +1157,8 @@ function CompositorNuevo({
               type="button"
               className="grid size-10 place-items-center bg-[var(--color-surface)] text-[20px]"
               aria-label="Cerrar compositor"
-              onClick={cerrar}
+              disabled={ocupado || adjuntos.subiendo}
+              onClick={cancelar}
             >
               ×
             </button>
@@ -716,27 +1206,21 @@ function CompositorNuevo({
             </div>
             <div className="campo">
               <label htmlFor="nuevo-texto">Mensaje</label>
-              <textarea
-                id="nuevo-texto"
-                className="entrada min-h-[220px] resize-y"
-                value={texto}
-                maxLength={20_000}
-                onChange={(event) => setTexto(event.target.value)}
-                placeholder="Escribe el mensaje."
-              />
+              <EditorCorreo id="nuevo-texto" onChange={setContenido} />
             </div>
+            <AdjuntosSalida gestor={adjuntos} />
           </div>
 
           <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
             {error ? <Aviso tono="error">{error}</Aviso> : <span />}
             <div className="flex gap-2">
-              <button type="button" className="boton boton-linea" onClick={cerrar}>
+              <button type="button" className="boton boton-linea" disabled={ocupado || adjuntos.subiendo} onClick={cancelar}>
                 Cancelar
               </button>
               <button
                 type="button"
                 className="boton"
-                disabled={ocupado || !para || !asunto.trim() || !texto.trim()}
+                disabled={ocupado || adjuntos.subiendo || !para || !asunto.trim() || !contenido.texto.trim()}
                 onClick={() => void mandar()}
               >
                 {ocupado ? "Enviando…" : "Enviar correo"}
@@ -825,6 +1309,22 @@ function IconoResponder() {
   return (
     <svg viewBox="0 0 20 20" aria-hidden="true" className="size-[16px] fill-none stroke-current stroke-[1.35]" strokeLinecap="round" strokeLinejoin="round">
       <path d="m8.25 5-5 5 5 5M3.5 10h7.25c3.25 0 5.25 1.5 5.75 4.5" />
+    </svg>
+  );
+}
+
+function IconoClip() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="size-[16px] fill-none stroke-current stroke-[1.35]" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m7.2 10.8 5.2-5.2a2.55 2.55 0 0 1 3.6 3.6l-6.35 6.35a4 4 0 0 1-5.65-5.65l6.1-6.1M6.8 12.2l5.85-5.85" />
+    </svg>
+  );
+}
+
+function IconoDescarga() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="size-[16px] shrink-0 fill-none stroke-current stroke-[1.35]" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 3v9m0 0 3.4-3.4M10 12 6.6 8.6M4 15.5h12" />
     </svg>
   );
 }

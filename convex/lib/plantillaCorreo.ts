@@ -1,7 +1,14 @@
 type OpcionesCorreoDashboard = {
   asunto: string;
   texto: string;
+  segmentos?: SegmentoCorreo[];
   remitente?: string;
+};
+
+export type SegmentoCorreo = {
+  texto: string;
+  negrita: boolean;
+  cursiva: boolean;
 };
 
 const LOGO_CORREO = "https://alphaccm.org/alpha-mark-white.png?email=20260820";
@@ -40,20 +47,31 @@ function resumen(valor: string, maximo: number): string {
   return limpio.length <= maximo ? limpio : `${limpio.slice(0, maximo - 1).trimEnd()}…`;
 }
 
+function cuerpoConFormato(texto: string, segmentos?: SegmentoCorreo[]): string {
+  const fuente = segmentos?.length
+    ? segmentos
+    : [{ texto, negrita: false, cursiva: false }];
+  const contenido = fuente
+    .map((segmento) => {
+      let salida = escaparHtml(segmento.texto).replaceAll("\n", "<br>");
+      if (segmento.cursiva) salida = `<em style="font-style:italic;">${salida}</em>`;
+      if (segmento.negrita) salida = `<strong style="font-weight:600;">${salida}</strong>`;
+      return salida;
+    })
+    .join("");
+
+  return `<p class="message-copy" style="margin:0 0 20px;color:#33445D;font-size:16px;font-weight:400;line-height:1.75;">${contenido}</p>`;
+}
+
 export function renderizarCorreoDashboard({
   asunto,
   texto,
+  segmentos,
   remitente,
 }: OpcionesCorreoDashboard): string {
   const asuntoSeguro = escaparHtml(asunto);
   const preencabezado = escaparHtml(resumen(texto, 120));
-  const parrafos = escaparHtml(texto)
-    .split(/\n{2,}/)
-    .map(
-      (parrafo) =>
-        `<p class="message-copy" style="margin:0 0 20px;color:#33445D;font-size:16px;font-weight:400;line-height:1.75;">${parrafo.replaceAll("\n", "<br>")}</p>`,
-    )
-    .join("");
+  const parrafos = cuerpoConFormato(texto, segmentos);
   const firma = firmaPara(remitente).map(escaparHtml).join("<br>");
   const marca = `<td valign="middle" style="width:54px;"><img src="${escaparHtml(LOGO_CORREO)}" width="48" height="33" alt="Alpha" style="width:48px;max-width:48px;height:33px;border:0;display:block;"></td>`;
 

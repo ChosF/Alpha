@@ -13,9 +13,18 @@ import {
 import { registrarEnBitacora } from "./lib/auditoria";
 import { correoContacto, esRemitenteManual, remitentesManuales } from "./lib/direccionesCorreo";
 import { CUOTAS, consumirLimite } from "./lib/limites";
-import { renderizarCorreoDashboard, textoConFirma } from "./lib/plantillaCorreo";
-import { requiereRol } from "./lib/rbac";
-import { limpiarMultilinea, limpiarTexto, normalizarCorreo } from "./lib/texto";
+import {
+  renderizarCorreoDashboard,
+  textoConFirma,
+  type SegmentoCorreo,
+} from "./lib/plantillaCorreo";
+import { puede, requiereRol } from "./lib/rbac";
+import {
+  limpiarFragmentoMultilinea,
+  limpiarMultilinea,
+  limpiarTexto,
+  normalizarCorreo,
+} from "./lib/texto";
 import {
   estadoHiloCorreoValidador,
   estadoIngestaCorreoValidador,
@@ -24,9 +33,62 @@ import {
 
 const MAX_HILOS = 160;
 const MAX_MENSAJES = 300;
+const MAX_SEGMENTOS = 500;
+const MAX_TEXTO_CORREO = 20_000;
+const MAX_ADJUNTOS = 10;
+const MAX_ADJUNTO_BYTES = 10 * 1024 * 1024;
+const MAX_TOTAL_ADJUNTOS_BYTES = 18 * 1024 * 1024;
+const CADUCIDAD_CARGA_MS = 24 * 60 * 60 * 1000;
 const VENTANA_HILO_MS = 180 * 24 * 60 * 60 * 1000;
 const CORREO_VALIDO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const ENLACE_COMUNIDAD = "https://chat.whatsapp.com/CDRLe4FEHZN0jrdf2WkH8n";
+
+const segmentoCorreoValidador = v.object({
+  texto: v.string(),
+  negrita: v.boolean(),
+  cursiva: v.boolean(),
+});
+
+function normalizarContenido(
+  textoOriginal: string,
+  segmentosOriginales?: SegmentoCorreo[],
+): { texto: string; segmentos?: SegmentoCorreo[] } {
+  if (!segmentosOriginales?.length) {
+    return { texto: limpiarMultilinea(textoOriginal, MAX_TEXTO_CORREO) };
+  }
+
+  const segmentos: SegmentoCorreo[] = [];
+  let restantes = MAX_TEXTO_CORREO;
+  for (const original of segmentosOriginales.slice(0, MAX_SEGMENTOS)) {
+    if (restantes <= 0) break;
+    const texto = limpiarFragmentoMultilinea(original.texto, restantes);
+    restantes -= texto.length;
+    if (!texto) continue;
+    const anterior = segmentos.at(-1);
+    if (
+      anterior &&
+      anterior.negrita === original.negrita &&
+      anterior.cursiva === original.cursiva
+    ) {
+      anterior.texto += texto;
+    } else {
+      segmentos.push({
+        texto,
+        negrita: Boolean(original.negrita),
+        cursiva: Boolean(original.cursiva),
+      });
+    }
+  }
+
+  if (segmentos[0]) segmentos[0].texto = segmentos[0].texto.replace(/^\s+/, "");
+  if (segmentos.at(-1)) segmentos.at(-1)!.texto = segmentos.at(-1)!.texto.replace(/\s+$/, "");
+  const limpios = segmentos.filter((segmento) => segmento.texto.length > 0);
+  const texto = limpiarMultilinea(
+    limpios.map((segmento) => segmento.texto).join(""),
+    MAX_TEXTO_CORREO,
+  );
+  return limpios.length ? { texto, segmentos: limpios } : { texto };
+}
 
 export const resend: Resend = new Resend(components.resend, {
   testMode: process.env.RESEND_TEST_MODE !== "false",
@@ -284,6 +346,8 @@ const mensajeValidador = v.object({
   cc: v.array(v.string()),
   asunto: v.string(),
   texto: v.string(),
+  segmentos: v.optional(v.array(segmentoCorreoValidador)),
+  html: v.optional(v.string()),
   estado: estadoMensajeCorreoValidador,
   autorCorreo: v.optional(v.string()),
   error: v.optional(v.string()),
@@ -294,7 +358,8 @@ const mensajeValidador = v.object({
       nombre: v.string(),
       tipoContenido: v.string(),
       tamano: v.number(),
-      url: v.union(v.string(), v.null()),
+      contentId: v.optional(v.string()),
+      disposicion: v.optional(v.union(v.literal("inline"), v.literal("attachment"))),
     }),
   ),
 });
@@ -432,15 +497,14 @@ export const detalle = query({
           .query("mailAttachments")
           .withIndex("by_message", (q) => q.eq("messageId", mensaje._id))
           .collect();
-        const conUrl = await Promise.all(
-          adjuntos.map(async (adjunto) => ({
-            _id: adjunto._id,
-            nombre: adjunto.nombre,
-            tipoContenido: adjunto.tipoContenido,
-            tamano: adjunto.tamano,
-            url: await ctx.storage.getUrl(adjunto.storageId),
-          })),
-        );
+        const adjuntosSeguros = adjuntos.map((adjunto) => ({
+          _id: adjunto._id,
+          nombre: adjunto.nombre,
+          tipoContenido: adjunto.tipoContenido,
+          tamano: adjunto.tamano,
+          contentId: adjunto.contentId,
+          disposicion: adjunto.disposicion,
+        }));
         return {
           _id: mensaje._id,
           _creationTime: mensaje._creationTime,
@@ -450,11 +514,13 @@ export const detalle = query({
           cc: mensaje.cc,
           asunto: mensaje.asunto,
           texto: mensaje.texto,
+          segmentos: mensaje.segmentos,
+          html: mensaje.html,
           estado: mensaje.estado,
           autorCorreo: mensaje.autorCorreo,
           error: mensaje.error,
           creadoEn: mensaje.creadoEn,
-          adjuntos: conUrl,
+          adjuntos: adjuntosSeguros,
         };
       }),
     );
@@ -471,6 +537,33 @@ export const detalle = query({
   },
 });
 
+export const obtenerAdjuntoDescarga = internalQuery({
+  args: { actorId: v.id("users"), id: v.string() },
+  returns: v.union(
+    v.null(),
+    v.object({
+      storageId: v.id("_storage"),
+      nombre: v.string(),
+      tipoContenido: v.string(),
+      tamano: v.number(),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const actor = await ctx.db.get(args.actorId);
+    if (!puede(actor, "editor")) return null;
+    const id = ctx.db.normalizeId("mailAttachments", args.id);
+    if (!id) return null;
+    const adjunto = await ctx.db.get(id);
+    if (!adjunto) return null;
+    return {
+      storageId: adjunto.storageId,
+      nombre: adjunto.nombre,
+      tipoContenido: adjunto.tipoContenido,
+      tamano: adjunto.tamano,
+    };
+  },
+});
+
 export const enviar = mutation({
   args: {
     clientRequestId: v.string(),
@@ -479,6 +572,7 @@ export const enviar = mutation({
     remitente: v.string(),
     asunto: v.string(),
     texto: v.string(),
+    segmentos: v.optional(v.array(segmentoCorreoValidador)),
   },
   returns: v.object({ threadId: v.id("mailThreads"), messageId: v.id("mailMessages") }),
   handler: async (ctx, args) => {
@@ -510,7 +604,8 @@ export const enviar = mutation({
       throw new ConvexError("Alcanzaste el limite de correos por hora. Intenta mas tarde.");
     }
 
-    const texto = limpiarMultilinea(args.texto, 20_000);
+    const contenido = normalizarContenido(args.texto, args.segmentos);
+    const texto = contenido.texto;
     const asuntoSolicitado = limpiarTexto(args.asunto, 180);
     if (texto.length < 1) throw new ConvexError("Escribe el contenido del correo.");
 
@@ -572,6 +667,7 @@ export const enviar = mutation({
       html: renderizarCorreoDashboard({
         asunto: asuntoEnvio,
         texto,
+        segmentos: contenido.segmentos,
         remitente,
       }),
       replyTo: [remitente],
@@ -586,6 +682,7 @@ export const enviar = mutation({
       cc: [],
       asunto,
       texto,
+      ...(contenido.segmentos ? { segmentos: contenido.segmentos } : {}),
       estado: "en_cola",
       clientRequestId,
       resendComponentId,
@@ -614,6 +711,386 @@ export const enviar = mutation({
     });
 
     return { threadId, messageId };
+  },
+});
+
+export const crearCargaAdjunto = mutation({
+  args: {},
+  returns: v.object({
+    id: v.id("mailAttachmentDrafts"),
+    url: v.string(),
+  }),
+  handler: async (ctx) => {
+    const actor = await requiereRol(ctx, "editor");
+    const id = await ctx.db.insert("mailAttachmentDrafts", {
+      actorId: actor._id,
+      creadoEn: Date.now(),
+    });
+    const url = await ctx.storage.generateUploadUrl();
+    await ctx.scheduler.runAfter(CADUCIDAD_CARGA_MS, internal.correo.limpiarCargaAdjunto, { id });
+    return { id, url };
+  },
+});
+
+export const completarCargaAdjunto = mutation({
+  args: {
+    id: v.id("mailAttachmentDrafts"),
+    storageId: v.id("_storage"),
+    nombre: v.string(),
+  },
+  returns: v.union(
+    v.object({
+      ok: v.literal(true),
+      nombre: v.string(),
+      tipoContenido: v.string(),
+      tamano: v.number(),
+    }),
+    v.object({ ok: v.literal(false), error: v.string() }),
+  ),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "editor");
+    const borrador = await ctx.db.get(args.id);
+    if (!borrador || borrador.actorId !== actor._id || borrador.storageId) {
+      return { ok: false as const, error: "La carga ya no esta disponible." };
+    }
+
+    const metadata = await ctx.db.system.get("_storage", args.storageId);
+    if (!metadata) {
+      await ctx.db.delete(borrador._id);
+      return { ok: false as const, error: "Convex no recibio el archivo." };
+    }
+    if (metadata.size <= 0 || metadata.size > MAX_ADJUNTO_BYTES) {
+      await ctx.storage.delete(args.storageId);
+      await ctx.db.delete(borrador._id);
+      return { ok: false as const, error: "Cada archivo debe pesar 10 MB o menos." };
+    }
+
+    const nombre = limpiarTexto(args.nombre, 180) || "archivo";
+    const tipoContenido = limpiarTexto(
+      metadata.contentType || "application/octet-stream",
+      120,
+    );
+    await ctx.db.patch(borrador._id, {
+      storageId: args.storageId,
+      nombre,
+      tipoContenido,
+      tamano: metadata.size,
+    });
+    return { ok: true as const, nombre, tipoContenido, tamano: metadata.size };
+  },
+});
+
+export const descartarCargaAdjunto = mutation({
+  args: { id: v.id("mailAttachmentDrafts") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "editor");
+    const borrador = await ctx.db.get(args.id);
+    if (!borrador || borrador.actorId !== actor._id) return null;
+    if (borrador.storageId) await ctx.storage.delete(borrador.storageId);
+    await ctx.db.delete(borrador._id);
+    return null;
+  },
+});
+
+export const limpiarCargaAdjunto = internalMutation({
+  args: { id: v.id("mailAttachmentDrafts") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const borrador = await ctx.db.get(args.id);
+    if (!borrador) return null;
+    const restante = borrador.creadoEn + CADUCIDAD_CARGA_MS - Date.now();
+    if (restante > 1_000) {
+      await ctx.scheduler.runAfter(restante, internal.correo.limpiarCargaAdjunto, { id: args.id });
+      return null;
+    }
+    if (borrador.storageId) await ctx.storage.delete(borrador.storageId);
+    await ctx.db.delete(borrador._id);
+    return null;
+  },
+});
+
+const envioAdjuntosValidador = v.object({
+  threadId: v.id("mailThreads"),
+  messageId: v.id("mailMessages"),
+  yaEnviado: v.boolean(),
+  clientRequestId: v.string(),
+  para: v.string(),
+  remitente: v.string(),
+  asunto: v.string(),
+  asuntoEnvio: v.string(),
+  texto: v.string(),
+  segmentos: v.optional(v.array(segmentoCorreoValidador)),
+  headers: v.optional(v.array(v.object({ name: v.string(), value: v.string() }))),
+  adjuntos: v.array(
+    v.object({
+      storageId: v.id("_storage"),
+      nombre: v.string(),
+      tipoContenido: v.string(),
+      tamano: v.number(),
+    }),
+  ),
+});
+
+export const prepararEnvioConAdjuntos = internalMutation({
+  args: {
+    actorId: v.id("users"),
+    clientRequestId: v.string(),
+    threadId: v.optional(v.id("mailThreads")),
+    para: v.optional(v.string()),
+    remitente: v.string(),
+    asunto: v.string(),
+    texto: v.string(),
+    segmentos: v.optional(v.array(segmentoCorreoValidador)),
+    adjuntos: v.array(v.id("mailAttachmentDrafts")),
+  },
+  returns: envioAdjuntosValidador,
+  handler: async (ctx, args) => {
+    const actor = await ctx.db.get(args.actorId);
+    if (!actor || !puede(actor, "editor")) {
+      throw new ConvexError("Tu sesion ya no permite enviar correo.");
+    }
+
+    const clientRequestId = limpiarTexto(args.clientRequestId, 80);
+    if (clientRequestId.length < 8) throw new ConvexError("Identificador de envio no valido.");
+
+    const existente = await ctx.db
+      .query("mailMessages")
+      .withIndex("by_client_request", (q) => q.eq("clientRequestId", clientRequestId))
+      .unique();
+    if (existente) {
+      if (existente.autorId !== actor._id) throw new ConvexError("Identificador de envio no valido.");
+      const adjuntos = await ctx.db
+        .query("mailAttachments")
+        .withIndex("by_message", (q) => q.eq("messageId", existente._id))
+        .collect();
+      const referencias = existente.referencias.slice(-20);
+      const headers = existente.inReplyTo
+        ? [
+            { name: "In-Reply-To", value: existente.inReplyTo },
+            ...(referencias.length ? [{ name: "References", value: referencias.join(" ") }] : []),
+          ]
+        : undefined;
+      if (!existente.resendEmailId && existente.estado === "fallido") {
+        await ctx.db.patch(existente._id, { estado: "en_cola", error: undefined });
+      }
+      return {
+        threadId: existente.threadId,
+        messageId: existente._id,
+        yaEnviado: Boolean(existente.resendEmailId),
+        clientRequestId,
+        para: existente.para[0] ?? "",
+        remitente: existente.de,
+        asunto: existente.asunto,
+        asuntoEnvio:
+          existente.inReplyTo && !/^re\s*:/i.test(existente.asunto)
+            ? `Re: ${existente.asunto}`
+            : existente.asunto,
+        texto: existente.texto,
+        segmentos: existente.segmentos,
+        headers,
+        adjuntos: adjuntos.map((adjunto) => ({
+          storageId: adjunto.storageId,
+          nombre: adjunto.nombre,
+          tipoContenido: adjunto.tipoContenido,
+          tamano: adjunto.tamano,
+        })),
+      };
+    }
+
+    if (!process.env.RESEND_API_KEY) {
+      throw new ConvexError("El correo todavia no esta configurado en Convex.");
+    }
+    if (args.adjuntos.length < 1 || args.adjuntos.length > MAX_ADJUNTOS) {
+      throw new ConvexError("Puedes adjuntar entre 1 y 10 archivos por correo.");
+    }
+    if (new Set(args.adjuntos).size !== args.adjuntos.length) {
+      throw new ConvexError("La lista de archivos contiene duplicados.");
+    }
+
+    const remitente = normalizarCorreo(args.remitente);
+    if (!esRemitenteManual(remitente)) {
+      throw new ConvexError("La direccion de envio no pertenece a Alpha.");
+    }
+    const limite = await consumirLimite(
+      ctx,
+      `correo:${actor._id}`,
+      CUOTAS.correosPorUsuario.maximo,
+      CUOTAS.correosPorUsuario.ventanaMs,
+    );
+    if (!limite.permitido) {
+      throw new ConvexError("Alcanzaste el limite de correos por hora. Intenta mas tarde.");
+    }
+
+    const contenido = normalizarContenido(args.texto, args.segmentos);
+    if (!contenido.texto) throw new ConvexError("Escribe el contenido del correo.");
+    const asuntoSolicitado = limpiarTexto(args.asunto, 180);
+    let hilo: Doc<"mailThreads"> | null = null;
+    if (args.threadId) {
+      hilo = await ctx.db.get(args.threadId);
+      if (!hilo) throw new ConvexError("La conversacion ya no existe.");
+    }
+    const para = hilo ? hilo.contactoCorreo : normalizarCorreo(args.para ?? "");
+    if (!CORREO_VALIDO.test(para)) throw new ConvexError("Escribe un destinatario valido.");
+    const asunto = asuntoSolicitado || hilo?.asunto || "Mensaje de Alpha";
+
+    const borradores = await Promise.all(args.adjuntos.map((id) => ctx.db.get(id)));
+    if (
+      borradores.some(
+        (borrador) =>
+          !borrador ||
+          borrador.actorId !== actor._id ||
+          !borrador.storageId ||
+          !borrador.nombre ||
+          !borrador.tipoContenido ||
+          borrador.tamano === undefined,
+      )
+    ) {
+      throw new ConvexError("Uno de los archivos ya no esta disponible.");
+    }
+    const listos = borradores.filter(
+      (borrador): borrador is NonNullable<typeof borrador> & {
+        storageId: Id<"_storage">;
+        nombre: string;
+        tipoContenido: string;
+        tamano: number;
+      } => Boolean(borrador?.storageId && borrador.nombre && borrador.tipoContenido),
+    );
+    const total = listos.reduce((suma, borrador) => suma + borrador.tamano, 0);
+    if (total > MAX_TOTAL_ADJUNTOS_BYTES) {
+      throw new ConvexError("Los archivos adjuntos no pueden superar 18 MB en total.");
+    }
+
+    const ahora = Date.now();
+    const threadId = hilo
+      ? hilo._id
+      : await ctx.db.insert("mailThreads", {
+          asunto,
+          asuntoClave: claveAsunto(asunto),
+          contactoCorreo: para,
+          estado: "abierto",
+          noLeidos: 0,
+          ultimoMensajeEn: ahora,
+          ultimoResumen: resumenTexto(contenido.texto),
+          asignadoA: actor._id,
+          creadoEn: ahora,
+          actualizadoEn: ahora,
+        });
+    const ultimo = hilo
+      ? await ctx.db
+          .query("mailMessages")
+          .withIndex("by_thread_time", (q) => q.eq("threadId", hilo!._id))
+          .order("desc")
+          .first()
+      : null;
+    const referencias = ultimo
+      ? [...ultimo.referencias, ...(ultimo.internetMessageId ? [ultimo.internetMessageId] : [])].slice(-20)
+      : [];
+    const headers = ultimo?.internetMessageId
+      ? [
+          { name: "In-Reply-To", value: ultimo.internetMessageId },
+          ...(referencias.length ? [{ name: "References", value: referencias.join(" ") }] : []),
+        ]
+      : undefined;
+    const asuntoEnvio = ultimo && !/^re\s*:/i.test(asunto) ? `Re: ${asunto}` : asunto;
+
+    const messageId = await ctx.db.insert("mailMessages", {
+      threadId,
+      direccion: "saliente",
+      de: remitente,
+      para: [para],
+      cc: [],
+      asunto,
+      texto: contenido.texto,
+      ...(contenido.segmentos ? { segmentos: contenido.segmentos } : {}),
+      estado: "en_cola",
+      clientRequestId,
+      inReplyTo: ultimo?.internetMessageId,
+      referencias,
+      autorId: actor._id,
+      autorCorreo: actor.email ?? "",
+      creadoEn: ahora,
+    });
+    await Promise.all(
+      listos.map(async (borrador, indice) => {
+        await ctx.db.insert("mailAttachments", {
+          messageId,
+          storageId: borrador.storageId,
+          providerAttachmentId: `saliente:${clientRequestId}:${indice}`,
+          nombre: borrador.nombre,
+          tipoContenido: borrador.tipoContenido,
+          tamano: borrador.tamano,
+          disposicion: "attachment",
+          creadoEn: ahora,
+        });
+        await ctx.db.delete(borrador._id);
+      }),
+    );
+    await ctx.db.patch(threadId, {
+      asunto,
+      asuntoClave: claveAsunto(asunto),
+      estado: "abierto",
+      ultimoMensajeEn: ahora,
+      ultimoResumen: resumenTexto(contenido.texto),
+      asignadoA: hilo?.asignadoA ?? actor._id,
+      actualizadoEn: ahora,
+    });
+    await registrarEnBitacora(ctx, {
+      actor,
+      accion: "correo.enviado",
+      entidad: "mailThreads",
+      entidadId: threadId,
+      detalle: `${para}; ${listos.length} adjuntos`,
+    });
+
+    return {
+      threadId,
+      messageId,
+      yaEnviado: false,
+      clientRequestId,
+      para,
+      remitente,
+      asunto,
+      asuntoEnvio,
+      texto: contenido.texto,
+      segmentos: contenido.segmentos,
+      headers,
+      adjuntos: listos.map((borrador) => ({
+        storageId: borrador.storageId,
+        nombre: borrador.nombre,
+        tipoContenido: borrador.tipoContenido,
+        tamano: borrador.tamano,
+      })),
+    };
+  },
+});
+
+export const confirmarEnvioConAdjuntos = internalMutation({
+  args: { messageId: v.id("mailMessages"), resendEmailId: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const mensaje = await ctx.db.get(args.messageId);
+    if (!mensaje || mensaje.direccion !== "saliente") return null;
+    await ctx.db.patch(mensaje._id, {
+      resendEmailId: limpiarTexto(args.resendEmailId, 120),
+      estado: "enviado",
+      error: undefined,
+    });
+    return null;
+  },
+});
+
+export const fallarEnvioConAdjuntos = internalMutation({
+  args: { messageId: v.id("mailMessages"), error: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const mensaje = await ctx.db.get(args.messageId);
+    if (!mensaje || mensaje.resendEmailId) return null;
+    await ctx.db.patch(mensaje._id, {
+      estado: "fallido",
+      error: limpiarTexto(args.error, 500),
+    });
+    return null;
   },
 });
 
@@ -776,6 +1253,7 @@ export const guardarEntrada = internalMutation({
   args: {
     jobId: v.id("mailInboundJobs"),
     texto: v.string(),
+    html: v.optional(v.string()),
     inReplyTo: v.optional(v.string()),
     referencias: v.array(v.string()),
     adjuntos: v.array(
@@ -785,6 +1263,8 @@ export const guardarEntrada = internalMutation({
         nombre: v.string(),
         tipoContenido: v.string(),
         tamano: v.number(),
+        contentId: v.optional(v.string()),
+        disposicion: v.optional(v.union(v.literal("inline"), v.literal("attachment"))),
       }),
     ),
   },
@@ -874,6 +1354,7 @@ export const guardarEntrada = internalMutation({
       cc: trabajo.cc,
       asunto,
       texto,
+      ...(args.html ? { html: args.html } : {}),
       estado: "recibido",
       providerInboundId: trabajo.providerEmailId,
       internetMessageId: trabajo.internetMessageId,
@@ -891,6 +1372,10 @@ export const guardarEntrada = internalMutation({
           nombre: limpiarTexto(adjunto.nombre, 180) || "adjunto",
           tipoContenido: limpiarTexto(adjunto.tipoContenido, 120),
           tamano: Math.max(0, Math.floor(adjunto.tamano)),
+          ...(adjunto.contentId
+            ? { contentId: limpiarTexto(adjunto.contentId.replace(/^<|>$/g, ""), 300) }
+            : {}),
+          ...(adjunto.disposicion ? { disposicion: adjunto.disposicion } : {}),
           creadoEn: ahora,
         }),
       ),
@@ -923,6 +1408,52 @@ export const registrarFalloEntrada = internalMutation({
       actualizadoEn: Date.now(),
     });
     return null;
+  },
+});
+
+export const actualizarEstadoEnvioDirecto = internalMutation({
+  args: {
+    resendEmailId: v.string(),
+    tipo: v.string(),
+    internetMessageId: v.optional(v.string()),
+    error: v.optional(v.string()),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const mensaje = await ctx.db
+      .query("mailMessages")
+      .withIndex("by_resend_email", (q) => q.eq("resendEmailId", args.resendEmailId))
+      .unique();
+    if (!mensaje || mensaje.resendComponentId) return false;
+
+    let estado = mensaje.estado;
+    switch (args.tipo) {
+      case "email.sent":
+        estado = "enviado";
+        break;
+      case "email.delivered":
+        estado = "entregado";
+        break;
+      case "email.delivery_delayed":
+        if (estado !== "entregado") estado = "retrasado";
+        break;
+      case "email.bounced":
+        estado = "rebotado";
+        break;
+      case "email.failed":
+        estado = "fallido";
+        break;
+      default:
+        break;
+    }
+    await ctx.db.patch(mensaje._id, {
+      estado,
+      ...(args.internetMessageId
+        ? { internetMessageId: limpiarTexto(args.internetMessageId, 500) }
+        : {}),
+      ...(args.error ? { error: limpiarTexto(args.error, 500) } : {}),
+    });
+    return true;
   },
 });
 

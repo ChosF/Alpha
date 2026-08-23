@@ -81,7 +81,9 @@ Suscribe el mismo endpoint a estos eventos:
 El endpoint verifica la firma Svix antes de actuar. Los eventos de entrega actualizan el mensaje
 saliente. `email.received` acepta `contacto@`, `direccion@` y `finanzas@`, crea un trabajo
 idempotente, obtiene el cuerpo mediante la API de Resend, copia los adjuntos permitidos a Convex
-Storage y coloca el mensaje en la misma bandeja.
+Storage y coloca el mensaje en la misma bandeja. El HTML original se conserva hasta 500 KB para
+mostrar correos complejos dentro de un iframe aislado. Las imagenes remotas quedan bloqueadas; las
+imagenes `cid:` se sirven desde los adjuntos copiados a Convex.
 
 Los mensajes manuales usan la direccion elegida como `From` y `Reply-To`. Finanzas firma como
 `Coordinación de Finanzas`; Direccion firma como `Presidencia y Vicepresidencia`. Las respuestas a
@@ -106,8 +108,13 @@ conversaciones anteriores.
 - El servidor limita el remitente y `Reply-To` a `contacto@`, `direccion@` o `finanzas@`. El usuario
   elige una de esas direcciones en el compositor.
 - Cada cuenta puede emitir hasta 40 correos por hora desde el compositor.
+- El compositor permite negritas, cursivas y hasta 10 adjuntos. Cada archivo puede pesar 10 MB y el
+  total por correo no puede superar 18 MB.
 - El webhook acepta solamente firmas validas y solo ingresa mensajes destinados a una direccion
   compartida autorizada.
-- El panel muestra texto plano. Nunca renderiza el HTML recibido.
+- El panel nunca entrega URLs publicas de Convex Storage. Cada vista o descarga pasa por una ruta
+  autenticada que vuelve a comprobar el rol del usuario.
+- El HTML recibido se renderiza con `sandbox`, sin scripts, formularios, enlaces activos ni recursos
+  remotos. El usuario puede cambiar a texto simple en cualquier momento.
 - Cada adjunto entrante puede pesar hasta 10 MB y el total guardado por correo es de 18 MB.
 - Los reintentos entrantes tienen espera creciente y terminan despues de cinco fallos.

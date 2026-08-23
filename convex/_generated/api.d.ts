@@ -12,6 +12,7 @@ import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as correo from "../correo.js";
 import type * as correoActions from "../correoActions.js";
+import type * as correoArchivos from "../correoArchivos.js";
 import type * as correoWebhook from "../correoWebhook.js";
 import type * as http from "../http.js";
 import type * as ingesta from "../ingesta.js";
@@ -39,6 +40,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   correo: typeof correo;
   correoActions: typeof correoActions;
+  correoArchivos: typeof correoArchivos;
   correoWebhook: typeof correoWebhook;
   http: typeof http;
   ingesta: typeof ingesta;

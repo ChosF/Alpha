@@ -1,13 +1,61 @@
 "use node";
 
 import { Resend } from "resend";
-import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
+import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
-import { internalAction } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import { action, internalAction } from "./_generated/server";
+import { renderizarCorreoDashboard, textoConFirma } from "./lib/plantillaCorreo";
 
 const MAX_INTENTOS = 5;
 const MAX_ADJUNTO_BYTES = 10 * 1024 * 1024;
 const MAX_TOTAL_ADJUNTOS_BYTES = 18 * 1024 * 1024;
+const MAX_HTML_ENTRANTE_BYTES = 500_000;
+
+const segmentoCorreoValidador = v.object({
+  texto: v.string(),
+  negrita: v.boolean(),
+  cursiva: v.boolean(),
+});
+
+type PreparadoEnvioAdjuntos = {
+  threadId: Id<"mailThreads">;
+  messageId: Id<"mailMessages">;
+  yaEnviado: boolean;
+  clientRequestId: string;
+  para: string;
+  remitente: string;
+  asunto: string;
+  asuntoEnvio: string;
+  texto: string;
+  segmentos?: Array<{ texto: string; negrita: boolean; cursiva: boolean }>;
+  headers?: Array<{ name: string; value: string }>;
+  adjuntos: Array<{
+    storageId: Id<"_storage">;
+    nombre: string;
+    tipoContenido: string;
+    tamano: number;
+  }>;
+};
+
+function esCorreoPrueba(correo: string): boolean {
+  const [prefijo, dominio] = correo.toLowerCase().split("@");
+  return (
+    dominio === "resend.dev" &&
+    ["delivered", "bounced", "complained"].some(
+      (valor) => prefijo === valor || prefijo?.startsWith(`${valor}+`),
+    )
+  );
+}
+
+function htmlEntranteGuardable(html: string | null): string | undefined {
+  if (!html) return undefined;
+  const limpio = html.trim();
+  return new TextEncoder().encode(limpio).byteLength <= MAX_HTML_ENTRANTE_BYTES
+    ? limpio
+    : undefined;
+}
 
 function cabecera(
   headers: Record<string, string> | null,
@@ -43,6 +91,90 @@ function textoDesdeHtml(html: string): string {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
+
+export const enviarConAdjuntos = action({
+  args: {
+    clientRequestId: v.string(),
+    threadId: v.optional(v.id("mailThreads")),
+    para: v.optional(v.string()),
+    remitente: v.string(),
+    asunto: v.string(),
+    texto: v.string(),
+    segmentos: v.optional(v.array(segmentoCorreoValidador)),
+    adjuntos: v.array(v.id("mailAttachmentDrafts")),
+  },
+  returns: v.object({ threadId: v.id("mailThreads"), messageId: v.id("mailMessages") }),
+  handler: async (ctx, args): Promise<{ threadId: Id<"mailThreads">; messageId: Id<"mailMessages"> }> => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new ConvexError("Tu sesion ya no permite enviar correo.");
+
+    const preparado: PreparadoEnvioAdjuntos = await ctx.runMutation(
+      internal.correo.prepararEnvioConAdjuntos,
+      {
+      actorId: userId as Id<"users">,
+      ...args,
+      },
+    );
+    if (preparado.yaEnviado) {
+      return { threadId: preparado.threadId, messageId: preparado.messageId };
+    }
+
+    try {
+      if (process.env.RESEND_TEST_MODE !== "false" && !esCorreoPrueba(preparado.para)) {
+        throw new Error("Resend esta en modo de prueba y no acepta este destinatario.");
+      }
+      const apiKey = process.env.RESEND_API_KEY;
+      if (!apiKey) throw new Error("RESEND_API_KEY no esta configurada en Convex.");
+
+      const adjuntos = await Promise.all(
+        preparado.adjuntos.map(async (adjunto) => {
+          const archivo = await ctx.storage.get(adjunto.storageId);
+          if (!archivo) throw new Error(`El archivo ${adjunto.nombre} ya no esta disponible.`);
+          return {
+            content: Buffer.from(await archivo.arrayBuffer()),
+            filename: adjunto.nombre,
+            contentType: adjunto.tipoContenido,
+          };
+        }),
+      );
+      const cliente = new Resend(apiKey);
+      const respuesta = await cliente.emails.send(
+        {
+          from: `Alpha CCM <${preparado.remitente}>`,
+          to: preparado.para,
+          subject: preparado.asuntoEnvio,
+          text: textoConFirma(preparado.texto, preparado.remitente),
+          html: renderizarCorreoDashboard({
+            asunto: preparado.asuntoEnvio,
+            texto: preparado.texto,
+            segmentos: preparado.segmentos,
+            remitente: preparado.remitente,
+          }),
+          replyTo: preparado.remitente,
+          ...(preparado.headers
+            ? { headers: Object.fromEntries(preparado.headers.map(({ name, value }) => [name, value])) }
+            : {}),
+          attachments: adjuntos,
+        },
+        { idempotencyKey: `alpha-${preparado.clientRequestId}` },
+      );
+      if (respuesta.error || !respuesta.data) {
+        throw new Error(respuesta.error?.message ?? "Resend no acepto el correo.");
+      }
+      await ctx.runMutation(internal.correo.confirmarEnvioConAdjuntos, {
+        messageId: preparado.messageId,
+        resendEmailId: respuesta.data.id,
+      });
+      return { threadId: preparado.threadId, messageId: preparado.messageId };
+    } catch (error) {
+      await ctx.runMutation(internal.correo.fallarEnvioConAdjuntos, {
+        messageId: preparado.messageId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  },
+});
 
 export const procesarEntrada = internalAction({
   args: { jobId: v.id("mailInboundJobs") },
@@ -86,6 +218,8 @@ export const procesarEntrada = internalAction({
         nombre: string;
         tipoContenido: string;
         tamano: number;
+        contentId?: string;
+        disposicion?: "inline" | "attachment";
       }> = [];
 
       for (const adjunto of respuestaAdjuntos.data.data) {
@@ -113,6 +247,8 @@ export const procesarEntrada = internalAction({
           nombre,
           tipoContenido: adjunto.content_type,
           tamano: contenido.byteLength,
+          ...(adjunto.content_id ? { contentId: adjunto.content_id } : {}),
+          ...(adjunto.content_disposition ? { disposicion: adjunto.content_disposition } : {}),
         });
       }
 
@@ -123,6 +259,7 @@ export const procesarEntrada = internalAction({
       await ctx.runMutation(internal.correo.guardarEntrada, {
         jobId: args.jobId,
         texto: `${base || "Mensaje sin contenido de texto."}${avisoOmitidos}`,
+        html: htmlEntranteGuardable(correo.html),
         inReplyTo: cabecera(correo.headers, "in-reply-to"),
         referencias: referenciasDesde(correo.headers),
         adjuntos,
