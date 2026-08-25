@@ -122,6 +122,22 @@ img,svg{display:block;max-width:100%}
     opacity:0;transform:translateY(var(--distance-medium))}
   .mg-title{margin:0 0 clamp(28px,6vh,52px);font-size:clamp(2.4rem,12.8vw,4.35rem);font-weight:700;line-height:.92;letter-spacing:-.045em;
     opacity:0;transform:translateY(var(--distance-medium))}
+  .mg-event{
+    display:grid;grid-template-columns:8px 1fr 44px;align-items:center;min-height:66px;margin:0 0 12px;
+    color:#fff;background:#0d2140;box-shadow:inset 0 0 0 1px rgba(175,207,255,.2),0 22px 48px -34px rgba(0,102,255,.9);
+    opacity:0;transform:translateY(var(--distance-medium));
+    transition:opacity var(--duration-very-slow) var(--ease-smooth-out),transform var(--duration-very-slow) var(--ease-smooth-out);
+    -webkit-tap-highlight-color:transparent;
+  }
+  .mg-event[hidden]{display:none}
+  .mg-event-bar{align-self:stretch;background:#0066ff}
+  .mg-event-copy{display:grid;gap:3px;padding:11px 14px}
+  .mg-event-copy strong{font-size:14px;font-weight:600;letter-spacing:-.02em}
+  .mg-event-copy span{font-size:8px;letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,.48)}
+  .mg-event-arrow{width:34px;height:34px;display:grid;place-items:center;background:rgba(255,255,255,.08);
+    transition:transform .5s var(--E2),background .5s var(--E2)}
+  .mg-event:active{transform:scale(.985)}
+  .mg-event:active .mg-event-arrow{transform:translate(2px,-2px);background:#0066ff}
   .mg-actions{display:grid;gap:8px}
   .mg-action{
     display:grid;grid-template-columns:44px 1fr 48px;align-items:center;min-height:72px;padding:0 8px 0 0;
@@ -150,10 +166,11 @@ img,svg{display:block;max-width:100%}
     -webkit-tap-highlight-color:transparent;
   }
   .mg-social:active{transform:scale(.94);color:#fff;background:rgba(255,255,255,.1)}
-  .mobile-gateway.in .mg-kicker,.mobile-gateway.in .mg-title,.mobile-gateway.in .mg-action{opacity:1;transform:none}
+  .mobile-gateway.in .mg-kicker,.mobile-gateway.in .mg-title,.mobile-gateway.in .mg-event,.mobile-gateway.in .mg-action{opacity:1;transform:none}
   .mobile-gateway.in .mg-socials{opacity:1;transform:none;transition:opacity var(--duration-very-slow) var(--ease-smooth-out) 280ms,transform var(--duration-very-slow) var(--ease-smooth-out) 280ms}
   .mobile-gateway.in .mg-kicker{transition:opacity var(--duration-very-slow) var(--ease-smooth-out) 80ms,transform var(--duration-very-slow) var(--ease-smooth-out) 80ms}
   .mobile-gateway.in .mg-title{transition:opacity var(--duration-very-slow) var(--ease-smooth-out) 120ms,transform var(--duration-very-slow) var(--ease-smooth-out) 120ms}
+  .mobile-gateway.in .mg-event{transition-delay:150ms}
   .mobile-gateway.in .mg-action:nth-child(1){transition-delay:160ms}
   .mobile-gateway.in .mg-action:nth-child(2){transition-delay:200ms}
   .mobile-gateway.in .mg-action:nth-child(3){transition-delay:240ms}
@@ -751,6 +768,14 @@ img,svg{display:block;max-width:100%}
   <div class="mg-body">
     <p class="mg-kicker tnum">2026 — 2027</p>
     <h1 class="mg-title">Empieza<br>aquí.</h1>
+    <a class="mg-event" id="calling-laf-gateway-banner" href="/eventos/calling-laf" aria-label="Calling LAF ya está aquí, abrir registro" hidden>
+      <span class="mg-event-bar" aria-hidden="true"></span>
+      <span class="mg-event-copy">
+        <strong>Calling LAF ya está aquí.</strong>
+        <span>04 SEP · SUM 1102 · Hora por confirmar</span>
+      </span>
+      <span class="mg-event-arrow" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
+    </a>
     <nav class="mg-actions" aria-label="Elige tu destino">
       <a class="mg-action" href="#unete" data-gateway-action="join" aria-label="Únete, abrir convocatoria">
         <span class="mg-ix tnum">01</span>
@@ -1357,16 +1382,18 @@ img,svg{display:block;max-width:100%}
   let running = true;
 
   const callingBanner = document.getElementById("calling-laf-banner");
+  const callingGatewayBanner = document.getElementById("calling-laf-gateway-banner");
+  const callingBanners = [callingBanner,callingGatewayBanner];
   const callingCierre = Date.parse("2026-09-06T06:00:00.000Z");
   const sincronizarCallingBanner = () => {
     const restante = callingCierre-Date.now();
     if (restante <= 0) {
-      callingBanner.classList.remove("on");
-      setTimeout(() => { callingBanner.hidden = true; },RM ? 0 : 620);
+      callingBanners.forEach(banner => banner.classList.remove("on"));
+      setTimeout(() => callingBanners.forEach(banner => { banner.hidden = true; }),RM ? 0 : 620);
       return;
     }
-    callingBanner.hidden = false;
-    requestAnimationFrame(() => callingBanner.classList.add("on"));
+    callingBanners.forEach(banner => { banner.hidden = false; });
+    requestAnimationFrame(() => callingBanners.forEach(banner => banner.classList.add("on")));
     setTimeout(sincronizarCallingBanner,Math.min(restante,2147483647));
   };
   sincronizarCallingBanner();
