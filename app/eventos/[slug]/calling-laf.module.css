@@ -217,8 +217,8 @@
 }
 
 .rutas {
-  align-self: end;
-  margin: 0 clamp(20px, 5vw, 76px) clamp(48px, 7vw, 90px) 0;
+  align-self: center;
+  margin: 0 clamp(20px, 5vw, 76px) 0 0;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 
