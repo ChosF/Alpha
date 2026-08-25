@@ -16,7 +16,10 @@ const cspLanding = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob:",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "connect-src 'self'",
+  // El proveedor global mantiene una conexión reactiva con Convex también en
+  // las páginas públicas. Firefox bloquea la página si el HTTPS/WSS de
+  // producción no aparece de forma explícita en connect-src.
+  "connect-src 'self' https://basic-gopher-658.convex.cloud wss://basic-gopher-658.convex.cloud",
   "upgrade-insecure-requests",
 ].join("; ");
 
