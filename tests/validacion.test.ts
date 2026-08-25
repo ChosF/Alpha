@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { aPayloadConvex, esquemaRegistro } from "@/lib/validacion";
+import {
+  aPayloadConvex,
+  aPayloadEventoConvex,
+  esquemaRegistro,
+  esquemaRegistroEvento,
+} from "@/lib/validacion";
 
 /**
  * Validacion del formulario publico: lo que se acepta y, sobre todo, lo que no.
@@ -184,5 +189,54 @@ describe("traduccion al payload de Convex", () => {
     expect(payload.areas).toEqual([]);
     expect(payload).not.toHaveProperty("aporte");
     expect(payload.canales.correo).toBe(true);
+  });
+});
+
+describe("registro de eventos", () => {
+  const eventoBase = {
+    nombre: "Mariela Reyes",
+    correo: "a01234567@tec.mx",
+    carrera: "LAF",
+    semestre: "7.º semestre",
+    matricula: "A01234567",
+    avisosCorreo: true,
+    whatsapp: false,
+    telefono: "",
+    sitio_web: "",
+    token: "1700000000.abc.firma",
+  };
+
+  it("usa los mismos datos personales y reglas de contacto que un miembro", () => {
+    const resultado = esquemaRegistroEvento.safeParse(eventoBase);
+    expect(resultado.success).toBe(true);
+    if (!resultado.success) return;
+    expect(aPayloadEventoConvex(resultado.data, { ipHash: "hash", userAgent: "test" })).toEqual({
+      nombre: "Mariela Reyes",
+      correo: "a01234567@tec.mx",
+      carrera: "LAF",
+      semestre: "7.º semestre",
+      matricula: "A01234567",
+      canales: { correo: true, whatsapp: false },
+      ipHash: "hash",
+      userAgent: "test",
+    });
+  });
+
+  it("exige telefono cuando se elige WhatsApp", () => {
+    expect(
+      esquemaRegistroEvento.safeParse({
+        ...eventoBase,
+        avisosCorreo: false,
+        whatsapp: true,
+      }).success,
+    ).toBe(false);
+    expect(
+      esquemaRegistroEvento.safeParse({
+        ...eventoBase,
+        avisosCorreo: false,
+        whatsapp: true,
+        telefono: "55 1234 5678",
+      }).success,
+    ).toBe(true);
   });
 });

@@ -19,6 +19,7 @@ import { MarcaAlpha } from "@/components/marca-alpha";
 const APARTADOS = [
   { href: "/dashboard", texto: "Inicio", minimo: "lector", icono: "inicio" },
   { href: "/dashboard/registros", texto: "Registros", minimo: "lector", icono: "registros" },
+  { href: "/dashboard/eventos", texto: "Eventos", minimo: "lector", icono: "eventos" },
   { href: "/dashboard/correo", texto: "Correo", minimo: "editor", icono: "correo" },
   { href: "/dashboard/programa", texto: "Programa", minimo: "lector", icono: "programa" },
   { href: "/dashboard/usuarios", texto: "Usuarios", minimo: "admin", icono: "usuarios" },
@@ -304,6 +305,7 @@ function IconoApartado({ nombre }: { nombre: (typeof APARTADOS)[number]["icono"]
     >
       {nombre === "inicio" ? <path d="M3.25 8.5 10 3l6.75 5.5v7.25a1 1 0 0 1-1 1H4.25a1 1 0 0 1-1-1V8.5ZM7.5 16.75v-5h5v5" /> : null}
       {nombre === "registros" ? <path d="M5 3.25h10v13.5H5zM7.75 7h4.5M7.75 10h4.5M7.75 13h2.75" /> : null}
+      {nombre === "eventos" ? <path d="M4 4.25h12v11.5H4zM7 2.75v3M13 2.75v3M4 8h12M7 11h2M11 11h2M7 14h2" /> : null}
       {nombre === "correo" ? <path d="M3 5.25h14v9.5H3zM3.5 6l6.5 5 6.5-5" /> : null}
       {nombre === "programa" ? <path d="M4 4.25h12v11.5H4zM7 2.75v3M13 2.75v3M4 8h12M7 11h2M11 11h2" /> : null}
       {nombre === "usuarios" ? <path d="M10 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM4.25 16.5c.45-2.7 2.35-4.25 5.75-4.25s5.3 1.55 5.75 4.25" /> : null}

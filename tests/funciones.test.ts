@@ -125,6 +125,101 @@ describe("ingesta del formulario publico", () => {
   });
 });
 
+const datosEvento = {
+  nombre: "Aaron Martinez",
+  correo: "a07654321@tec.mx",
+  carrera: "LAF",
+  semestre: "7.º semestre",
+  matricula: "A07654321",
+  canales: { correo: true, whatsapp: false },
+  ipHash: "hash-evento",
+  userAgent: "vitest",
+};
+
+describe("registro de Calling LAF", () => {
+  it("crea el evento una vez y guarda asistentes separados de miembros", async () => {
+    const t = convexTest(schema, modulos);
+    const primero = await t.action(api.ingestaEventos.asegurarCallingLaf, { secreto: SECRETO });
+    const segundo = await t.action(api.ingestaEventos.asegurarCallingLaf, { secreto: SECRETO });
+    expect(segundo).toBe(primero);
+
+    const resultado = await t.action(api.ingestaEventos.registrar, {
+      secreto: SECRETO,
+      slug: "calling-laf",
+      datos: datosEvento,
+    });
+    expect(resultado).toEqual({ ok: true });
+
+    const guardado = await t.run(async (ctx) => ({
+      asistentes: await ctx.db.query("eventRegistrations").collect(),
+      miembros: await ctx.db.query("registrations").collect(),
+      evento: await ctx.db.get(primero),
+    }));
+    expect(guardado.asistentes).toHaveLength(1);
+    expect(guardado.miembros).toHaveLength(0);
+    expect(guardado.evento?.totalRegistros).toBe(1);
+  });
+
+  it("un correo repetido no duplica ni sobrescribe el registro", async () => {
+    const t = convexTest(schema, modulos);
+    await t.action(api.ingestaEventos.asegurarCallingLaf, { secreto: SECRETO });
+    await t.action(api.ingestaEventos.registrar, {
+      secreto: SECRETO,
+      slug: "calling-laf",
+      datos: datosEvento,
+    });
+    await t.action(api.ingestaEventos.registrar, {
+      secreto: SECRETO,
+      slug: "calling-laf",
+      datos: { ...datosEvento, nombre: "Nombre manipulado" },
+    });
+    const filas = await t.run(async (ctx) => ctx.db.query("eventRegistrations").collect());
+    expect(filas).toHaveLength(1);
+    expect(filas[0]?.nombre).toBe("Aaron Martinez");
+  });
+
+  it("rechaza registros cuando el evento esta cerrado", async () => {
+    const t = convexTest(schema, modulos);
+    const eventId = await t.action(api.ingestaEventos.asegurarCallingLaf, { secreto: SECRETO });
+    await t.run(async (ctx) => ctx.db.patch(eventId, { registroAbierto: false }));
+    await expect(
+      t.action(api.ingestaEventos.registrar, {
+        secreto: SECRETO,
+        slug: "calling-laf",
+        datos: datosEvento,
+      }),
+    ).resolves.toEqual({ ok: false, motivo: "cerrado" });
+  });
+
+  it("protege la lista y reserva los cambios para editores", async () => {
+    const t = convexTest(schema, modulos);
+    const eventId = await t.action(api.ingestaEventos.asegurarCallingLaf, { secreto: SECRETO });
+    await t.action(api.ingestaEventos.registrar, {
+      secreto: SECRETO,
+      slug: "calling-laf",
+      datos: datosEvento,
+    });
+    const registroId = await t.run(async (ctx) => (await ctx.db.query("eventRegistrations").first())!._id);
+    const lector = await comoUsuario(t, "lector");
+    const editor = await comoUsuario(t, "editor");
+
+    await expect(t.query(api.eventos.listar, {})).rejects.toThrow(/Sesion no valida/);
+    await expect(lector.sesion.query(api.eventos.listarRegistros, { eventId })).resolves.toHaveLength(1);
+    await expect(
+      lector.sesion.mutation(api.eventos.cambiarEstadoRegistro, {
+        id: registroId,
+        estado: "confirmado",
+      }),
+    ).rejects.toThrow(/no permite/);
+    await expect(
+      editor.sesion.mutation(api.eventos.cambiarEstadoRegistro, {
+        id: registroId,
+        estado: "confirmado",
+      }),
+    ).resolves.toBeNull();
+  });
+});
+
 describe("control de acceso", () => {
   it("sin sesion no se puede leer nada del panel", async () => {
     const t = convexTest(schema, modulos);

@@ -27,33 +27,46 @@ const texto = (min: number, max: number, campo: string) =>
     .transform((valor) => limpiarTexto(valor, max))
     .refine((valor) => valor.length >= min, `${campo}: escribe al menos ${min} caracteres.`);
 
+const camposPersona = {
+  nombre: texto(2, 80, "Nombre"),
+  correo: z
+    .string()
+    .max(120, "El correo es demasiado largo.")
+    .transform(normalizarCorreo)
+    .refine((c) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c), "Ese correo no parece valido."),
+  carrera: texto(2, 80, "Carrera"),
+  semestre: texto(1, 30, "Semestre"),
+  matricula: z
+    .string()
+    .transform((valor) => limpiarTexto(valor, 12).toUpperCase())
+    .refine((valor) => valor === "" || /^A\d{8}$/.test(valor), "La matricula va como A01234567.")
+    .optional()
+    .default(""),
+} as const;
+
+const camposContactoMiembro = {
+  avisosCorreo: z.boolean().optional().default(false),
+  whatsapp: z.boolean().optional().default(false),
+  telefono: z
+    .string()
+    .transform(normalizarTelefono)
+    .refine((valor) => valor === "" || /^\d{10}$/.test(valor), "El telefono va a 10 digitos.")
+    .optional()
+    .default(""),
+} as const;
+
+const defensasFormulario = {
+  sitio_web: z.string().max(200).optional().default(""),
+  token: z.string().min(10).max(512),
+} as const;
+
 export const esquemaRegistro = z
   .object({
     tipo: z.enum(["miembro", "aliado"], { error: "Elige si entras como miembro o como aliado." }),
-    nombre: texto(2, 80, "Nombre"),
-    correo: z
-      .string()
-      .max(120, "El correo es demasiado largo.")
-      .transform(normalizarCorreo)
-      .refine((c) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c), "Ese correo no parece valido."),
-    carrera: texto(2, 80, "Carrera"),
-    semestre: texto(1, 30, "Semestre"),
-    matricula: z
-      .string()
-      .transform((valor) => limpiarTexto(valor, 12).toUpperCase())
-      .refine((valor) => valor === "" || /^A\d{8}$/.test(valor), "La matricula va como A01234567.")
-      .optional()
-      .default(""),
+    ...camposPersona,
 
     // Miembro
-    avisosCorreo: z.boolean().optional().default(false),
-    whatsapp: z.boolean().optional().default(false),
-    telefono: z
-      .string()
-      .transform(normalizarTelefono)
-      .refine((valor) => valor === "" || /^\d{10}$/.test(valor), "El telefono va a 10 digitos.")
-      .optional()
-      .default(""),
+    ...camposContactoMiembro,
 
     // Aliado
     areas: z
@@ -70,9 +83,7 @@ export const esquemaRegistro = z
     // Antiabuso: campo trampa que un humano nunca ve ni llena. A proposito
     // NO se rechaza aqui: el route handler responde con un exito fingido para
     // no ensenarle al bot que cayo en la trampa.
-    sitio_web: z.string().max(200).optional().default(""),
-    // Token firmado emitido por /api/registro/token.
-    token: z.string().min(10).max(512),
+    ...defensasFormulario,
   })
   .superRefine((datos, ctx) => {
     if (datos.tipo === "aliado" && !dominioPermitido(datos.correo)) {
@@ -107,6 +118,31 @@ export const esquemaRegistro = z
 
 export type DatosRegistro = z.infer<typeof esquemaRegistro>;
 
+export const esquemaRegistroEvento = z
+  .object({
+    ...camposPersona,
+    ...camposContactoMiembro,
+    ...defensasFormulario,
+  })
+  .superRefine((datos, ctx) => {
+    if (!datos.avisosCorreo && !datos.whatsapp) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["avisosCorreo"],
+        message: "Elige Correo Electronico, WhatsApp o ambos.",
+      });
+    }
+    if (datos.whatsapp && datos.telefono === "") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["telefono"],
+        message: "Si eliges WhatsApp, deja tu numero.",
+      });
+    }
+  });
+
+export type DatosRegistroEvento = z.infer<typeof esquemaRegistroEvento>;
+
 /** Pasa del formulario a la forma que espera Convex. */
 export function aPayloadConvex(
   datos: DatosRegistro,
@@ -127,6 +163,23 @@ export function aPayloadConvex(
     ...(datos.telefono ? { telefono: datos.telefono } : {}),
     areas: esMiembro ? [] : datos.areas,
     ...(!esMiembro && datos.aporte ? { aporte: datos.aporte } : {}),
+    ipHash: extra.ipHash,
+    userAgent: extra.userAgent,
+  };
+}
+
+export function aPayloadEventoConvex(
+  datos: DatosRegistroEvento,
+  extra: { ipHash: string; userAgent: string },
+) {
+  return {
+    nombre: datos.nombre,
+    correo: datos.correo,
+    carrera: datos.carrera,
+    semestre: datos.semestre,
+    ...(datos.matricula ? { matricula: datos.matricula } : {}),
+    canales: { correo: datos.avisosCorreo, whatsapp: datos.whatsapp },
+    ...(datos.telefono ? { telefono: datos.telefono } : {}),
     ipHash: extra.ipHash,
     userAgent: extra.userAgent,
   };

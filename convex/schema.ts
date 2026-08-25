@@ -6,6 +6,8 @@ import {
   direccionMensajeCorreoValidador,
   estadoHiloCorreoValidador,
   estadoIngestaCorreoValidador,
+  estadoAsistenteValidador,
+  estadoEventoValidador,
   estadoMensajeCorreoValidador,
   estadoProgramaValidador,
   estadoRegistroValidador,
@@ -84,6 +86,41 @@ export default defineSchema({
     .index("by_estado", ["estado"])
     .index("by_tipo", ["tipo"])
     .index("by_creado", ["creadoEn"]),
+
+  /** Eventos con registro publico administrados desde el panel. */
+  events: defineTable({
+    slug: v.string(),
+    titulo: v.string(),
+    resumen: v.string(),
+    pilar: pilarValidador,
+    estado: estadoEventoValidador,
+    registroAbierto: v.boolean(),
+    totalRegistros: v.number(),
+    creadoEn: v.number(),
+    actualizadoEn: v.number(),
+  }).index("by_slug", ["slug"]),
+
+  /** Personas registradas a un evento. No se mezclan con la convocatoria de miembros. */
+  eventRegistrations: defineTable({
+    eventId: v.id("events"),
+    nombre: v.string(),
+    correo: v.string(),
+    carrera: v.string(),
+    semestre: v.string(),
+    matricula: v.optional(v.string()),
+    canales: v.object({ correo: v.boolean(), whatsapp: v.boolean() }),
+    telefono: v.optional(v.string()),
+    estado: estadoAsistenteValidador,
+    notas: v.optional(v.string()),
+    origen: v.string(),
+    ipHash: v.string(),
+    userAgent: v.string(),
+    creadoEn: v.number(),
+    actualizadoEn: v.number(),
+  })
+    .index("by_event_and_correo", ["eventId", "correo"])
+    .index("by_event_and_creado", ["eventId", "creadoEn"])
+    .index("by_event_and_estado", ["eventId", "estado", "creadoEn"]),
 
   /** Invitaciones al panel. El token en claro jamas se guarda. */
   invites: defineTable({

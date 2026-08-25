@@ -47,6 +47,13 @@ const COLOR_ESTADO: Record<string, string> = {
   planeacion: "var(--color-nuevo)",
   propuesto: "var(--color-contactado)",
   exploratorio: "var(--color-n500)",
+  borrador: "var(--color-n500)",
+  publicado: "var(--color-activo)",
+  cerrado: "var(--color-baja)",
+  registrado: "var(--color-nuevo)",
+  confirmado: "var(--color-activo)",
+  cancelado: "var(--color-baja)",
+  asistio: "var(--color-activo)",
 };
 
 /** Marcador de estado. Cuadrado, no circulo: la marca no tiene curvas. */

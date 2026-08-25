@@ -927,6 +927,11 @@ textarea {
   font-size: 7.75px;
 }
 
+.panel-mobile-tabs-core[data-items="6"] .panel-mobile-tab {
+  gap: 3px;
+  font-size: 7px;
+}
+
 .registro-tipo-movil {
   flex: none;
   padding: 3px 5px;
