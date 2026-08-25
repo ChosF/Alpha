@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 const RUTAS = [
   "Banca de inversión",
   "Mercados",
-  "Finanzas corporativas",
+  "Valuación de empresas",
   "Consultoria",
   "Gestión de riesgos",
   "Capital privado",
@@ -48,9 +48,10 @@ export default async function CallingLaf({ params }: { params: Promise<{ slug: s
             <span>LAF</span>
           </h1>
           <p className={estilos.introduccion}>
-            Conoce las concentraciones disponibles, las certificaciones que pesan en cada área y
-            las oportunidades profesionales que puedes construir desde la etapa final de tu
-            carrera.
+            Resuelve tus dudas sobre la Licenciatura en Administración Financiera, las
+            concentraciones disponibles, las certificaciones que pesan en cada área y las
+            oportunidades profesionales que puedes construir. Además, podrás conocer al director
+            de carrera, a profesores, a la sociedad de alumnos y sus diferentes actividades.
           </p>
           <dl className={estilos.datosEvento} aria-label="Datos del evento">
             <div>
