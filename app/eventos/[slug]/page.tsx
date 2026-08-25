@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { MarcaAlpha } from "@/components/marca-alpha";
+import { CALLING_LAF, registroCallingLafDisponible } from "@/lib/calling-laf";
 import { FormularioCallingLaf } from "./formulario-calling-laf";
 import estilos from "./calling-laf.module.css";
 
@@ -24,7 +26,9 @@ const RUTAS = [
 
 export default async function CallingLaf({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  if (slug !== "calling-laf") notFound();
+  if (slug !== CALLING_LAF.slug) notFound();
+  await connection();
+  const registroDisponible = registroCallingLafDisponible();
 
   return (
     <main className={estilos.pagina}>
@@ -51,7 +55,25 @@ export default async function CallingLaf({ params }: { params: Promise<{ slug: s
             las oportunidades profesionales que puedes construir desde la etapa final de tu
             carrera.
           </p>
-          <FormularioCallingLaf estilos={estilos} />
+          <dl className={estilos.datosEvento} aria-label="Datos del evento">
+            <div>
+              <dt>Fecha</dt>
+              <dd>{CALLING_LAF.fechaCorta}</dd>
+            </div>
+            <div>
+              <dt>Lugar</dt>
+              <dd>{CALLING_LAF.sede}</dd>
+            </div>
+            <div>
+              <dt>Hora</dt>
+              <dd>{CALLING_LAF.horaTexto}</dd>
+            </div>
+          </dl>
+          <FormularioCallingLaf
+            estilos={estilos}
+            registroDisponible={registroDisponible}
+            cierreRegistroIso={CALLING_LAF.cierreRegistroIso}
+          />
         </div>
 
         <div className={estilos.rutas}>

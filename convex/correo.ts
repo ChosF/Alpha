@@ -30,6 +30,7 @@ import {
   estadoIngestaCorreoValidador,
   estadoMensajeCorreoValidador,
 } from "./lib/validadores";
+import { CALLING_LAF } from "../lib/calling-laf";
 
 const MAX_HILOS = 160;
 const MAX_MENSAJES = 300;
@@ -333,6 +334,154 @@ export async function enviarConfirmacionRegistro(
     subject: contenido.asunto,
     text: textoConfirmacionRegistro(args),
     html: cuerpoConfirmacionRegistro(args, sitio),
+    replyTo: [correoContacto()],
+  });
+  return true;
+}
+
+type ConfirmacionCallingLaf = {
+  nombre: string;
+  correo: string;
+};
+
+function textoConfirmacionCallingLaf(args: ConfirmacionCallingLaf): string {
+  const nombre = primerNombre(args.nombre);
+  return [
+    `Hola${nombre ? ` ${nombre}` : ""},`,
+    "",
+    "Tu lugar en Calling LAF está registrado.",
+    "",
+    "Fecha: 4 de septiembre de 2026",
+    "Hora: Por confirmar",
+    "Lugar: SUM 1102, Tec CCM",
+    "",
+    "Te enviaremos la hora por este correo en cuanto quede confirmada. Guarda este mensaje para tener a la mano los datos del evento.",
+    "",
+    "Conoce tus opciones. Define tu especialización. Construye tu siguiente paso.",
+    "",
+    "Si necesitas corregir algún dato, responde a este correo.",
+    "",
+    "Sociedad Estudiantil Alpha",
+    "Tecnológico de Monterrey, Campus Ciudad de México",
+  ].join("\n");
+}
+
+function cuerpoConfirmacionCallingLaf(args: ConfirmacionCallingLaf, sitio: string): string {
+  const nombre = escaparHtml(primerNombre(args.nombre));
+  const saludo = nombre ? `Hola, ${nombre}.` : "Hola.";
+  const logo = `${sitio}/alpha-mark-white.png`;
+  const evento = `${sitio}/eventos/${CALLING_LAF.slug}`;
+
+  return `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light only">
+  <title>Tu lugar en Calling LAF está registrado</title>
+  <style>
+    :root { color-scheme: light only; }
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    table { border-collapse: collapse !important; }
+    img { border: 0; display: block; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+    a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; }
+    @media only screen and (max-width: 600px) {
+      .page-pad { padding: 0 !important; }
+      .shell { width: 100% !important; max-width: 100% !important; }
+      .hero-pad { padding: 25px 22px 36px !important; }
+      .content-pad { padding: 32px 22px 30px !important; }
+      .event-title { font-size: 45px !important; line-height: .92 !important; letter-spacing: -2px !important; }
+      .detail-row, .detail-label, .detail-value { display: block !important; width: 100% !important; }
+      .detail-label { padding: 13px 0 4px !important; border-top: 1px solid #D5DFEC !important; }
+      .detail-value { padding: 0 0 13px !important; }
+      .button { display: block !important; padding: 16px 18px !important; text-align: center !important; }
+      .footer-pad { padding: 24px 22px 32px !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#DDE3EA;color:#0D2140;font-family:Montserrat,Arial,sans-serif;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">Confirmamos tu registro. Fecha, lugar y próximos pasos dentro.&#847; &zwnj; &nbsp;</div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background-color:#DDE3EA;">
+    <tr>
+      <td class="page-pad" align="center" style="padding:32px 18px;">
+        <table role="presentation" class="shell" width="640" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:640px;background-color:#F4F6F8;">
+          <tr>
+            <td class="hero-pad" style="padding:30px 42px 48px;background-color:#0D2140;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td valign="middle" style="width:54px;"><img src="${escaparHtml(logo)}" width="48" alt="Alpha" style="width:48px;max-width:48px;height:auto;"></td>
+                  <td valign="middle" style="padding-left:12px;color:#FFFFFF;font-family:Poppins,Arial,sans-serif;font-size:22px;font-weight:700;letter-spacing:-.5px;">Alpha</td>
+                  <td valign="middle" align="right" style="color:#AFCFFF;font-size:9px;font-weight:600;letter-spacing:2px;white-space:nowrap;">04 · 09 · 26</td>
+                </tr>
+              </table>
+              <div style="margin-top:43px;color:#AFCFFF;font-size:10px;font-weight:600;letter-spacing:2.2px;line-height:1.4;">REGISTRO CONFIRMADO</div>
+              <h1 class="event-title" style="margin:15px 0 0;color:#FFFFFF;font-family:Poppins,Arial,sans-serif;font-size:64px;font-weight:700;letter-spacing:-3.4px;line-height:.88;">CALLING<br><span style="color:#0066FF;">LAF</span></h1>
+            </td>
+          </tr>
+          <tr>
+            <td class="content-pad" style="padding:44px 42px 38px;background-color:#F4F6F8;">
+              <p style="margin:0;color:#0066FF;font-family:Poppins,Arial,sans-serif;font-size:13px;font-weight:600;line-height:1.5;">${saludo}</p>
+              <h2 style="margin:12px 0 0;color:#0D2140;font-family:Poppins,Arial,sans-serif;font-size:29px;font-weight:700;letter-spacing:-1px;line-height:1.12;">Tu lugar está registrado.</h2>
+              <p style="margin:16px 0 0;color:#43536A;font-size:15px;line-height:1.72;">Recibimos tus datos para Calling LAF. Aquí tienes la información confirmada hasta ahora:</p>
+
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:30px;border-top:5px solid #0066FF;background-color:#E8EDF3;">
+                <tr class="detail-row">
+                  <td class="detail-label" width="30%" style="padding:17px 20px;border-bottom:1px solid #D5DFEC;color:#66758A;font-size:9px;font-weight:600;letter-spacing:1.7px;">FECHA</td>
+                  <td class="detail-value" style="padding:17px 20px;border-bottom:1px solid #D5DFEC;color:#0D2140;font-size:14px;font-weight:600;">4 de septiembre de 2026</td>
+                </tr>
+                <tr class="detail-row">
+                  <td class="detail-label" width="30%" style="padding:17px 20px;border-bottom:1px solid #D5DFEC;color:#66758A;font-size:9px;font-weight:600;letter-spacing:1.7px;">HORA</td>
+                  <td class="detail-value" style="padding:17px 20px;border-bottom:1px solid #D5DFEC;color:#0066FF;font-size:14px;font-weight:700;">Por confirmar</td>
+                </tr>
+                <tr class="detail-row">
+                  <td class="detail-label" width="30%" style="padding:17px 20px;color:#66758A;font-size:9px;font-weight:600;letter-spacing:1.7px;">LUGAR</td>
+                  <td class="detail-value" style="padding:17px 20px;color:#0D2140;font-size:14px;font-weight:600;">SUM 1102 · Tec CCM</td>
+                </tr>
+              </table>
+
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:24px;background-color:#AFCFFF;border-left:5px solid #194270;">
+                <tr><td style="padding:23px 24px;"><div style="color:#194270;font-size:9px;font-weight:700;letter-spacing:1.8px;">SIGUIENTE ACTUALIZACIÓN</div><p style="margin:8px 0 0;color:#213B5C;font-size:13px;line-height:1.65;">Te enviaremos la hora por este correo en cuanto quede confirmada. Guarda este mensaje para tener a la mano la fecha y el lugar.</p></td></tr>
+              </table>
+
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:28px;">
+                <tr><td bgcolor="#0066FF" style="background-color:#0066FF;"><a class="button" href="${escaparHtml(evento)}" target="_blank" style="display:inline-block;padding:15px 22px;color:#FFFFFF;font-size:13px;font-weight:600;line-height:1;text-decoration:none;">Ver página del evento&nbsp;&nbsp;→</a></td></tr>
+              </table>
+
+              <p style="margin:30px 0 0;color:#0D2140;font-family:Poppins,Arial,sans-serif;font-size:14px;font-weight:600;line-height:1.6;">Conoce tus opciones. Define tu especialización. Construye tu siguiente paso.</p>
+              <p style="margin:16px 0 0;color:#6B7482;font-size:11px;line-height:1.7;">Si necesitas corregir algún dato, responde a este correo.</p>
+              <p style="margin:10px 0 0;color:#7A8492;font-size:10px;line-height:1.7;">Recibes este mensaje porque solicitaste confirmación por correo al registrarte en Calling LAF.</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="footer-pad" style="padding:25px 42px 34px;background-color:#E6EAF0;border-top:1px solid #CCD3DC;color:#596577;font-size:11px;line-height:1.65;">Sociedad Estudiantil Alpha<br>Tecnológico de Monterrey, Campus Ciudad de México</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function enviarConfirmacionCallingLaf(
+  ctx: ActionCtx,
+  args: ConfirmacionCallingLaf,
+): Promise<boolean> {
+  const sitio = process.env.SITE_URL?.replace(/\/$/, "");
+  if (!sitio || !process.env.RESEND_API_KEY || process.env.RESEND_TEST_MODE !== "false") {
+    return false;
+  }
+
+  const auto = normalizarCorreo(process.env.ALPHA_AUTO_EMAIL ?? "auto@alphaccm.org");
+  await resend.sendEmail(ctx, {
+    from: nombreDireccion(auto, "Alpha CCM"),
+    to: normalizarCorreo(args.correo),
+    subject: "Tu lugar en Calling LAF está registrado",
+    text: textoConfirmacionCallingLaf(args),
+    html: cuerpoConfirmacionCallingLaf(args, sitio),
     replyTo: [correoContacto()],
   });
   return true;

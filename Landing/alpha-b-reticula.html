@@ -188,6 +188,24 @@ img,svg{display:block;max-width:100%}
 .top>*{pointer-events:auto}
 .top-lk{height:19px;color:var(--ink)}
 
+/* aviso temporal de Calling LAF; desaparece al terminar el 5 de septiembre */
+.calling-banner{
+  position:fixed;z-index:58;top:22px;left:50%;width:min(600px,calc(100vw - 210px));
+  color:#fff;background:#0d2140;box-shadow:0 26px 72px -34px rgba(13,33,64,.72),inset 0 0 0 1px rgba(175,207,255,.18);
+  opacity:0;transform:translate3d(-50%,-14px,0);visibility:hidden;pointer-events:none;
+  transition:opacity .5s var(--E),transform .6s var(--E),visibility 0s .6s;
+}
+.calling-banner.on{opacity:1;transform:translate3d(-50%,0,0);visibility:visible;pointer-events:auto;transition-delay:.18s,.18s,0s}
+.calling-banner a{display:grid;grid-template-columns:auto 1fr auto;align-items:center;min-height:70px}
+.calling-banner-k{align-self:stretch;display:grid;place-items:center;padding:0 20px;background:#0066ff;
+  font-size:9px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;white-space:nowrap}
+.calling-banner-copy{display:grid;gap:2px;padding:13px 20px}
+.calling-banner-copy strong{font-size:16px;font-weight:600;letter-spacing:-.02em}
+.calling-banner-copy span{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.52)}
+.calling-banner-go{width:42px;height:42px;margin-right:14px;display:grid;place-items:center;background:rgba(255,255,255,.08);
+  transition:transform .5s var(--E2),background .5s var(--E2)}
+.calling-banner a:hover .calling-banner-go{transform:translate(2px,-2px);background:#0066ff}
+
 /* isla inferior (móvil) */
 .dock{
   position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;
@@ -545,6 +563,15 @@ img,svg{display:block;max-width:100%}
   .burg{width:38px;height:38px;flex:none}
   .burg i{left:10px}
 
+  .calling-banner{top:max(67px,calc(env(safe-area-inset-top) + 58px));left:50%;width:calc(100vw - 28px);transform:translate3d(-50%,-14px,0)}
+  .calling-banner.on{transform:translate3d(-50%,0,0)}
+  .calling-banner a{grid-template-columns:9px 1fr 38px;min-height:64px}
+  .calling-banner-k{padding:0;font-size:0}
+  .calling-banner-copy{padding:11px 14px}
+  .calling-banner-copy strong{font-size:14px}
+  .calling-banner-copy span{font-size:8px;letter-spacing:.1em}
+  .calling-banner-go{width:34px;height:34px;margin-right:8px}
+
   .dock{
     bottom:max(8px,env(safe-area-inset-bottom));padding:4px;gap:0;
     max-width:calc(100vw - 20px);background:rgba(242,244,247,.86);
@@ -769,6 +796,17 @@ img,svg{display:block;max-width:100%}
     <button class="burg" id="burg" aria-label="Abrir menú" aria-expanded="false"><i></i><i></i></button>
   </div>
 </header>
+
+<aside class="calling-banner" id="calling-laf-banner" aria-label="Evento destacado" hidden>
+  <a href="/eventos/calling-laf">
+    <span class="calling-banner-k">Evento</span>
+    <span class="calling-banner-copy">
+      <strong>Calling LAF ya está aquí.</strong>
+      <span>4 SEP · SUM 1102 · Hora por confirmar</span>
+    </span>
+    <span class="calling-banner-go" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
+  </a>
+</aside>
 
 <nav class="rail" id="rail" aria-label="Secciones">
   <a href="#pilares" data-sec="pilares"><b></b><span>Pilares</span></a>
@@ -1317,6 +1355,21 @@ img,svg{display:block;max-width:100%}
   const themeColor = document.querySelector('meta[name="theme-color"]');
   const hasMobileGateway = () => matchMedia("(max-width: 767px)").matches;
   let running = true;
+
+  const callingBanner = document.getElementById("calling-laf-banner");
+  const callingCierre = Date.parse("2026-09-06T06:00:00.000Z");
+  const sincronizarCallingBanner = () => {
+    const restante = callingCierre-Date.now();
+    if (restante <= 0) {
+      callingBanner.classList.remove("on");
+      setTimeout(() => { callingBanner.hidden = true; },RM ? 0 : 620);
+      return;
+    }
+    callingBanner.hidden = false;
+    requestAnimationFrame(() => callingBanner.classList.add("on"));
+    setTimeout(sincronizarCallingBanner,Math.min(restante,2147483647));
+  };
+  sincronizarCallingBanner();
 
   /* ─── Estrellas fugaces sobre el campo navy ─────────────────────── */
   if (!RM && cv) {

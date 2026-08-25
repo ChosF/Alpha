@@ -101,6 +101,42 @@
   color: rgba(255, 255, 255, 0.72);
 }
 
+.datosEvento {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  flex-wrap: wrap;
+  margin-top: 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.datosEvento div {
+  min-width: 132px;
+  padding: 14px 22px 14px 0;
+}
+
+.datosEvento div + div {
+  padding-left: 22px;
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.datosEvento dt {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.datosEvento dd {
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--cielo);
+}
+
 .enlaceFormulario {
   display: inline-flex;
   width: fit-content;
@@ -121,6 +157,29 @@
 .enlaceFormulario:hover {
   border-color: white;
   color: white;
+}
+
+.registroCerrado {
+  width: fit-content;
+  max-width: 420px;
+  margin-top: 32px;
+  padding: 16px 18px;
+  border-left: 4px solid var(--cielo);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.registroCerrado span {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cielo);
+}
+
+.registroCerrado p {
+  margin-top: 5px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.66);
 }
 
 .rutas {
@@ -433,45 +492,172 @@
 }
 
 .exito {
-  display: flex;
-  min-height: 420px;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  padding: clamp(30px, 5vw, 60px);
-  border-left: 8px solid var(--azul);
+  position: relative;
+  grid-column: 1 / -1;
+  min-height: min(610px, calc(100dvh - 230px));
+  overflow: hidden;
   background: var(--navy);
   color: white;
 }
 
-.exito > span {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  background: var(--azul);
-  font-family: var(--font-mono);
+.exito::before {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 76% 18%, rgba(0, 102, 255, 0.25), transparent 31%),
+    linear-gradient(115deg, transparent 0 62%, rgba(175, 207, 255, 0.08) 62% 63%, transparent 63%);
+  content: "";
+  pointer-events: none;
 }
 
-.exito p {
-  margin-top: 44px;
+.exitoColumnas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  pointer-events: none;
+}
+
+.exitoColumnas i {
+  flex: 1;
+  border-left: 1px solid rgba(255, 255, 255, 0.055);
+  background: rgba(0, 102, 255, 0.08);
+  transform: translateY(-101%);
+  animation: exitoColumna 760ms cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+.exitoColumnas i:nth-child(2) { animation-delay: 45ms; }
+.exitoColumnas i:nth-child(3) { animation-delay: 90ms; }
+.exitoColumnas i:nth-child(4) { animation-delay: 135ms; }
+.exitoColumnas i:nth-child(5) { animation-delay: 180ms; }
+.exitoColumnas i:nth-child(6) { animation-delay: 225ms; }
+
+.exitoContenido {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: inherit;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(38px, 7vw, 88px);
+}
+
+.exitoCheck {
+  display: block;
+  width: 66px;
+  height: 66px;
+  opacity: 0;
+  transform-origin: center;
+  will-change: transform, opacity, filter;
+}
+
+.exitoCheck svg {
+  display: block;
+  overflow: visible;
+}
+
+.exitoCheck circle {
+  fill: rgba(0, 102, 255, 0.18);
+  stroke: var(--azul);
+  stroke-width: 2;
+}
+
+.exitoCheck path {
+  stroke: white;
+  stroke-width: 4;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+}
+
+.exitoCheck[data-state="in"] {
+  animation:
+    exitoCheckFade 500ms cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    exitoCheckRotate 500ms cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    exitoCheckBlur 500ms cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    exitoCheckBob 500ms cubic-bezier(0.34, 1.35, 0.64, 1) forwards;
+  animation-delay: 280ms;
+}
+
+.exitoCheck[data-state="in"] path {
+  animation: exitoCheckDraw 500ms cubic-bezier(0.22, 1, 0.36, 1) 360ms forwards;
+}
+
+.exitoCejilla {
+  margin-top: 38px;
   font-size: 10px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--cielo);
+  opacity: 0;
+  transform: translateY(14px);
+  animation: exitoEntrada 560ms cubic-bezier(0.22, 1, 0.36, 1) 390ms forwards;
 }
 
-.exito h3 {
+.exitoContenido h3 {
   max-width: 600px;
   margin-top: 12px;
   font-size: clamp(2.4rem, 5vw, 5rem);
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.06em;
+  opacity: 0;
+  transform: translateY(18px);
+  animation: exitoEntrada 620ms cubic-bezier(0.22, 1, 0.36, 1) 460ms forwards;
 }
 
-.exito button {
-  margin-top: 38px;
+.exitoTexto {
+  max-width: 620px;
+  margin-top: 22px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.7;
+  opacity: 0;
+  transform: translateY(14px);
+  animation: exitoEntrada 620ms cubic-bezier(0.22, 1, 0.36, 1) 530ms forwards;
+}
+
+.exitoDatos {
+  display: grid;
+  width: min(760px, 100%);
+  grid-template-columns: 1.2fr 0.8fr 1fr;
+  margin-top: 34px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  opacity: 0;
+  transform: translateY(14px);
+  animation: exitoEntrada 620ms cubic-bezier(0.22, 1, 0.36, 1) 600ms forwards;
+}
+
+.exitoDatos div {
+  min-width: 0;
+  padding: 17px 20px 17px 0;
+}
+
+.exitoDatos div + div {
+  padding-left: 20px;
+  border-left: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.exitoDatos dt {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.exitoDatos dd {
+  margin-top: 6px;
+  font-size: 11px;
+  color: white;
+}
+
+.exitoContenido button {
+  margin-top: 32px;
   padding: 11px 0;
   border: 0;
   border-bottom: 1px solid var(--cielo);
@@ -479,7 +665,18 @@
   color: var(--cielo);
   font: 500 11px/1 var(--font-sans);
   cursor: pointer;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: exitoEntrada 560ms cubic-bezier(0.22, 1, 0.36, 1) 670ms forwards;
 }
+
+@keyframes exitoColumna { to { transform: translateY(0); } }
+@keyframes exitoCheckFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes exitoCheckRotate { from { transform: rotate(80deg); } to { transform: rotate(0deg); } }
+@keyframes exitoCheckBlur { from { filter: blur(10px); } to { filter: blur(0); } }
+@keyframes exitoCheckBob { from { translate: 0 40px; } to { translate: 0 0; } }
+@keyframes exitoCheckDraw { to { stroke-dashoffset: 0; } }
+@keyframes exitoEntrada { to { opacity: 1; transform: translateY(0); } }
 
 .pie {
   display: flex;
@@ -564,6 +761,20 @@
     margin-top: 52px;
   }
 
+  .datosEvento {
+    width: 100%;
+  }
+
+  .datosEvento div {
+    min-width: 0;
+    flex: 1 1 33%;
+    padding-right: 12px;
+  }
+
+  .datosEvento div + div {
+    padding-left: 12px;
+  }
+
   .campos {
     grid-template-columns: 1fr;
     gap: 26px;
@@ -587,6 +798,30 @@
   .modalContenido {
     gap: 42px;
     padding: 46px 22px max(46px, env(safe-area-inset-bottom));
+  }
+
+  .exito {
+    min-height: calc(100dvh - 62px);
+  }
+
+  .exitoContenido {
+    justify-content: flex-start;
+    padding: 54px 0 max(50px, env(safe-area-inset-bottom));
+  }
+
+  .exitoDatos {
+    grid-template-columns: 1fr;
+  }
+
+  .exitoDatos div,
+  .exitoDatos div + div {
+    padding: 13px 0;
+    border-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .exitoDatos div:first-child {
+    border-top: 0;
   }
 
   .registroIntro h2 {
@@ -619,5 +854,40 @@
   .pie {
     align-items: flex-start;
     flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modalFondo,
+  .modalPanel,
+  .exitoColumnas i,
+  .exitoCheck,
+  .exitoCheck path,
+  .exitoCejilla,
+  .exitoContenido h3,
+  .exitoTexto,
+  .exitoDatos,
+  .exitoContenido button {
+    animation: none !important;
+  }
+
+  .exitoCheck,
+  .exitoCejilla,
+  .exitoContenido h3,
+  .exitoTexto,
+  .exitoDatos,
+  .exitoContenido button {
+    opacity: 1;
+    transform: none;
+    translate: none;
+    filter: none;
+  }
+
+  .exitoCheck path {
+    stroke-dashoffset: 0;
+  }
+
+  .exitoColumnas i {
+    transform: translateY(0);
   }
 }

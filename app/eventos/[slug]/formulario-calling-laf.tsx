@@ -10,6 +10,12 @@ import {
 
 type Estilos = Record<string, string>;
 
+type PropiedadesFormulario = {
+  estilos: Estilos;
+  registroDisponible: boolean;
+  cierreRegistroIso: string;
+};
+
 async function obtenerToken(): Promise<string> {
   try {
     const respuesta = await fetch("/api/registro/token", {
@@ -23,18 +29,34 @@ async function obtenerToken(): Promise<string> {
   }
 }
 
-export function FormularioCallingLaf({ estilos }: { estilos: Estilos }) {
+export function FormularioCallingLaf({
+  estilos,
+  registroDisponible,
+  cierreRegistroIso,
+}: PropiedadesFormulario) {
+  const [disponible, setDisponible] = useState(registroDisponible);
   const [abierto, setAbierto] = useState(false);
   const [token, setToken] = useState("");
   const [whatsapp, setWhatsapp] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [mensaje, setMensaje] = useState<{ texto: string; error: boolean } | null>(null);
   const [completo, setCompleto] = useState(false);
+  const [confirmacionCorreo, setConfirmacionCorreo] = useState(true);
   const cerrarRef = useRef<HTMLButtonElement>(null);
 
   const pedirToken = async () => setToken(await obtenerToken());
 
   useEffect(() => {
+    const restante = Math.max(0, Date.parse(cierreRegistroIso) - Date.now());
+    const temporizador = window.setTimeout(() => {
+      setDisponible(false);
+      setAbierto(false);
+    }, restante);
+    return () => window.clearTimeout(temporizador);
+  }, [cierreRegistroIso]);
+
+  useEffect(() => {
+    if (!disponible) return;
     let activo = true;
     void obtenerToken().then((nuevoToken) => {
       if (activo) setToken(nuevoToken);
@@ -42,7 +64,7 @@ export function FormularioCallingLaf({ estilos }: { estilos: Estilos }) {
     return () => {
       activo = false;
     };
-  }, []);
+  }, [disponible]);
 
   useEffect(() => {
     if (!abierto) return;
@@ -57,6 +79,7 @@ export function FormularioCallingLaf({ estilos }: { estilos: Estilos }) {
   const cerrar = () => {
     setAbierto(false);
     setCompleto(false);
+    setConfirmacionCorreo(true);
     setMensaje(null);
   };
 
@@ -120,6 +143,7 @@ export function FormularioCallingLaf({ estilos }: { estilos: Estilos }) {
       }
       formulario.reset();
       setWhatsapp(false);
+      setConfirmacionCorreo(cuerpo.avisosCorreo);
       setCompleto(true);
       setMensaje(null);
       setToken("");
@@ -133,9 +157,16 @@ export function FormularioCallingLaf({ estilos }: { estilos: Estilos }) {
 
   return (
     <>
-      <button type="button" className={estilos.enlaceFormulario} onClick={() => setAbierto(true)}>
-        Quiero registrarme <span aria-hidden="true">↗</span>
-      </button>
+      {disponible ? (
+        <button type="button" className={estilos.enlaceFormulario} onClick={() => setAbierto(true)}>
+          Quiero registrarme <span aria-hidden="true">↗</span>
+        </button>
+      ) : (
+        <div className={estilos.registroCerrado} role="status">
+          <span>Registro cerrado</span>
+          <p>Calling LAF se realizó el 4 de septiembre de 2026.</p>
+        </div>
+      )}
       {abierto ? (
         <div
           className={estilos.modal}
@@ -161,12 +192,32 @@ export function FormularioCallingLaf({ estilos }: { estilos: Estilos }) {
             <div className={estilos.modalContenido}>
               {completo ? (
                 <div className={estilos.exito} role="status" aria-live="polite">
-                  <span aria-hidden="true">✓</span>
-                  <p>Tu registro quedó listo.</p>
-                  <h3>Nos vemos en Calling LAF.</h3>
-                  <button type="button" onClick={() => setCompleto(false)}>
-                    Registrar a otra persona
-                  </button>
+                  <div className={estilos.exitoColumnas} aria-hidden="true">
+                    <i /><i /><i /><i /><i /><i />
+                  </div>
+                  <div className={estilos.exitoContenido}>
+                    <span className={estilos.exitoCheck} data-state="in" aria-hidden="true">
+                      <svg viewBox="0 0 64 64" fill="none">
+                        <circle cx="32" cy="32" r="29" />
+                        <path d="m19 32 8 8 18-19" />
+                      </svg>
+                    </span>
+                    <p className={estilos.exitoCejilla}>Calling LAF · Registro confirmado</p>
+                    <h3>Tu lugar está registrado.</h3>
+                    <p className={estilos.exitoTexto}>
+                      {confirmacionCorreo
+                        ? "Te enviamos la confirmación y los datos del evento al correo que registraste."
+                        : "Guardamos tu registro. Te compartiremos las indicaciones por WhatsApp."}
+                    </p>
+                    <dl className={estilos.exitoDatos}>
+                      <div><dt>Fecha</dt><dd>4 de septiembre de 2026</dd></div>
+                      <div><dt>Hora</dt><dd>Por confirmar</dd></div>
+                      <div><dt>Lugar</dt><dd>SUM 1102 · Tec CCM</dd></div>
+                    </dl>
+                    <button type="button" onClick={() => setCompleto(false)}>
+                      Registrar a otra persona
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -175,7 +226,8 @@ export function FormularioCallingLaf({ estilos }: { estilos: Estilos }) {
                     <h2 id="calling-laf-registro-titulo">Reserva tu lugar</h2>
                     <p>
                       Déjanos tus datos para incluirte en la lista de Calling LAF y compartirte las
-                      indicaciones del evento por el medio que elijas.
+                      indicaciones del evento por el medio que elijas. La hora se confirmará más
+                      adelante.
                     </p>
                   </div>
                   <Formulario

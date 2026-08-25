@@ -4,8 +4,10 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { comparaSegura, limpiarTexto, normalizarCorreo, normalizarTelefono, sha256Hex } from "./lib/texto";
 import { CUOTAS, consumirLimite } from "./lib/limites";
+import { CALLING_LAF, registroCallingLafDisponible } from "../lib/calling-laf";
+import { enviarConfirmacionCallingLaf } from "./correo";
 
-const SLUG_CALLING_LAF = "calling-laf";
+const SLUG_CALLING_LAF = CALLING_LAF.slug;
 
 const datosRegistroEvento = v.object({
   nombre: v.string(),
@@ -75,6 +77,22 @@ export const registrar = action({
       slug: args.slug,
       datos: args.datos,
     });
+    if (resultado.ok && resultado.creado && args.datos.canales.correo) {
+      try {
+        const encolado = await enviarConfirmacionCallingLaf(ctx, {
+          nombre: args.datos.nombre,
+          correo: args.datos.correo,
+        });
+        if (!encolado) {
+          console.error("No se encoló la confirmación de Calling LAF: correo automático no configurado.");
+        }
+      } catch (error) {
+        console.error(
+          "No se pudo encolar la confirmación de Calling LAF.",
+          error instanceof Error ? error.message : "Error desconocido",
+        );
+      }
+    }
     return resultado.ok
       ? { ok: true }
       : { ok: false, ...(resultado.motivo ? { motivo: resultado.motivo } : {}) };
@@ -86,6 +104,9 @@ export const guardar = internalMutation({
   returns: v.object({ ok: v.boolean(), creado: v.boolean(), motivo: v.optional(v.string()) }),
   handler: async (ctx, args) => {
     const slug = limpiarTexto(args.slug, 80).toLowerCase();
+    if (slug === SLUG_CALLING_LAF && !registroCallingLafDisponible()) {
+      return { ok: false, creado: false, motivo: "cerrado" };
+    }
     const evento = await ctx.db
       .query("events")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
