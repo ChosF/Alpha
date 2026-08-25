@@ -250,11 +250,13 @@ type Formato = "xlsx" | "csv";
 const ENCABEZADOS = ["Nombre", "Correo", "Carrera", "Semestre", "Matricula", "Correo autorizado", "WhatsApp", "Telefono", "Estado", "Notas", "Registrado"] as const;
 
 function BotonExportar({ eventId, slug, estado }: { eventId: Id<"events">; slug: string; estado: EstadoAsistente | "" }) {
+  const [abierto, setAbierto] = useState(false);
   const [pedido, setPedido] = useState<{ formato: Formato; id: number } | null>(null);
   const filas = useQuery(api.eventos.paraExportar, pedido ? { eventId, ...(estado ? { estado } : {}) } : "skip");
   const anotar = useMutation(api.eventos.registrarExportacion);
   const secuencia = useRef(0);
   const procesado = useRef(0);
+  const excelRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!pedido || filas === undefined || procesado.current === pedido.id) return;
@@ -275,10 +277,52 @@ function BotonExportar({ eventId, slug, estado }: { eventId: Id<"events">; slug:
     setPedido({ formato, id: secuencia.current });
   };
 
+  const cargando = pedido !== null && filas === undefined;
+
   return (
-    <div className="flex gap-2">
-      <button type="button" className="boton boton-linea" onClick={() => exportar("xlsx")}>Excel</button>
-      <button type="button" className="boton boton-linea" onClick={() => exportar("csv")}>CSV</button>
+    <div
+      className={`relative h-11 overflow-hidden border border-[var(--hair)] bg-transparent transition-[width,background-color] duration-300 ease-[var(--E)] motion-reduce:transition-none sm:h-10 ${
+        abierto ? "w-[152px] bg-[var(--color-surface)]" : "w-[108px]"
+      }`}
+    >
+      <button
+        type="button"
+        className={`absolute inset-0 grid place-items-center text-[13px] font-medium transition-[opacity,transform] duration-200 ease-[var(--E)] motion-reduce:transition-none ${
+          abierto ? "pointer-events-none -translate-y-1 opacity-0" : "translate-y-0 opacity-100"
+        }`}
+        aria-expanded={abierto}
+        onClick={() => {
+          setAbierto(true);
+          requestAnimationFrame(() => excelRef.current?.focus());
+        }}
+      >
+        Exportar
+      </button>
+      <div
+        className={`absolute inset-0 grid grid-cols-2 transition-[opacity,transform] duration-200 ease-[var(--E)] motion-reduce:transition-none ${
+          abierto ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0"
+        }`}
+        role="group"
+        aria-label="Formato de exportacion"
+      >
+        <button
+          ref={excelRef}
+          type="button"
+          className="border-r border-[var(--hair)] text-[11px] font-medium transition-colors duration-200 hover:bg-white disabled:opacity-45"
+          disabled={cargando}
+          onClick={() => exportar("xlsx")}
+        >
+          {cargando && pedido?.formato === "xlsx" ? "···" : "Excel"}
+        </button>
+        <button
+          type="button"
+          className="text-[11px] font-medium uppercase tracking-[.04em] transition-colors duration-200 hover:bg-white disabled:opacity-45"
+          disabled={cargando}
+          onClick={() => exportar("csv")}
+        >
+          {cargando && pedido?.formato === "csv" ? "···" : "CSV"}
+        </button>
+      </div>
     </div>
   );
 }
