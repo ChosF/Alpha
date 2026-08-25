@@ -11,7 +11,7 @@ import {
 } from "@/convex/lib/validadores";
 import { construirCsv } from "@/lib/csv";
 import { construirXlsx } from "@/lib/xlsx";
-import { Aviso, Bandeja, Cargando, Marca, Titulo, Vacio, fecha } from "@/components/panel/piezas";
+import { Aviso, Bandeja, Cargando, Marca, Vacio, fecha } from "@/components/panel/piezas";
 import { SelectorPersonalizado } from "@/components/panel/selector-personalizado";
 
 export default function Eventos() {
@@ -24,7 +24,6 @@ export default function Eventos() {
 
   return (
     <>
-      <Titulo cejilla="Gestión de asistentes">Eventos</Titulo>
       {eventos === undefined ? (
         <Bandeja><Cargando que="los eventos" /></Bandeja>
       ) : eventos.length === 0 ? (
@@ -35,7 +34,7 @@ export default function Eventos() {
         <div className="grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
           <Bandeja>
             <div className="p-5 sm:p-6">
-              <p className="rotulo">Eventos activos</p>
+              <p className="rotulo">Eventos con registro</p>
               <ul className="mt-5">
                 {eventos.map((item) => (
                   <li key={item._id}>

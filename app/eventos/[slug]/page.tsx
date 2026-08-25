@@ -40,9 +40,6 @@ export default async function CallingLaf({ params }: { params: Promise<{ slug: s
       </header>
 
       <section className={estilos.hero}>
-        <div className={estilos.indice} aria-hidden="true">
-          01 / 26
-        </div>
         <div className={estilos.presentacion}>
           <p className={estilos.cejilla}>Orientación profesional para estudiantes LAF</p>
           <h1>

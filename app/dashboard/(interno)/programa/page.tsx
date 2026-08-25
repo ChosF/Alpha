@@ -21,7 +21,7 @@ import { SelectorPersonalizado } from "@/components/panel/selector-personalizado
  * sin rodeos. El estado usa las mismas tres palabras que ve el estudiante
  * (en planeacion, propuesto, exploratorio) para que nadie tenga que traducir.
  */
-export default function Programa() {
+export function ProgramaEventos({ integrado = false }: { integrado?: boolean }) {
   const yo = useQuery(api.usuarios.yo, {});
   const programas = useQuery(api.programas.listar, {});
   const [editando, setEditando] = useState<Id<"programs"> | "nuevo" | null>(null);
@@ -31,7 +31,16 @@ export default function Programa() {
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-0 sm:gap-6">
-        <Titulo cejilla="Plan de trabajo">Programa</Titulo>
+        {integrado ? (
+          <div className="mb-6 sm:mb-8">
+            <p className="cejilla">Plan general</p>
+            <h2 className="mt-2.5 text-[clamp(1.45rem,6vw,2.1rem)] font-bold leading-[1.05] tracking-[-.04em] sm:mt-3">
+              Programa de eventos
+            </h2>
+          </div>
+        ) : (
+          <Titulo cejilla="Plan de trabajo">Programa</Titulo>
+        )}
         {puedeEditar ? (
           <button
             type="button"
@@ -113,6 +122,10 @@ export default function Programa() {
       </Bandeja>
     </>
   );
+}
+
+export default function Programa() {
+  return <ProgramaEventos />;
 }
 
 function Formulario({

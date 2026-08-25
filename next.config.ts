@@ -53,6 +53,11 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/dashboard/programa",
+        destination: "/dashboard/eventos/programa",
+        permanent: true,
+      },
+      {
         source: "/panel/:path*",
         destination: "/dashboard/:path*",
         permanent: true,
