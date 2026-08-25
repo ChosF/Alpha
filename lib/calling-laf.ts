@@ -3,7 +3,7 @@ export const CALLING_LAF = {
   fechaIso: "2026-09-04",
   fechaTexto: "4 de septiembre de 2026",
   fechaCorta: "04 SEP 2026",
-  horaTexto: "Por confirmar",
+  horaTexto: "3:00–5:00 PM",
   sede: "SUM 1102",
   campus: "Tec CCM",
   cierreRegistroIso: "2026-09-06T06:00:00.000Z",

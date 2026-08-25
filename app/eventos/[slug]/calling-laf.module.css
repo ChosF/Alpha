@@ -57,7 +57,8 @@
 
 @media (min-width: 901px) {
   .presentacion {
-    transform: translateY(-88px);
+    position: relative;
+    top: -88px;
   }
 }
 

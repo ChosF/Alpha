@@ -351,11 +351,11 @@ function textoConfirmacionCallingLaf(args: ConfirmacionCallingLaf): string {
     "",
     "Tu lugar en Calling LAF está registrado.",
     "",
-    "Fecha: 4 de septiembre de 2026",
-    "Hora: Por confirmar",
-    "Lugar: SUM 1102, Tec CCM",
+    `Fecha: ${CALLING_LAF.fechaTexto}`,
+    `Hora: ${CALLING_LAF.horaTexto}`,
+    `Lugar: ${CALLING_LAF.sede}, ${CALLING_LAF.campus}`,
     "",
-    "Te enviaremos la hora por este correo en cuanto quede confirmada. Guarda este mensaje para tener a la mano los datos del evento.",
+    "Guarda este mensaje para tener a la mano los datos del evento.",
     "",
     "Conoce tus opciones. Define tu especialización. Construye tu siguiente paso.",
     "",
@@ -425,25 +425,21 @@ function cuerpoConfirmacionCallingLaf(args: ConfirmacionCallingLaf, sitio: strin
             <td class="content-pad" style="padding:44px 42px 38px;background-color:#F4F6F8;">
               <p style="margin:0;color:#0066FF;font-family:Poppins,Arial,sans-serif;font-size:13px;font-weight:600;line-height:1.5;">${saludo}</p>
               <h2 style="margin:12px 0 0;color:#0D2140;font-family:Poppins,Arial,sans-serif;font-size:29px;font-weight:700;letter-spacing:-1px;line-height:1.12;">Tu lugar está registrado.</h2>
-              <p style="margin:16px 0 0;color:#43536A;font-size:15px;line-height:1.72;">Recibimos tus datos para Calling LAF. Aquí tienes la información confirmada hasta ahora:</p>
+              <p style="margin:16px 0 0;color:#43536A;font-size:15px;line-height:1.72;">Recibimos tus datos para Calling LAF. Estos son los datos del evento:</p>
 
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:30px;border-top:5px solid #0066FF;background-color:#E8EDF3;">
                 <tr class="detail-row">
                   <td class="detail-label" width="30%" style="padding:17px 20px;border-bottom:1px solid #D5DFEC;color:#66758A;font-size:9px;font-weight:600;letter-spacing:1.7px;">FECHA</td>
-                  <td class="detail-value" style="padding:17px 20px;border-bottom:1px solid #D5DFEC;color:#0D2140;font-size:14px;font-weight:600;">4 de septiembre de 2026</td>
+                  <td class="detail-value" style="padding:17px 20px;border-bottom:1px solid #D5DFEC;color:#0D2140;font-size:14px;font-weight:600;">${escaparHtml(CALLING_LAF.fechaTexto)}</td>
                 </tr>
                 <tr class="detail-row">
                   <td class="detail-label" width="30%" style="padding:17px 20px;border-bottom:1px solid #D5DFEC;color:#66758A;font-size:9px;font-weight:600;letter-spacing:1.7px;">HORA</td>
-                  <td class="detail-value" style="padding:17px 20px;border-bottom:1px solid #D5DFEC;color:#0066FF;font-size:14px;font-weight:700;">Por confirmar</td>
+                  <td class="detail-value" style="padding:17px 20px;border-bottom:1px solid #D5DFEC;color:#0066FF;font-size:14px;font-weight:700;">${escaparHtml(CALLING_LAF.horaTexto)}</td>
                 </tr>
                 <tr class="detail-row">
                   <td class="detail-label" width="30%" style="padding:17px 20px;color:#66758A;font-size:9px;font-weight:600;letter-spacing:1.7px;">LUGAR</td>
-                  <td class="detail-value" style="padding:17px 20px;color:#0D2140;font-size:14px;font-weight:600;">SUM 1102 · Tec CCM</td>
+                  <td class="detail-value" style="padding:17px 20px;color:#0D2140;font-size:14px;font-weight:600;">${escaparHtml(CALLING_LAF.sede)} · ${escaparHtml(CALLING_LAF.campus)}</td>
                 </tr>
-              </table>
-
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:24px;background-color:#AFCFFF;border-left:5px solid #194270;">
-                <tr><td style="padding:23px 24px;"><div style="color:#194270;font-size:9px;font-weight:700;letter-spacing:1.8px;">SIGUIENTE ACTUALIZACIÓN</div><p style="margin:8px 0 0;color:#213B5C;font-size:13px;line-height:1.65;">Te enviaremos la hora por este correo en cuanto quede confirmada. Guarda este mensaje para tener a la mano la fecha y el lugar.</p></td></tr>
               </table>
 
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:28px;">

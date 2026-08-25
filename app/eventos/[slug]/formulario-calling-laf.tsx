@@ -7,6 +7,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from "react";
+import { CALLING_LAF } from "@/lib/calling-laf";
 
 type Estilos = Record<string, string>;
 
@@ -210,9 +211,9 @@ export function FormularioCallingLaf({
                         : "Guardamos tu registro. Te compartiremos las indicaciones por WhatsApp."}
                     </p>
                     <dl className={estilos.exitoDatos}>
-                      <div><dt>Fecha</dt><dd>4 de septiembre de 2026</dd></div>
-                      <div><dt>Hora</dt><dd>Por confirmar</dd></div>
-                      <div><dt>Lugar</dt><dd>SUM 1102 · Tec CCM</dd></div>
+                      <div><dt>Fecha</dt><dd>{CALLING_LAF.fechaTexto}</dd></div>
+                      <div><dt>Hora</dt><dd>{CALLING_LAF.horaTexto}</dd></div>
+                      <div><dt>Lugar</dt><dd>{CALLING_LAF.sede} · {CALLING_LAF.campus}</dd></div>
                     </dl>
                     <button type="button" onClick={() => setCompleto(false)}>
                       Registrar a otra persona
@@ -226,8 +227,8 @@ export function FormularioCallingLaf({
                     <h2 id="calling-laf-registro-titulo">Reserva tu lugar</h2>
                     <p>
                       Déjanos tus datos para incluirte en la lista de Calling LAF y compartirte las
-                      indicaciones del evento por el medio que elijas. La hora se confirmará más
-                      adelante.
+                      indicaciones del evento por el medio que elijas. El evento será de
+                      {` ${CALLING_LAF.horaTexto}`}.
                     </p>
                   </div>
                   <Formulario
