@@ -84,6 +84,27 @@ export const cambiarEstado = mutation({
   },
 });
 
+export const cambiarTipo = mutation({
+  args: { id: v.id("registrations"), tipo: tipoRegistroValidador },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "editor");
+    const registro = await ctx.db.get(args.id);
+    if (registro === null) throw new Error("Ese registro ya no existe.");
+    if (registro.tipo === args.tipo) return null;
+
+    await ctx.db.patch(args.id, { tipo: args.tipo, actualizadoEn: Date.now() });
+    await registrarEnBitacora(ctx, {
+      actor,
+      accion: "registro.tipo",
+      entidad: "registrations",
+      entidadId: args.id,
+      detalle: `${registro.tipo} -> ${args.tipo}`,
+    });
+    return null;
+  },
+});
+
 export const guardarNotas = mutation({
   args: { id: v.id("registrations"), notas: v.string() },
   returns: v.null(),

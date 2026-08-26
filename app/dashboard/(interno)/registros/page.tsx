@@ -158,10 +158,12 @@ function Ficha({
   puedeEditar: boolean;
 }) {
   const cambiarEstado = useMutation(api.registros.cambiarEstado);
+  const cambiarTipo = useMutation(api.registros.cambiarTipo);
   const guardarNotas = useMutation(api.registros.guardarNotas);
   const [notas, setNotas] = useState(registro.notas ?? "");
   const [mensaje, setMensaje] = useState<{ tono: "error" | "exito"; texto: string } | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [cambiandoTipo, setCambiandoTipo] = useState(false);
 
   const alGuardar = async () => {
     setGuardando(true);
@@ -182,6 +184,19 @@ function Ficha({
       await cambiarEstado({ id: registro._id, estado: nuevo });
     } catch {
       setMensaje({ tono: "error", texto: "No se pudo cambiar el estado." });
+    }
+  };
+
+  const alCambiarTipo = async () => {
+    const nuevo = registro.tipo === "miembro" ? "aliado" : "miembro";
+    setCambiandoTipo(true);
+    setMensaje(null);
+    try {
+      await cambiarTipo({ id: registro._id, tipo: nuevo });
+    } catch {
+      setMensaje({ tono: "error", texto: "No se pudo cambiar el tipo de registro." });
+    } finally {
+      setCambiandoTipo(false);
     }
   };
 
@@ -234,6 +249,22 @@ function Ficha({
       <div>
         {puedeEditar ? (
           <>
+            <div className="mb-6 flex items-center justify-between gap-4 border-b border-[var(--hair)] pb-3">
+              <span className="text-[12px] text-[var(--color-n700)]">
+                {ETIQUETAS[registro.tipo]}
+              </span>
+              <button
+                type="button"
+                className="text-[10px] font-medium uppercase tracking-[.1em] text-[var(--color-accent)] underline decoration-[var(--hair)] underline-offset-4 transition-colors hover:decoration-[var(--color-accent)] disabled:cursor-wait disabled:opacity-50"
+                onClick={() => void alCambiarTipo()}
+                disabled={cambiandoTipo}
+              >
+                {cambiandoTipo
+                  ? "Cambiando…"
+                  : `Cambiar a ${registro.tipo === "miembro" ? "aliado" : "miembro"}`}
+              </button>
+            </div>
+
             <div className="campo">
               <label htmlFor={`estado-${registro._id}`}>Estado</label>
               <SelectorPersonalizado
