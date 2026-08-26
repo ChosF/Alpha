@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { MarcaAlpha } from "@/components/marca-alpha";
@@ -33,9 +32,9 @@ export default async function CallingLaf({ params }: { params: Promise<{ slug: s
   return (
     <main className={estilos.pagina}>
       <header className={estilos.cabecera}>
-        <Link href="/" aria-label="Volver al inicio de Alpha">
+        <a href="/" aria-label="Volver al inicio de Alpha">
           <MarcaAlpha className={estilos.marca} tono="blanco" />
-        </Link>
+        </a>
         <p>Sociedad Estudiantil de Finanzas</p>
       </header>
 
