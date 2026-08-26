@@ -517,6 +517,24 @@
   color: #798596;
 }
 
+.privacidad a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 3px;
+  padding: 3px 7px;
+  border: 1px solid rgba(0, 102, 255, 0.24);
+  color: var(--azul);
+  font-weight: 600;
+  line-height: 1.35;
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
+.privacidad a:hover {
+  border-color: var(--azul);
+  background: rgba(0, 102, 255, 0.06);
+}
+
 .trampa {
   position: absolute;
   left: -9999px;

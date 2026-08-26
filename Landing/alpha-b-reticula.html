@@ -441,6 +441,11 @@ img,svg{display:block;max-width:100%}
 .jn-form[data-tipo="miembro"] [data-only="aliado"]{display:none}
 .jn-form[data-tipo="aliado"] [data-only="miembro"]{display:none}
 .jn-sub{margin-top:clamp(26px,3vw,36px);padding-top:26px;border-top:1px solid var(--hair)}
+.jn-legal{font-size:11px;line-height:1.75;color:var(--n500);max-width:76ch}
+.jn-legal-link{display:inline-flex;align-items:center;gap:5px;margin:0 3px;padding:3px 7px;
+  border:1px solid rgba(31,95,208,.28);color:var(--accent);font-weight:600;line-height:1.35;
+  transition:border-color .2s ease,background .2s ease}
+.jn-legal-link:hover{border-color:var(--accent);background:rgba(31,95,208,.06)}
 
 /* ══ CONFIRMACIÓN DE REGISTRO ════════════════════════════════════ */
 #registro-exito{
@@ -1322,9 +1327,11 @@ img,svg{display:block;max-width:100%}
         <span class="ok text-[11px] opacity-0 transition-opacity duration-500" role="status" aria-live="polite"></span>
       </div>
 
-      <p class="text-[11px] leading-[1.75] text-[var(--n500)] max-w-[70ch]">
-        Usamos tus datos sólo para contactarte sobre actividades de Alpha. Puedes pedir que te demos
-        de baja en cualquier momento escribiendo a contacto@alphaccm.org.
+      <p class="jn-legal">
+        Al registrarte aceptas nuestros
+        <a class="jn-legal-link" href="/terminos">términos y condiciones <span aria-hidden="true">↗</span></a>.
+        Puedes pedir que eliminemos tus datos o dejar de recibir comunicaciones escribiendo a
+        contacto@alphaccm.org.
       </p>
     </form>
   </div>

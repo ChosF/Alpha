@@ -340,8 +340,10 @@ function Formulario({
       </div>
 
       <p className={estilos.privacidad}>
-        Usamos tus datos para gestionar Calling LAF y contactarte sobre este evento. Puedes pedir tu
-        baja escribiendo a contacto@alphaccm.org.
+        Al registrarte aceptas nuestros{" "}
+        <a href="/terminos">términos y condiciones <span aria-hidden="true">↗</span></a>.
+        Puedes pedir que eliminemos tus datos o dejar de recibir comunicaciones escribiendo a
+        {" "}contacto@alphaccm.org.
       </p>
     </form>
   );
