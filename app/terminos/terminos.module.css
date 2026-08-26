@@ -140,6 +140,7 @@
   color: #657083;
 }
 .marcaPie { width: 92px; height: auto; text-transform: none; }
+.marcaPie text { font-weight: 700; }
 .pie a { justify-self: end; color: var(--navy); }
 .pie a span { margin-left: 8px; color: var(--azul); }
 
