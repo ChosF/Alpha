@@ -87,6 +87,13 @@ export default defineSchema({
     .index("by_tipo", ["tipo"])
     .index("by_creado", ["creadoEn"]),
 
+  /** Cupos que la mesa directiva puede cerrar por area para nuevos aliados. */
+  registrationSettings: defineTable({
+    clave: v.literal("aliados"),
+    areasCerradas: v.array(areaValidador),
+    actualizadoEn: v.number(),
+  }).index("by_clave", ["clave"]),
+
   /** Eventos con registro publico administrados desde el panel. */
   events: defineTable({
     slug: v.string(),

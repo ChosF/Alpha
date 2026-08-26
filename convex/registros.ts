@@ -3,14 +3,72 @@ import { mutation, query } from "./_generated/server";
 import { requiereRol } from "./lib/rbac";
 import { registrarEnBitacora } from "./lib/auditoria";
 import { limpiarMultilinea, limpiarTexto } from "./lib/texto";
-import { estadoRegistroValidador, tipoRegistroValidador } from "./lib/validadores";
+import {
+  areaValidador,
+  estadoRegistroValidador,
+  tipoRegistroValidador,
+} from "./lib/validadores";
 
 /**
- * Registros para el panel. Todo pasa por requiereRol: no existe manera de leer
- * datos personales sin sesion, ni de escribir sin rol de editor.
+ * Los datos personales solo se leen con sesion y las escrituras exigen rol de
+ * editor. La unica consulta publica devuelve los cupos por area, nunca registros.
  */
 
 const LIMITE_PAGINA = 50;
+
+export const areasCerradasPublicas = query({
+  args: {},
+  returns: v.array(areaValidador),
+  handler: async (ctx) => {
+    const configuracion = await ctx.db
+      .query("registrationSettings")
+      .withIndex("by_clave", (q) => q.eq("clave", "aliados"))
+      .unique();
+    return configuracion?.areasCerradas ?? [];
+  },
+});
+
+export const cambiarCupoArea = mutation({
+  args: { area: areaValidador, lleno: v.boolean() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "editor");
+    const configuracion = await ctx.db
+      .query("registrationSettings")
+      .withIndex("by_clave", (q) => q.eq("clave", "aliados"))
+      .unique();
+    const actuales = configuracion?.areasCerradas ?? [];
+    const yaEstaCerrada = actuales.includes(args.area);
+
+    if (yaEstaCerrada === args.lleno) return null;
+
+    const areasCerradas = args.lleno
+      ? [...actuales, args.area]
+      : actuales.filter((area) => area !== args.area);
+    const actualizadoEn = Date.now();
+
+    const configuracionId =
+      configuracion === null
+        ? await ctx.db.insert("registrationSettings", {
+            clave: "aliados",
+            areasCerradas,
+            actualizadoEn,
+          })
+        : configuracion._id;
+    if (configuracion !== null) {
+      await ctx.db.patch(configuracion._id, { areasCerradas, actualizadoEn });
+    }
+
+    await registrarEnBitacora(ctx, {
+      actor,
+      accion: "registro.cupo_area",
+      entidad: "registrationSettings",
+      entidadId: configuracionId,
+      detalle: `${args.area} -> ${args.lleno ? "cupo lleno" : "disponible"}`,
+    });
+    return null;
+  },
+});
 
 export const listar = query({
   args: {

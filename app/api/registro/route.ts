@@ -83,7 +83,12 @@ export async function POST(peticion: Request): Promise<NextResponse> {
     });
 
     if (!resultado.ok) {
-      // El unico motivo que devuelve Convex hoy es el limite por correo.
+      if (resultado.motivo?.startsWith("area_cerrada:") === true) {
+        return NextResponse.json(
+          { error: "Una de las áreas que elegiste ya tiene cupo lleno. Selecciona otra." },
+          { status: 409 },
+        );
+      }
       return NextResponse.json(
         { error: "Ya recibimos varios registros con ese correo. Escribenos si necesitas ayuda." },
         { status: 429 },

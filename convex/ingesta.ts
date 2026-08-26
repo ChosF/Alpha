@@ -101,6 +101,17 @@ export const guardar = internalMutation({
       throw new Error("El telefono debe tener 10 digitos.");
     }
 
+    if (!esMiembro) {
+      const configuracion = await ctx.db
+        .query("registrationSettings")
+        .withIndex("by_clave", (q) => q.eq("clave", "aliados"))
+        .unique();
+      const areaCerrada = datos.areas.find((area) => configuracion?.areasCerradas.includes(area));
+      if (areaCerrada) {
+        return { ok: false, creado: false, motivo: `area_cerrada:${areaCerrada}` };
+      }
+    }
+
     // Primer limite: por origen. El hash de IP lo calcula Next, que es el
     // unico que ve la direccion real; aqui solo se cuenta contra ese hash.
     const limiteIp = await consumirLimite(

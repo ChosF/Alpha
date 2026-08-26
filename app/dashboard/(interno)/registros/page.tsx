@@ -5,9 +5,11 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Doc, Id } from "@/convex/_generated/dataModel";
 import {
+  AREAS,
   ESTADOS_REGISTRO,
   ETIQUETAS,
   TIPOS_REGISTRO,
+  type Area,
   type EstadoRegistro,
   type TipoRegistro,
 } from "@/convex/lib/validadores";
@@ -44,6 +46,8 @@ export default function Registros() {
         <Titulo cejilla="Convocatoria">Registros</Titulo>
         {yo?.rol === "admin" ? <BotonExportar tipo={tipo} estado={estado} /> : null}
       </div>
+
+      <CuposAliados puedeEditar={puedeEditar} />
 
       {/* Filtros */}
       <div className="grid gap-4 sm:grid-cols-[1fr_auto_auto] mb-6">
@@ -146,6 +150,106 @@ export default function Registros() {
         )}
       </Bandeja>
     </>
+  );
+}
+
+function CuposAliados({ puedeEditar }: { puedeEditar: boolean }) {
+  const areasCerradas = useQuery(api.registros.areasCerradasPublicas, {});
+  const cambiarCupo = useMutation(api.registros.cambiarCupoArea);
+  const [cambiando, setCambiando] = useState<Area | null>(null);
+  const [mensaje, setMensaje] = useState<{ tono: "error" | "exito"; texto: string } | null>(null);
+
+  const alternar = async (area: Area, lleno: boolean) => {
+    setCambiando(area);
+    setMensaje(null);
+    try {
+      await cambiarCupo({ area, lleno: !lleno });
+      setMensaje({
+        tono: "exito",
+        texto: lleno
+          ? `${ETIQUETAS[area]} vuelve a aceptar registros.`
+          : `${ETIQUETAS[area]} ahora aparece como Cupo lleno.`,
+      });
+    } catch {
+      setMensaje({ tono: "error", texto: "No se pudo cambiar el cupo del área." });
+    } finally {
+      setCambiando(null);
+    }
+  };
+
+  return (
+    <section className="mb-6" aria-labelledby="cupos-aliados-titulo">
+      <Bandeja>
+        <div className="p-5 sm:p-7">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="rotulo">Aliados</p>
+              <h2 id="cupos-aliados-titulo" className="mt-2 text-[18px] font-semibold tracking-[-.02em]">
+                Cupos por área
+              </h2>
+              <p className="mt-2 max-w-2xl text-[12px] font-light leading-6 text-[var(--color-n600)]">
+                Cierra un área cuando ya no pueda recibir aliados. En la landing aparecerá como Cupo lleno.
+              </p>
+            </div>
+            <span className="text-[11px] text-[var(--color-n600)]">
+              {areasCerradas === undefined
+                ? "Consultando cupos..."
+                : `${areasCerradas.length} de ${AREAS.length} cerradas`}
+            </span>
+          </div>
+
+          {areasCerradas === undefined ? (
+            <div className="mt-5 h-[2px] overflow-hidden bg-[var(--hair-2)]">
+              <div className="h-full w-1/3 animate-pulse bg-[var(--color-accent)]" />
+            </div>
+          ) : (
+            <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {AREAS.map((area) => {
+                const lleno = areasCerradas.includes(area);
+                const guardando = cambiando === area;
+                return (
+                  <button
+                    key={area}
+                    type="button"
+                    aria-pressed={lleno}
+                    disabled={!puedeEditar || cambiando !== null}
+                    onClick={() => void alternar(area, lleno)}
+                    className={`flex min-h-[76px] items-center justify-between gap-4 border px-4 py-3 text-left transition-colors ${
+                      lleno
+                        ? "border-[rgba(180,35,42,.25)] bg-[rgba(180,35,42,.04)]"
+                        : "border-[var(--hair-2)] bg-white"
+                    } ${puedeEditar ? "hover:border-[var(--color-accent)]" : "cursor-default"}`}
+                  >
+                    <span>
+                      <span className="block text-[12px] font-medium text-[var(--color-n900)]">
+                        {ETIQUETAS[area] ?? area}
+                      </span>
+                      <span
+                        className="mt-1.5 block text-[10px] uppercase tracking-[.15em]"
+                        style={{ color: lleno ? "var(--color-baja)" : "var(--color-activo)" }}
+                      >
+                        {lleno ? "Cupo lleno" : "Disponible"}
+                      </span>
+                    </span>
+                    {puedeEditar ? (
+                      <span className="text-right text-[10px] font-medium uppercase tracking-[.12em] text-[var(--color-accent)]">
+                        {guardando ? "Guardando..." : lleno ? "Reabrir" : "Cerrar cupo"}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {mensaje ? (
+            <div className="mt-4">
+              <Aviso tono={mensaje.tono}>{mensaje.texto}</Aviso>
+            </div>
+          ) : null}
+        </div>
+      </Bandeja>
+    </section>
   );
 }
 

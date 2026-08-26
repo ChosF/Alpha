@@ -437,6 +437,10 @@ img,svg{display:block;max-width:100%}
 .chk input:checked::after{content:"";position:absolute;left:6px;top:2.5px;width:5px;height:10px;
   border:solid #fff;border-width:0 1.6px 1.6px 0;transform:rotate(45deg)}
 .chk input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chk[data-cupo="lleno"]{cursor:not-allowed;color:var(--n500)}
+.chk[data-cupo="lleno"] input{cursor:not-allowed;background:rgba(101,113,133,.08);box-shadow:inset 0 0 0 1px var(--n300)}
+.chk-state{display:block;margin-top:2px;font-size:9px;line-height:1.35;letter-spacing:.14em;text-transform:uppercase;color:#b4232a;font-weight:600}
+.chk-state[hidden]{display:none}
 
 .jn-form[data-tipo="miembro"] [data-only="aliado"]{display:none}
 .jn-form[data-tipo="aliado"] [data-only="miembro"]{display:none}
@@ -1303,12 +1307,12 @@ img,svg{display:block;max-width:100%}
           antes de asignarte algo.
         </p>
         <div class="jn-areas grid gap-4 sm:grid-cols-2">
-          <label class="chk"><input type="checkbox" name="area" value="operaciones"><span>Operaciones y Logística</span></label>
-          <label class="chk"><input type="checkbox" name="area" value="comunicacion"><span>Comunicación</span></label>
-          <label class="chk"><input type="checkbox" name="area" value="finanzas"><span>Finanzas</span></label>
-          <label class="chk"><input type="checkbox" name="area" value="patrocinios"><span>Patrocinios</span></label>
-          <label class="chk"><input type="checkbox" name="area" value="responsabilidad"><span>Responsabilidad Social</span></label>
-          <label class="chk"><input type="checkbox" name="area" value="alphanalisis"><span>Alphanálisis · podcast</span></label>
+          <label class="chk" data-area-option><input type="checkbox" name="area" value="operaciones"><span>Operaciones y Logística<small class="chk-state" hidden>Cupo lleno</small></span></label>
+          <label class="chk" data-area-option><input type="checkbox" name="area" value="comunicacion"><span>Comunicación<small class="chk-state" hidden>Cupo lleno</small></span></label>
+          <label class="chk" data-area-option><input type="checkbox" name="area" value="finanzas"><span>Finanzas<small class="chk-state" hidden>Cupo lleno</small></span></label>
+          <label class="chk" data-area-option><input type="checkbox" name="area" value="patrocinios"><span>Patrocinios<small class="chk-state" hidden>Cupo lleno</small></span></label>
+          <label class="chk" data-area-option><input type="checkbox" name="area" value="responsabilidad"><span>Responsabilidad Social<small class="chk-state" hidden>Cupo lleno</small></span></label>
+          <label class="chk" data-area-option><input type="checkbox" name="area" value="alphanalisis"><span>Alphanálisis · podcast<small class="chk-state" hidden>Cupo lleno</small></span></label>
         </div>
         <div class="fld mt-2"><label for="jn-ap">Qué te gustaría aportar <span class="normal-case tracking-normal">(opcional)</span></label>
           <input class="inp" id="jn-ap" name="aporte" placeholder="Edición de video, modelado en Excel, contactos, diseño…"></div>
@@ -1636,6 +1640,7 @@ img,svg{display:block;max-width:100%}
   const telFld = document.getElementById("jn-tel-f");
   const telInput = document.getElementById("jn-tel");
   const telLabel = document.getElementById("jn-tel-label");
+  const areaInputs = [...jform.querySelectorAll('input[name="area"]')];
   let lastFocus = null;
   let detenerCieloExito = () => {};
   let temporizadorFocoExito = null;
@@ -1695,6 +1700,30 @@ img,svg{display:block;max-width:100%}
     opts.forEach(o => o.setAttribute("aria-checked", String(o.dataset.tipo === t)));
     syncTelefono();
   };
+  const pintarCupos = areasCerradas => {
+    const cerradas = new Set(areasCerradas);
+    areaInputs.forEach(input => {
+      const lleno = cerradas.has(input.value);
+      const opcion = input.closest("[data-area-option]");
+      const estado = opcion.querySelector(".chk-state");
+      input.disabled = lleno;
+      if (lleno) input.checked = false;
+      opcion.dataset.cupo = lleno ? "lleno" : "disponible";
+      estado.hidden = !lleno;
+    });
+  };
+  const actualizarCupos = async () => {
+    try {
+      const respuesta = await fetch("/api/registro/disponibilidad", {
+        headers: { accept: "application/json" },
+        cache: "no-store"
+      });
+      if (!respuesta.ok) return;
+      const datos = await respuesta.json();
+      if (Array.isArray(datos.areasCerradas)) pintarCupos(datos.areasCerradas);
+    } catch {}
+  };
+  actualizarCupos();
   const openJoin = () => {
     lastFocus = document.activeElement;
     decir("", false);
@@ -1702,6 +1731,7 @@ img,svg{display:block;max-width:100%}
     join.setAttribute("aria-hidden", "false");
     document.body.classList.add("locked");
     join.querySelector(".jn-pn").scrollTop = 0;
+    actualizarCupos();
     if (!campoTok.value) pedirToken();
     setTimeout(() => (join.querySelector('.opt[aria-checked="true"]') || opts[0]).focus(), 80);
   };
@@ -1852,6 +1882,7 @@ img,svg{display:block;max-width:100%}
         abrirExito(cuerpo);
       } else {
         decir(d.error || "No pudimos guardar tu registro. Intenta de nuevo.", true);
+        if (r.status === 409) actualizarCupos();
       }
     } catch (_) {
       decir("Revisa tu conexion e intenta de nuevo.", true);
