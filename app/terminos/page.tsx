@@ -19,6 +19,7 @@ const secciones = [
   ["datos", "Datos personales"],
   ["responsabilidad", "Responsabilidad"],
   ["cambios", "Cambios a estos términos"],
+  ["ley", "Ley aplicable"],
   ["contacto", "Contacto"],
 ] as const;
 
@@ -58,8 +59,9 @@ export default function TerminosPage() {
         <article className={estilos.documento}>
           <p className={estilos.introduccion}>
             Estos términos regulan el uso del sitio web de Alpha, sociedad estudiantil de
-            finanzas del Tecnológico de Monterrey, Campus Ciudad de México. Al navegar por el
-            sitio o enviar un registro, aceptas estas condiciones.
+            finanzas del Tecnológico de Monterrey, Campus Ciudad de México. Puedes consultar el
+            sitio sin celebrar un contrato con Alpha. Si envías un registro, estos términos y la
+            información específica de la actividad formarán las reglas aplicables a tu solicitud.
           </p>
 
           <section id="alcance">
@@ -70,6 +72,11 @@ export default function TerminosPage() {
               contacto. Alpha es una organización dirigida por estudiantes. Salvo que se indique
               expresamente, el contenido del sitio no constituye una postura oficial del
               Tecnológico de Monterrey ni una recomendación financiera, legal o fiscal.
+            </p>
+            <p>
+              Estos términos no eliminan derechos que la ley aplicable reconozca con carácter
+              obligatorio. Si una actividad publica reglas particulares, esas reglas se aplicarán
+              solo a dicha actividad y prevalecerán en caso de contradicción.
             </p>
           </section>
 
@@ -91,12 +98,15 @@ export default function TerminosPage() {
               Cuando te registras, declaras que la información que proporcionas es correcta y que
               puedes compartirla. Un registro no garantiza admisión, lugar, constancia, beneficio
               ni participación. Cada actividad puede tener cupo, requisitos, horarios o reglas
-              adicionales que se comunicarán por sus canales oficiales.
+              adicionales. Te mostraremos esa información antes del registro o la comunicaremos por
+              los canales oficiales de la actividad.
             </p>
             <p>
               Alpha puede modificar o cancelar una actividad por razones operativas,
-              institucionales, de seguridad o de fuerza mayor. Si ocurre un cambio, procuraremos
-              informarlo por los datos de contacto registrados o por nuestros canales oficiales.
+              institucionales, de seguridad o de fuerza mayor. Si ocurre un cambio relevante,
+              haremos un esfuerzo razonable por informarlo mediante los datos de contacto
+              registrados o los canales oficiales. Cuando una actividad tenga costo, sus
+              condiciones de pago, cancelación y reembolso deberán informarse antes del cobro.
             </p>
           </section>
 
@@ -108,7 +118,8 @@ export default function TerminosPage() {
               las indicaciones del equipo organizador, las reglas del recinto y la normativa del
               Tecnológico de Monterrey. Alpha puede negar o retirar la participación ante conductas
               que pongan en riesgo a otras personas, interrumpan una actividad o incumplan estas
-              reglas.
+              reglas. La medida será proporcional a la conducta y a las necesidades de seguridad
+              de la actividad.
             </p>
           </section>
 
@@ -139,7 +150,9 @@ export default function TerminosPage() {
             <p>
               Usamos la información enviada en formularios para administrar registros, comunicar
               actividades y dar seguimiento a solicitudes relacionadas con Alpha. Comparte solo los
-              datos solicitados y evita incluir información sensible en campos abiertos.
+              datos solicitados y evita incluir información sensible en campos abiertos. La
+              información de privacidad mostrada en cada formulario indicará el uso aplicable y no
+              queda sustituida por estos términos.
             </p>
             <p>
               Puedes solicitar acceso, corrección o eliminación de tus datos, o dejar de recibir
@@ -158,6 +171,13 @@ export default function TerminosPage() {
               en la comunicación oficial de cada actividad antes de tomar una decisión o trasladarte.
               El contenido educativo es general y no sustituye asesoría profesional personalizada.
             </p>
+            <p>
+              En la medida permitida por la ley, Alpha no responde por decisiones tomadas únicamente
+              con base en contenido general del sitio, por fallas atribuibles a servicios de terceros
+              ni por hechos fuera de su control razonable. Esta limitación no se aplica a daños
+              causados intencionalmente o por negligencia grave, a lesiones personales atribuibles a
+              Alpha ni a responsabilidades que legalmente no puedan excluirse o limitarse.
+            </p>
           </section>
 
           <section id="cambios">
@@ -166,12 +186,25 @@ export default function TerminosPage() {
             <p>
               Podemos actualizar estos términos cuando cambien el sitio, las actividades o las
               reglas aplicables. Publicaremos la versión vigente en esta página e indicaremos la
-              fecha de la última actualización. El uso posterior del sitio se sujetará a esa versión.
+              fecha de la última actualización. Los cambios no afectarán de forma retroactiva un
+              registro ya aceptado. Si el cambio altera de forma importante una actividad futura en
+              la que estés registrado, haremos un esfuerzo razonable por avisarte.
+            </p>
+          </section>
+
+          <section id="ley">
+            <p className={estilos.numero}>10</p>
+            <h2>Ley aplicable</h2>
+            <p>
+              Estos términos se interpretan conforme a las leyes aplicables en México. Nada en esta
+              sección impide que una persona ejerza derechos obligatorios o acuda a las autoridades y
+              tribunales que la ley le reconozca. Si una disposición resulta inválida o inaplicable,
+              las demás conservarán sus efectos.
             </p>
           </section>
 
           <section id="contacto">
-            <p className={estilos.numero}>10</p>
+            <p className={estilos.numero}>11</p>
             <h2>Contacto</h2>
             <p>
               Para dudas sobre estos términos o sobre el uso del sitio, escribe a
