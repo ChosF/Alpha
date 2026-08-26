@@ -112,11 +112,11 @@ function Fila({ usuario }: { usuario: UsuarioFila }) {
         {error ? <Aviso tono="error">{error}</Aviso> : null}
       </div>
 
-      <div className="flex w-full min-w-0 flex-wrap items-center gap-3 justify-self-start sm:w-auto sm:flex-nowrap sm:justify-self-end">
+      <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 justify-self-start sm:w-[13.5rem] sm:grid-cols-[8.5rem_auto] sm:justify-self-end">
         <SelectorPersonalizado
           id={`rol-${usuario._id}`}
           ariaLabel={`Rol de ${usuario.correo}`}
-          className="min-w-[7.5rem] flex-1 sm:w-[8.5rem] sm:flex-none"
+          className="min-w-0"
           variante="compacto"
           valor={usuario.rol}
           opciones={ROLES.map((rol) => ({ valor: rol, etiqueta: ETIQUETAS[rol] ?? rol }))}
