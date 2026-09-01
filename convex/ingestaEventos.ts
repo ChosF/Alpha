@@ -82,20 +82,6 @@ export const asegurarMarioKart = action({
   },
 });
 
-export const probarCorreoMarioKartAaron = action({
-  args: { secreto: v.string() },
-  returns: v.object({ enviado: v.boolean() }),
-  handler: async (ctx, args): Promise<{ enviado: boolean }> => {
-    exigirSecreto(args.secreto);
-    return {
-      enviado: await enviarConfirmacionMarioKart(ctx, {
-        nombre: "Aaron",
-        correo: "aaron.fm005@gmail.com",
-      }),
-    };
-  },
-});
-
 export const asegurarEventoMarioKart = internalMutation({
   args: { activar: v.boolean() },
   returns: v.id("events"),
