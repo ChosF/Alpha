@@ -6,6 +6,14 @@ import fondoMovil from "./assets/hero-track-mobile.webp";
 import { LanzadorRegistro } from "./registro-lanzador";
 import estilos from "./mario-kart.module.css";
 
+const estrellasHero = (
+  <div className={estilos.estrellas} aria-hidden="true">
+    {Array.from({ length: 18 }, (_, indice) => (
+      <i key={indice} />
+    ))}
+  </div>
+);
+
 const descripcion =
   "Compite, convive y conoce a estudiantes de todos los semestres en el Mario Kart Challenge de la comunidad LAF de Alpha CCM.";
 
@@ -72,6 +80,7 @@ export default function MarioKartChallenge() {
         </picture>
         <div className={estilos.veladura} aria-hidden="true" />
         <div className={estilos.resplandor} aria-hidden="true" />
+        {estrellasHero}
 
         <header className={estilos.cabecera}>
           <a className={estilos.marcaEnlace} href="/" aria-label="Volver al inicio de Alpha">

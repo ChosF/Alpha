@@ -23,6 +23,31 @@ type Mensaje = {
 
 const CIERRE_MS = 150;
 
+const estrellasFugaces = (
+  <div className={estilos.estrellasFugaces} aria-hidden="true">
+    {Array.from({ length: 7 }, (_, indice) => (
+      <i key={indice} />
+    ))}
+  </div>
+);
+
+function IconoCalendario() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />
+    </svg>
+  );
+}
+
+function IconoComunidad() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M20 11.5a8 8 0 0 1-11.75 7.06L4 20l1.42-4.16A8 8 0 1 1 20 11.5Z" />
+      <path d="M8.5 10.2c.9 2.05 2.25 3.4 4.3 4.3M14.8 14.65l1.35-1.02M7.35 7.85l1.02-1.35" />
+    </svg>
+  );
+}
+
 export function ModalRegistro({ onCerrar }: Propiedades) {
   const [visible, setVisible] = useState(false);
   const [cerrando, setCerrando] = useState(false);
@@ -158,6 +183,22 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
     .filter(Boolean)
     .join(" ");
 
+  const clasesPanelExterior = [
+    estilos.modalPanelExterior,
+    completo ? estilos.modalPanelExteriorExito : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const clasesPanel = [estilos.modalPanel, completo ? estilos.modalPanelExito : ""]
+    .filter(Boolean)
+    .join(" ");
+  const clasesCabecera = [estilos.modalCabecera, completo ? estilos.modalCabeceraExito : ""]
+    .filter(Boolean)
+    .join(" ");
+  const clasesContenido = [estilos.modalContenido, completo ? estilos.modalContenidoExito : ""]
+    .filter(Boolean)
+    .join(" ");
+
   return createPortal(
     <div
       className={clasesModal}
@@ -172,9 +213,9 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
         aria-label="Cerrar registro"
         onClick={cerrar}
       />
-      <div className={estilos.modalPanelExterior}>
-        <div className={estilos.modalPanel}>
-          <div className={estilos.modalCabecera}>
+      <div className={clasesPanelExterior}>
+        <div className={clasesPanel}>
+          <div className={clasesCabecera}>
             <p>Mario Kart Challenge / Registro</p>
             <button
               ref={cerrarRef}
@@ -188,20 +229,72 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
             </button>
           </div>
 
-          <div className={estilos.modalContenido}>
+          <div className={clasesContenido}>
             {completo ? (
               <div className={estilos.exito} role="status" aria-live="polite">
-                <div className={estilos.exitoIcono} aria-hidden="true">
-                  <svg viewBox="0 0 48 48" fill="none">
-                    <path d="m13 25 7 7 15-17" />
-                  </svg>
+                {estrellasFugaces}
+                <div className={estilos.exitoHalo} aria-hidden="true" />
+
+                <div className={estilos.exitoPrincipal}>
+                  <div className={estilos.exitoMensaje}>
+                    <p className={estilos.exitoCejilla}>Registro confirmado · Pole position</p>
+                    <h2
+                      id="mario-kart-registro-titulo"
+                      className={`${estilos.titulo} ${estilos.exitoTitulo}`}
+                      aria-label="Ya estás en la parrilla"
+                    >
+                      <span className={estilos.mario}>Ya estás</span>
+                      <span className={estilos.kart}>En la</span>
+                      <span className={estilos.challenge}>Parrilla</span>
+                    </h2>
+                    <div className={estilos.exitoRegla} aria-hidden="true" />
+                    <p className={estilos.exitoDetalle}>
+                      Recibimos tu registro y te enviaremos la confirmación por correo. Te esperamos
+                      el {MARIO_KART_CHALLENGE.fechaTexto}, de {MARIO_KART_CHALLENGE.horaTexto}, en{" "}
+                      {MARIO_KART_CHALLENGE.sede}.
+                    </p>
+                  </div>
+
+                  <div className={estilos.exitoTarjetaExterior}>
+                    <div className={estilos.exitoTarjeta}>
+                      <div
+                        className={`${estilos.exitoIcono} ${estilos["t-success-check"]}`}
+                        data-state="in"
+                        aria-hidden="true"
+                      >
+                        <svg viewBox="0 0 48 48" fill="none">
+                          <path d="m13 25 7 7 15-17" />
+                        </svg>
+                      </div>
+                      <p className={estilos.exitoTarjetaEtiqueta}>Tu siguiente vuelta</p>
+                      <p className={estilos.exitoInvitacion}>
+                        Guarda la fecha y entra a la comunidad LAF antes de la carrera.
+                      </p>
+                      <div className={estilos.exitoAcciones}>
+                        <a
+                          className={`${estilos.exitoAccion} ${estilos.exitoAccionCalendario}`}
+                          href={MARIO_KART_CHALLENGE.calendarioRuta}
+                        >
+                          <span>Agregar al calendario</span>
+                          <i aria-hidden="true">
+                            <IconoCalendario />
+                          </i>
+                        </a>
+                        <a
+                          className={`${estilos.exitoAccion} ${estilos.exitoAccionWhatsapp}`}
+                          href={MARIO_KART_CHALLENGE.whatsappComunidad}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <span>Unirme a WhatsApp</span>
+                          <i aria-hidden="true">
+                            <IconoComunidad />
+                          </i>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <h2>Ya estás en la parrilla.</h2>
-                <p>
-                  Recibimos tu registro. También te enviaremos una confirmación por correo. Te
-                  esperamos el {MARIO_KART_CHALLENGE.fechaTexto}, de {MARIO_KART_CHALLENGE.horaTexto},
-                  en {MARIO_KART_CHALLENGE.sede}.
-                </p>
                 <button type="button" className={estilos.exitoCerrar} onClick={cerrar}>
                   Volver a la pista
                 </button>
