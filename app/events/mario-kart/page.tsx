@@ -101,7 +101,7 @@ export default function MarioKartChallenge() {
                 <div className={estilos.datoInterior}>
                   <dt>
                     <IconoCalendario />
-                    Fecha
+                    Fecha · hora
                   </dt>
                   <dd>{MARIO_KART_CHALLENGE.fechaCorta}</dd>
                 </div>

@@ -8,6 +8,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { createPortal } from "react-dom";
+import { MARIO_KART_CHALLENGE } from "@/lib/mario-kart";
 import { renovarToken, tomarToken } from "./registro-cliente";
 import estilos from "./mario-kart.module.css";
 
@@ -30,7 +31,6 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
   const [ocupado, setOcupado] = useState(false);
   const [mensaje, setMensaje] = useState<Mensaje | null>(null);
   const [completo, setCompleto] = useState(false);
-  const [confirmacionCorreo, setConfirmacionCorreo] = useState(true);
   const formularioRef = useRef<HTMLFormElement>(null);
   const cerrarRef = useRef<HTMLButtonElement>(null);
   const temporizadorCierre = useRef<number | null>(null);
@@ -139,7 +139,6 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
 
       formulario.reset();
       setWhatsapp(false);
-      setConfirmacionCorreo(cuerpo.avisosCorreo);
       setCompleto(true);
       setMensaje(null);
       const siguienteToken = await renovarToken();
@@ -199,9 +198,9 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
                 </div>
                 <h2>Ya estás en la parrilla.</h2>
                 <p>
-                  Recibimos tu registro. {confirmacionCorreo
-                    ? "También te enviaremos una confirmación por correo."
-                    : "Te contactaremos por el canal que elegiste."} La fecha se compartirá cuando quede confirmada.
+                  Recibimos tu registro. También te enviaremos una confirmación por correo. Te
+                  esperamos el {MARIO_KART_CHALLENGE.fechaTexto}, de {MARIO_KART_CHALLENGE.horaTexto},
+                  en {MARIO_KART_CHALLENGE.sede}.
                 </p>
                 <button type="button" className={estilos.exitoCerrar} onClick={cerrar}>
                   Volver a la pista
@@ -213,8 +212,7 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
                   <span>Registro de participante</span>
                   <h2 id="mario-kart-registro-titulo">Aparta tu lugar.</h2>
                   <p>
-                    Déjanos tus datos para participar en el Mario Kart Challenge. La fecha se
-                    anunciará cuando quede confirmada.
+                    Déjanos tus datos para participar el {MARIO_KART_CHALLENGE.fechaTexto}, de {MARIO_KART_CHALLENGE.horaTexto}, en {MARIO_KART_CHALLENGE.sede}.
                   </p>
                 </div>
 

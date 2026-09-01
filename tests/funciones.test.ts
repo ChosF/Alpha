@@ -224,6 +224,13 @@ describe("registro de Mario Kart Challenge", () => {
   it("crea el evento de forma idempotente y lo mantiene separado de Calling LAF", async () => {
     const t = convexTest(schema, modulos);
     const primero = await t.action(api.ingestaEventos.asegurarMarioKart, { secreto: SECRETO });
+    await t.run(async (ctx) =>
+      ctx.db.patch(primero, {
+        titulo: "Borrador",
+        estado: "borrador",
+        registroAbierto: false,
+      }),
+    );
     const segundo = await t.action(api.ingestaEventos.asegurarMarioKart, { secreto: SECRETO });
     expect(segundo).toBe(primero);
 

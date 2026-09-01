@@ -76,19 +76,33 @@ export const asegurarMarioKart = action({
   returns: v.id("events"),
   handler: async (ctx, args): Promise<Id<"events">> => {
     exigirSecreto(args.secreto);
-    return await ctx.runMutation(internal.ingestaEventos.asegurarEventoMarioKart, {});
+    return await ctx.runMutation(internal.ingestaEventos.asegurarEventoMarioKart, {
+      activar: true,
+    });
   },
 });
 
 export const asegurarEventoMarioKart = internalMutation({
-  args: {},
+  args: { activar: v.boolean() },
   returns: v.id("events"),
-  handler: async (ctx) => {
+  handler: async (ctx, args) => {
     const existente = await ctx.db
       .query("events")
       .withIndex("by_slug", (q) => q.eq("slug", SLUG_MARIO_KART))
       .unique();
-    if (existente !== null) return existente._id;
+    if (existente !== null) {
+      if (args.activar) {
+        await ctx.db.patch(existente._id, {
+          titulo: MARIO_KART_CHALLENGE.titulo,
+          resumen: MARIO_KART_CHALLENGE.resumen,
+          pilar: "comunidad",
+          estado: "publicado",
+          registroAbierto: true,
+          actualizadoEn: Date.now(),
+        });
+      }
+      return existente._id;
+    }
 
     const ahora = Date.now();
     return await ctx.db.insert("events", {
@@ -105,6 +119,23 @@ export const asegurarEventoMarioKart = internalMutation({
   },
 });
 
+/** Envía la misma confirmación de un registro real al buzón compartido de Alpha. */
+export const probarCorreoMarioKart = action({
+  args: { secreto: v.string() },
+  returns: v.object({ enviado: v.boolean() }),
+  handler: async (ctx, args): Promise<{ enviado: boolean }> => {
+    exigirSecreto(args.secreto);
+    const correo = normalizarCorreo(
+      process.env.ALPHA_CONTACT_EMAIL ?? "contacto@alphaccm.org",
+    );
+    const enviado = await enviarConfirmacionMarioKart(ctx, {
+      nombre: "Equipo Alpha",
+      correo,
+    });
+    return { enviado };
+  },
+});
+
 export const registrar = action({
   args: { secreto: v.string(), slug: v.string(), datos: datosRegistroEvento },
   returns: v.object({ ok: v.boolean(), motivo: v.optional(v.string()) }),
@@ -112,13 +143,17 @@ export const registrar = action({
     exigirSecreto(args.secreto);
     const slug = limpiarTexto(args.slug, 80).toLowerCase();
     if (slug === SLUG_MARIO_KART) {
-      await ctx.runMutation(internal.ingestaEventos.asegurarEventoMarioKart, {});
+      await ctx.runMutation(internal.ingestaEventos.asegurarEventoMarioKart, {
+        activar: false,
+      });
     }
     const resultado = await ctx.runMutation(internal.ingestaEventos.guardar, {
       slug,
       datos: args.datos,
     });
-    if (resultado.ok && resultado.creado && args.datos.canales.correo) {
+    const debeEnviarConfirmacion =
+      slug === SLUG_MARIO_KART || args.datos.canales.correo;
+    if (resultado.ok && resultado.creado && debeEnviarConfirmacion) {
       try {
         const datosCorreo = { nombre: args.datos.nombre, correo: args.datos.correo };
         const encolado =

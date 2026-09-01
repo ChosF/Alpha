@@ -494,12 +494,16 @@ function textoConfirmacionMarioKart(args: ConfirmacionMarioKart): string {
   return [
     `Hola${nombre ? ` ${nombre}` : ""},`,
     "",
-    "Tu registro para Mario Kart Challenge quedó guardado.",
+    "Ya estás en la parrilla de Mario Kart Challenge.",
     "",
-    "La fecha se compartirá cuando quede confirmada.",
-    `Lugar: ${MARIO_KART_CHALLENGE.sede}`,
+    `Fecha: ${MARIO_KART_CHALLENGE.fechaTexto}`,
+    `Hora: ${MARIO_KART_CHALLENGE.horaTexto}`,
+    `Lugar: ${MARIO_KART_CHALLENGE.sede}, ${MARIO_KART_CHALLENGE.campus}`,
     "",
     "La pista es de toda la comunidad LAF.",
+    "",
+    "Únete a la comunidad de WhatsApp de Alpha para recibir avisos del evento y conocer las próximas actividades:",
+    ENLACE_COMUNIDAD,
     "",
     "Si necesitas corregir algún dato, responde a este correo.",
     "",
@@ -513,6 +517,7 @@ function cuerpoConfirmacionMarioKart(args: ConfirmacionMarioKart, sitio: string)
   const saludo = nombre ? `Hola, ${nombre}.` : "Hola.";
   const logo = `${sitio}/alpha-mark-white.png`;
   const evento = `${sitio}${MARIO_KART_CHALLENGE.ruta}`;
+  const fondo = `${sitio}/events/mario-kart/opengraph-image.jpg`;
 
   return `<!doctype html>
 <html lang="es">
@@ -520,41 +525,108 @@ function cuerpoConfirmacionMarioKart(args: ConfirmacionMarioKart, sitio: string)
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light only">
   <title>Tu registro para Mario Kart Challenge</title>
+  <style>
+    :root { color-scheme: light only; }
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    table { border-collapse: collapse !important; }
+    img { -ms-interpolation-mode: bicubic; border: 0; display: block; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+    a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; }
+    @media only screen and (max-width: 600px) {
+      .page-pad { padding: 0 !important; }
+      .shell { width: 100% !important; max-width: 100% !important; }
+      .top-pad { padding: 20px 20px 18px !important; }
+      .hero-pad { padding: 42px 22px 46px !important; }
+      .event-title { font-size: 45px !important; letter-spacing: -2px !important; line-height: .88 !important; }
+      .content-pad { padding: 32px 22px 34px !important; }
+      .lead { font-size: 15px !important; line-height: 1.7 !important; }
+      .detail-row, .detail-label, .detail-value { display: block !important; width: 100% !important; }
+      .detail-label { padding: 14px 18px 4px !important; }
+      .detail-value { padding: 0 18px 14px !important; text-align: left !important; }
+      .button-cell { display: block !important; width: 100% !important; padding: 0 0 10px !important; }
+      .button { display: block !important; padding: 16px 18px !important; text-align: center !important; }
+      .footer-pad { padding: 24px 22px 30px !important; }
+      .desktop-date { display: none !important; }
+    }
+  </style>
 </head>
-<body style="margin:0;padding:0;background:#050914;color:#EAF4FF;font-family:Montserrat,Arial,sans-serif;">
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Tu registro quedó guardado. Te avisaremos cuando la fecha esté confirmada.</div>
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#050914;">
+<body style="margin:0;padding:0;background-color:#020612;color:#EAF4FF;font-family:'Trebuchet MS',Verdana,sans-serif;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">Te esperamos el ${escaparHtml(MARIO_KART_CHALLENGE.fechaTexto)}, de ${escaparHtml(MARIO_KART_CHALLENGE.horaTexto)}, en ${escaparHtml(MARIO_KART_CHALLENGE.sede)}.&#847; &zwnj; &nbsp;</div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background-color:#020612;">
     <tr>
-      <td align="center" style="padding:28px 16px;">
-        <table role="presentation" width="620" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:620px;background:#081426;border-collapse:collapse;">
+      <td class="page-pad" align="center" style="padding:34px 16px;">
+        <table role="presentation" class="shell" width="640" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:640px;background-color:#071326;">
           <tr>
-            <td style="padding:28px 34px;background:linear-gradient(120deg,#081426,#111D3D);border-bottom:4px solid #F0221A;">
+            <td class="top-pad" style="padding:23px 34px 21px;background-color:#030916;border-bottom:1px solid #19365D;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
-                  <td width="54"><img src="${escaparHtml(logo)}" width="48" alt="Alpha" style="display:block;width:48px;height:auto;border:0;"></td>
-                  <td style="padding-left:12px;color:#FFFFFF;font-family:Poppins,Arial,sans-serif;font-size:20px;font-weight:600;">Alpha</td>
-                  <td align="right" style="color:#8BD9FF;font-size:9px;font-weight:600;letter-spacing:1.8px;">REGISTRO CONFIRMADO</td>
+                  <td width="46" valign="middle"><img src="${escaparHtml(logo)}" width="40" alt="" style="width:40px;max-width:40px;height:auto;"></td>
+                  <td valign="middle" style="padding-left:10px;color:#FFFFFF;font-family:'Trebuchet MS',Verdana,sans-serif;font-size:20px;font-weight:700;letter-spacing:-.5px;">Alpha</td>
+                  <td class="desktop-date" align="right" valign="middle" style="color:#8EDBFF;font-size:9px;font-weight:700;letter-spacing:1.8px;white-space:nowrap;">21 · 09 · 26</td>
                 </tr>
               </table>
-              <h1 style="margin:40px 0 0;color:#FFFFFF;font-family:Poppins,Arial,sans-serif;font-size:45px;font-style:italic;font-weight:600;letter-spacing:-2.2px;line-height:.94;text-transform:uppercase;">Mario Kart<br><span style="color:#27DC78;">Challenge</span></h1>
             </td>
           </tr>
           <tr>
-            <td style="padding:38px 34px 34px;background:#F3F6FA;color:#0B1D39;">
-              <p style="margin:0;color:#E1261C;font-family:Poppins,Arial,sans-serif;font-size:13px;font-weight:600;">${saludo}</p>
-              <h2 style="margin:10px 0 0;font-family:Poppins,Arial,sans-serif;font-size:28px;font-weight:600;letter-spacing:-1px;line-height:1.1;">Ya estás en la parrilla.</h2>
-              <p style="margin:16px 0 0;color:#465870;font-size:14px;line-height:1.7;">Recibimos tu registro. La fecha se compartirá cuando quede confirmada.</p>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:24px;background:#E4EAF2;border-top:4px solid #167AFF;border-collapse:collapse;">
-                <tr><td style="padding:14px 17px;border-bottom:1px solid #CBD5E2;color:#69788C;font-size:9px;font-weight:600;letter-spacing:1.5px;">FECHA</td><td align="right" style="padding:14px 17px;border-bottom:1px solid #CBD5E2;font-size:13px;font-weight:600;">POR CONFIRMAR</td></tr>
-                <tr><td style="padding:14px 17px;color:#69788C;font-size:9px;font-weight:600;letter-spacing:1.5px;">LUGAR</td><td align="right" style="padding:14px 17px;font-size:13px;font-weight:600;">${escaparHtml(MARIO_KART_CHALLENGE.sede)}</td></tr>
-              </table>
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:25px;"><tr><td bgcolor="#D91B14"><a href="${escaparHtml(evento)}" style="display:inline-block;padding:14px 20px;color:#FFFFFF;font-size:12px;font-weight:600;text-decoration:none;">Ver página del evento&nbsp;&nbsp;→</a></td></tr></table>
-              <p style="margin:27px 0 0;color:#0B1D39;font-family:Poppins,Arial,sans-serif;font-size:13px;font-weight:600;line-height:1.6;">La pista es de toda la comunidad LAF.</p>
-              <p style="margin:12px 0 0;color:#68778B;font-size:10px;line-height:1.7;">Si necesitas corregir algún dato, responde a este correo.</p>
+            <td class="hero-pad" background="${escaparHtml(fondo)}" style="padding:54px 42px 58px;background-color:#081A35;background-image:url('${escaparHtml(fondo)}');background-position:center;background-size:cover;">
+              <div style="color:#B7E8FF;font-size:9px;font-weight:700;letter-spacing:2.2px;line-height:1.4;">REGISTRO CONFIRMADO</div>
+              <h1 class="event-title" style="margin:17px 0 0;color:#FFFFFF;font-family:'Trebuchet MS',Verdana,sans-serif;font-size:58px;font-style:italic;font-weight:700;letter-spacing:-3.3px;line-height:.88;text-transform:uppercase;text-shadow:0 2px 12px #020612;"><span style="color:#FF4B45;">Mario</span><br><span style="color:#FFBE32;">Kart</span><br><span style="color:#63F1B1;">Challenge</span></h1>
             </td>
           </tr>
-          <tr><td style="padding:22px 34px 28px;background:#DDE4ED;color:#5A697C;font-size:10px;line-height:1.65;">Sociedad Estudiantil Alpha<br>Tecnológico de Monterrey, Campus Ciudad de México</td></tr>
+          <tr>
+            <td style="padding:0;background-color:#071326;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;">
+                <tr>
+                  <td height="5" bgcolor="#FF3E38" style="height:5px;background-color:#FF3E38;font-size:0;line-height:0;">&nbsp;</td>
+                  <td height="5" bgcolor="#FFB72B" style="height:5px;background-color:#FFB72B;font-size:0;line-height:0;">&nbsp;</td>
+                  <td height="5" bgcolor="#30D578" style="height:5px;background-color:#30D578;font-size:0;line-height:0;">&nbsp;</td>
+                  <td height="5" bgcolor="#20B9FF" style="height:5px;background-color:#20B9FF;font-size:0;line-height:0;">&nbsp;</td>
+                  <td height="5" bgcolor="#7A62FF" style="height:5px;background-color:#7A62FF;font-size:0;line-height:0;">&nbsp;</td>
+                  <td height="5" bgcolor="#EF4EBC" style="height:5px;background-color:#EF4EBC;font-size:0;line-height:0;">&nbsp;</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td class="content-pad" style="padding:42px 42px 40px;background-color:#071326;color:#EAF4FF;">
+              <p style="margin:0;color:#FF625B;font-size:13px;font-weight:700;line-height:1.5;">${saludo}</p>
+              <h2 style="margin:10px 0 0;color:#FFFFFF;font-family:'Trebuchet MS',Verdana,sans-serif;font-size:30px;font-style:italic;font-weight:700;letter-spacing:-1px;line-height:1.08;text-transform:uppercase;">Ya estás en la parrilla.</h2>
+              <p class="lead" style="margin:17px 0 0;color:#B8C9E3;font-size:15px;line-height:1.72;">Recibimos tu registro. Guarda estos datos para el día del evento.</p>
+
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:28px;background-color:#0C1D37;border-top:4px solid #21B8FF;">
+                <tr class="detail-row">
+                  <td class="detail-label" width="27%" style="padding:16px 20px;border-bottom:1px solid #19365D;color:#7895BA;font-size:9px;font-weight:700;letter-spacing:1.7px;">FECHA</td>
+                  <td class="detail-value" align="right" style="padding:16px 20px;border-bottom:1px solid #19365D;color:#FFFFFF;font-size:14px;font-weight:700;">${escaparHtml(MARIO_KART_CHALLENGE.fechaTexto)}</td>
+                </tr>
+                <tr class="detail-row">
+                  <td class="detail-label" width="27%" style="padding:16px 20px;border-bottom:1px solid #19365D;color:#7895BA;font-size:9px;font-weight:700;letter-spacing:1.7px;">HORA</td>
+                  <td class="detail-value" align="right" style="padding:16px 20px;border-bottom:1px solid #19365D;color:#55D7FF;font-size:14px;font-weight:700;">${escaparHtml(MARIO_KART_CHALLENGE.horaTexto)}</td>
+                </tr>
+                <tr class="detail-row">
+                  <td class="detail-label" width="27%" style="padding:16px 20px;color:#7895BA;font-size:9px;font-weight:700;letter-spacing:1.7px;">LUGAR</td>
+                  <td class="detail-value" align="right" style="padding:16px 20px;color:#FFFFFF;font-size:14px;font-weight:700;">${escaparHtml(MARIO_KART_CHALLENGE.sede)} · ${escaparHtml(MARIO_KART_CHALLENGE.campus)}</td>
+                </tr>
+              </table>
+
+              <p style="margin:27px 0 0;color:#FFFFFF;font-size:14px;font-weight:700;line-height:1.6;">La pista es de toda la comunidad LAF.</p>
+              <p style="margin:8px 0 0;color:#9FB3D1;font-size:13px;line-height:1.68;">Únete a la comunidad de WhatsApp de Alpha para recibir avisos del evento y conocer las próximas actividades.</p>
+
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:24px;">
+                <tr>
+                  <td class="button-cell" width="48%" bgcolor="#E32119" style="width:48%;background-color:#E32119;"><a class="button" href="${escaparHtml(evento)}" target="_blank" style="display:block;padding:15px 18px;color:#FFFFFF;font-size:12px;font-weight:700;line-height:1;text-align:center;text-decoration:none;">Ver evento&nbsp;&nbsp;→</a></td>
+                  <td class="button-cell" width="4%" style="width:4%;font-size:0;line-height:0;">&nbsp;</td>
+                  <td class="button-cell" width="48%" bgcolor="#159447" style="width:48%;background-color:#159447;"><a class="button" href="${ENLACE_COMUNIDAD}" target="_blank" style="display:block;padding:15px 18px;color:#FFFFFF;font-size:12px;font-weight:700;line-height:1;text-align:center;text-decoration:none;">Entrar a WhatsApp&nbsp;&nbsp;→</a></td>
+                </tr>
+              </table>
+              <p style="margin:12px 0 0;color:#6F8BB0;font-size:10px;line-height:1.65;word-break:break-all;">Si el botón no abre, usa este enlace: <a href="${ENLACE_COMUNIDAD}" style="color:#55D7FF;text-decoration:underline;">${ENLACE_COMUNIDAD}</a></p>
+              <p style="margin:28px 0 0;color:#91A7C6;font-size:11px;line-height:1.7;">Si necesitas corregir algún dato, responde a este correo.</p>
+              <p style="margin:9px 0 0;color:#627B9D;font-size:10px;line-height:1.7;">Recibes este mensaje porque te registraste en Mario Kart Challenge.</p>
+            </td>
+          </tr>
+          <tr><td class="footer-pad" style="padding:23px 42px 29px;background-color:#030916;border-top:1px solid #19365D;color:#7890B1;font-size:10px;line-height:1.7;">Sociedad Estudiantil Alpha<br>Tecnológico de Monterrey, Campus Ciudad de México</td></tr>
         </table>
       </td>
     </tr>
