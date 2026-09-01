@@ -273,9 +273,11 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
                       <div className={estilos.exitoAcciones}>
                         <a
                           className={`${estilos.exitoAccion} ${estilos.exitoAccionCalendario}`}
-                          href={MARIO_KART_CHALLENGE.calendarioRuta}
+                          href={MARIO_KART_CHALLENGE.calendarioUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
                         >
-                          <span>Agregar al calendario</span>
+                          <span>Abrir Google Calendar</span>
                           <i aria-hidden="true">
                             <IconoCalendario />
                           </i>

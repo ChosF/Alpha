@@ -11,4 +11,18 @@ describe("datos de Mario Kart Challenge", () => {
       campus: "Tec CCM",
     });
   });
+
+  it("abre Google Calendar con los datos del evento en lugar de descargar un archivo", () => {
+    const calendario = new URL(MARIO_KART_CHALLENGE.calendarioUrl);
+
+    expect(calendario.origin).toBe("https://calendar.google.com");
+    expect(calendario.pathname).toBe("/calendar/render");
+    expect(calendario.searchParams.get("action")).toBe("TEMPLATE");
+    expect(calendario.searchParams.get("text")).toBe("Mario Kart Challenge");
+    expect(calendario.searchParams.get("dates")).toBe(
+      "20260921T190000Z/20260921T230000Z",
+    );
+    expect(calendario.searchParams.get("location")).toContain("SUM 2103");
+    expect(calendario.searchParams.get("ctz")).toBe("America/Mexico_City");
+  });
 });

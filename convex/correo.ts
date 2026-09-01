@@ -516,7 +516,7 @@ function cuerpoConfirmacionMarioKart(args: ConfirmacionMarioKart, sitio: string)
   const nombre = escaparHtml(primerNombre(args.nombre));
   const saludo = nombre ? `Hola, ${nombre}.` : "Hola.";
   const logo = `${sitio}/alpha-mark-white.png`;
-  const calendario = `${sitio}/events/mario-kart/mario-kart-challenge.ics`;
+  const calendario = MARIO_KART_CHALLENGE.calendarioUrl;
 
   return `<!doctype html>
 <html lang="es">
@@ -621,7 +621,7 @@ function cuerpoConfirmacionMarioKart(args: ConfirmacionMarioKart, sitio: string)
 
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:24px;">
                 <tr>
-                  <td bgcolor="#E32119" style="background-color:#E32119;"><a class="button" href="${escaparHtml(calendario)}" target="_blank" style="display:block;padding:15px 18px;color:#FFFFFF;font-size:12px;font-weight:700;line-height:1;text-align:center;text-decoration:none;">Agregar a tu calendario&nbsp;&nbsp;→</a></td>
+                  <td bgcolor="#E32119" style="background-color:#E32119;"><a class="button" href="${escaparHtml(calendario)}" target="_blank" style="display:block;padding:15px 18px;color:#FFFFFF;font-size:12px;font-weight:700;line-height:1;text-align:center;text-decoration:none;">Abrir Google Calendar&nbsp;&nbsp;→</a></td>
                 </tr>
                 <tr><td height="10" style="height:10px;font-size:0;line-height:0;">&nbsp;</td></tr>
                 <tr>
