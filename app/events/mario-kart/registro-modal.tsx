@@ -237,7 +237,7 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
 
                 <div className={estilos.exitoPrincipal}>
                   <div className={estilos.exitoMensaje}>
-                    <p className={estilos.exitoCejilla}>Registro confirmado · Pole position</p>
+                    <p className={estilos.exitoCejilla}>Registro confirmado</p>
                     <h2
                       id="mario-kart-registro-titulo"
                       className={`${estilos.titulo} ${estilos.exitoTitulo}`}
@@ -257,16 +257,6 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
 
                   <div className={estilos.exitoTarjetaExterior}>
                     <div className={estilos.exitoTarjeta}>
-                      <div
-                        className={`${estilos.exitoIcono} ${estilos["t-success-check"]}`}
-                        data-state="in"
-                        aria-hidden="true"
-                      >
-                        <svg viewBox="0 0 48 48" fill="none">
-                          <path d="m13 25 7 7 15-17" />
-                        </svg>
-                      </div>
-                      <p className={estilos.exitoTarjetaEtiqueta}>Tu siguiente vuelta</p>
                       <p className={estilos.exitoInvitacion}>
                         Guarda la fecha y entra a la comunidad LAF antes de la carrera.
                       </p>
@@ -298,7 +288,7 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
                   </div>
                 </div>
                 <button type="button" className={estilos.exitoCerrar} onClick={cerrar}>
-                  Volver a la pista
+                  Volver
                 </button>
               </div>
             ) : (
