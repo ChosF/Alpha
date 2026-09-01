@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { MarcaAlpha } from "@/components/marca-alpha";
 import { MARIO_KART_CHALLENGE } from "@/lib/mario-kart";
-import fondoEscritorio from "./assets/hero-track-desktop.webp";
+import fondoEscritorio from "./assets/Mario-Desktop.webp";
 import fondoMovil from "./assets/hero-track-mobile.webp";
 import { LanzadorRegistro } from "./registro-lanzador";
 import estilos from "./mario-kart.module.css";
