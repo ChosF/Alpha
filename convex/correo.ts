@@ -517,7 +517,6 @@ function cuerpoConfirmacionMarioKart(args: ConfirmacionMarioKart, sitio: string)
   const saludo = nombre ? `Hola, ${nombre}.` : "Hola.";
   const logo = `${sitio}/alpha-mark-white.png`;
   const evento = `${sitio}${MARIO_KART_CHALLENGE.ruta}`;
-  const fondo = `${sitio}/events/mario-kart/opengraph-image.jpg`;
 
   return `<!doctype html>
 <html lang="es">
@@ -539,14 +538,10 @@ function cuerpoConfirmacionMarioKart(args: ConfirmacionMarioKart, sitio: string)
       .page-pad { padding: 0 !important; }
       .shell { width: 100% !important; max-width: 100% !important; }
       .top-pad { padding: 20px 20px 18px !important; }
-      .hero-pad { padding: 42px 22px 46px !important; }
-      .event-title { font-size: 45px !important; letter-spacing: -2px !important; line-height: .88 !important; }
+      .hero-pad { padding: 34px 22px 38px !important; }
+      .event-title { font-size: 40px !important; letter-spacing: -2.4px !important; line-height: .78 !important; }
       .content-pad { padding: 32px 22px 34px !important; }
       .lead { font-size: 15px !important; line-height: 1.7 !important; }
-      .detail-row, .detail-label, .detail-value { display: block !important; width: 100% !important; }
-      .detail-label { padding: 14px 18px 4px !important; }
-      .detail-value { padding: 0 18px 14px !important; text-align: left !important; }
-      .button-cell { display: block !important; width: 100% !important; padding: 0 0 10px !important; }
       .button { display: block !important; padding: 16px 18px !important; text-align: center !important; }
       .footer-pad { padding: 24px 22px 30px !important; }
       .desktop-date { display: none !important; }
@@ -571,9 +566,13 @@ function cuerpoConfirmacionMarioKart(args: ConfirmacionMarioKart, sitio: string)
             </td>
           </tr>
           <tr>
-            <td class="hero-pad" background="${escaparHtml(fondo)}" style="padding:54px 42px 58px;background-color:#081A35;background-image:url('${escaparHtml(fondo)}');background-position:center;background-size:cover;">
+            <td class="hero-pad" style="padding:44px 42px 50px;background-color:#081A35;">
               <div style="color:#B7E8FF;font-size:9px;font-weight:700;letter-spacing:2.2px;line-height:1.4;">REGISTRO CONFIRMADO</div>
-              <h1 class="event-title" style="margin:17px 0 0;color:#FFFFFF;font-family:'Trebuchet MS',Verdana,sans-serif;font-size:58px;font-style:italic;font-weight:700;letter-spacing:-3.3px;line-height:.88;text-transform:uppercase;text-shadow:0 2px 12px #020612;"><span style="color:#FF4B45;">Mario</span><br><span style="color:#FFBE32;">Kart</span><br><span style="color:#63F1B1;">Challenge</span></h1>
+              <div class="event-title" role="heading" aria-level="1" style="margin:20px 0 0;color:#FFFFFF;font-family:'Trebuchet MS',Verdana,sans-serif;font-size:54px;font-style:italic;font-weight:700;letter-spacing:-3.4px;line-height:.78;text-transform:uppercase;transform:skewX(-4deg);">
+                <div style="color:#FF4B45;white-space:nowrap;text-shadow:3px 4px 0 #020612,0 0 12px #A41325;">Mario</div>
+                <div style="margin-left:.3em;color:#FFBE32;white-space:nowrap;text-shadow:3px 4px 0 #020612,0 0 12px #B85C00;">Kart</div>
+                <div style="color:#63F1B1;white-space:nowrap;text-shadow:3px 4px 0 #020612,0 0 12px #087B55;">Challenge</div>
+              </div>
             </td>
           </tr>
           <tr>
@@ -597,17 +596,23 @@ function cuerpoConfirmacionMarioKart(args: ConfirmacionMarioKart, sitio: string)
               <p class="lead" style="margin:17px 0 0;color:#B8C9E3;font-size:15px;line-height:1.72;">Recibimos tu registro. Guarda estos datos para el día del evento.</p>
 
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:28px;background-color:#0C1D37;border-top:4px solid #21B8FF;">
-                <tr class="detail-row">
-                  <td class="detail-label" width="27%" style="padding:16px 20px;border-bottom:1px solid #19365D;color:#7895BA;font-size:9px;font-weight:700;letter-spacing:1.7px;">FECHA</td>
-                  <td class="detail-value" align="right" style="padding:16px 20px;border-bottom:1px solid #19365D;color:#FFFFFF;font-size:14px;font-weight:700;">${escaparHtml(MARIO_KART_CHALLENGE.fechaTexto)}</td>
+                <tr>
+                  <td style="padding:16px 20px;border-bottom:1px solid #19365D;">
+                    <div style="color:#7895BA;font-size:9px;font-weight:700;letter-spacing:1.7px;line-height:1.4;">FECHA</div>
+                    <div style="margin-top:5px;color:#FFFFFF;font-size:14px;font-weight:700;line-height:1.5;">${escaparHtml(MARIO_KART_CHALLENGE.fechaTexto)}</div>
+                  </td>
                 </tr>
-                <tr class="detail-row">
-                  <td class="detail-label" width="27%" style="padding:16px 20px;border-bottom:1px solid #19365D;color:#7895BA;font-size:9px;font-weight:700;letter-spacing:1.7px;">HORA</td>
-                  <td class="detail-value" align="right" style="padding:16px 20px;border-bottom:1px solid #19365D;color:#55D7FF;font-size:14px;font-weight:700;">${escaparHtml(MARIO_KART_CHALLENGE.horaTexto)}</td>
+                <tr>
+                  <td style="padding:16px 20px;border-bottom:1px solid #19365D;">
+                    <div style="color:#7895BA;font-size:9px;font-weight:700;letter-spacing:1.7px;line-height:1.4;">HORA</div>
+                    <div style="margin-top:5px;color:#55D7FF;font-size:14px;font-weight:700;line-height:1.5;">${escaparHtml(MARIO_KART_CHALLENGE.horaTexto)}</div>
+                  </td>
                 </tr>
-                <tr class="detail-row">
-                  <td class="detail-label" width="27%" style="padding:16px 20px;color:#7895BA;font-size:9px;font-weight:700;letter-spacing:1.7px;">LUGAR</td>
-                  <td class="detail-value" align="right" style="padding:16px 20px;color:#FFFFFF;font-size:14px;font-weight:700;">${escaparHtml(MARIO_KART_CHALLENGE.sede)} · ${escaparHtml(MARIO_KART_CHALLENGE.campus)}</td>
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <div style="color:#7895BA;font-size:9px;font-weight:700;letter-spacing:1.7px;line-height:1.4;">LUGAR</div>
+                    <div style="margin-top:5px;color:#FFFFFF;font-size:14px;font-weight:700;line-height:1.5;">${escaparHtml(MARIO_KART_CHALLENGE.sede)} · ${escaparHtml(MARIO_KART_CHALLENGE.campus)}</div>
+                  </td>
                 </tr>
               </table>
 
@@ -616,9 +621,11 @@ function cuerpoConfirmacionMarioKart(args: ConfirmacionMarioKart, sitio: string)
 
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:24px;">
                 <tr>
-                  <td class="button-cell" width="48%" bgcolor="#E32119" style="width:48%;background-color:#E32119;"><a class="button" href="${escaparHtml(evento)}" target="_blank" style="display:block;padding:15px 18px;color:#FFFFFF;font-size:12px;font-weight:700;line-height:1;text-align:center;text-decoration:none;">Ver evento&nbsp;&nbsp;→</a></td>
-                  <td class="button-cell" width="4%" style="width:4%;font-size:0;line-height:0;">&nbsp;</td>
-                  <td class="button-cell" width="48%" bgcolor="#159447" style="width:48%;background-color:#159447;"><a class="button" href="${ENLACE_COMUNIDAD}" target="_blank" style="display:block;padding:15px 18px;color:#FFFFFF;font-size:12px;font-weight:700;line-height:1;text-align:center;text-decoration:none;">Entrar a WhatsApp&nbsp;&nbsp;→</a></td>
+                  <td bgcolor="#E32119" style="background-color:#E32119;"><a class="button" href="${escaparHtml(evento)}" target="_blank" style="display:block;padding:15px 18px;color:#FFFFFF;font-size:12px;font-weight:700;line-height:1;text-align:center;text-decoration:none;">Ver evento&nbsp;&nbsp;→</a></td>
+                </tr>
+                <tr><td height="10" style="height:10px;font-size:0;line-height:0;">&nbsp;</td></tr>
+                <tr>
+                  <td bgcolor="#159447" style="background-color:#159447;"><a class="button" href="${ENLACE_COMUNIDAD}" target="_blank" style="display:block;padding:15px 18px;color:#FFFFFF;font-size:12px;font-weight:700;line-height:1;text-align:center;text-decoration:none;">Entrar a WhatsApp&nbsp;&nbsp;→</a></td>
                 </tr>
               </table>
               <p style="margin:12px 0 0;color:#6F8BB0;font-size:10px;line-height:1.65;word-break:break-all;">Si el botón no abre, usa este enlace: <a href="${ENLACE_COMUNIDAD}" style="color:#55D7FF;text-decoration:underline;">${ENLACE_COMUNIDAD}</a></p>
