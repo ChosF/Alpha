@@ -7,6 +7,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { renovarToken, tomarToken } from "./registro-cliente";
 import estilos from "./mario-kart.module.css";
 
@@ -158,7 +159,7 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
     .filter(Boolean)
     .join(" ");
 
-  return (
+  return createPortal(
     <div
       className={clasesModal}
       role="dialog"
@@ -339,6 +340,7 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

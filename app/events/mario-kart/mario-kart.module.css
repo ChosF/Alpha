@@ -129,21 +129,6 @@
   width: min(100%, 790px);
 }
 
-.tituloBloque::after {
-  position: absolute;
-  right: 2%;
-  bottom: 6%;
-  left: 5%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--mk-red), var(--mk-amber), var(--mk-green), var(--mk-cyan), transparent);
-  box-shadow: 0 0 14px rgba(78, 186, 255, 0.8);
-  content: "";
-  opacity: 0;
-  transform: scaleX(0.15);
-  transform-origin: left;
-  animation: lineaEntrada 700ms var(--mk-ease) 620ms forwards;
-}
-
 .cejilla {
   display: inline-flex;
   align-items: center;
@@ -942,13 +927,6 @@
   }
 }
 
-@keyframes lineaEntrada {
-  to {
-    opacity: 1;
-    transform: scaleX(1);
-  }
-}
-
 @keyframes sacudida {
   0%, 100% { transform: translateX(0); }
   28% { transform: translateX(6px); }
@@ -1010,12 +988,6 @@
 
   .tituloBloque {
     width: 100%;
-  }
-
-  .tituloBloque::after {
-    right: 4%;
-    bottom: 3%;
-    left: 0;
   }
 
   .cejilla {
@@ -1105,7 +1077,6 @@
   }
 
   .modal {
-    align-items: end;
     padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom));
   }
 
@@ -1206,7 +1177,6 @@
   .informacion,
   .cabecera,
   .resplandor,
-  .tituloBloque::after,
   .exitoIcono {
     opacity: 1;
     transform: none;
