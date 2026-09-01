@@ -119,23 +119,6 @@ export const asegurarEventoMarioKart = internalMutation({
   },
 });
 
-/** Envía la misma confirmación de un registro real al buzón compartido de Alpha. */
-export const probarCorreoMarioKart = action({
-  args: { secreto: v.string() },
-  returns: v.object({ enviado: v.boolean() }),
-  handler: async (ctx, args): Promise<{ enviado: boolean }> => {
-    exigirSecreto(args.secreto);
-    const correo = normalizarCorreo(
-      process.env.ALPHA_CONTACT_EMAIL ?? "contacto@alphaccm.org",
-    );
-    const enviado = await enviarConfirmacionMarioKart(ctx, {
-      nombre: "Equipo Alpha",
-      correo,
-    });
-    return { enviado };
-  },
-});
-
 export const registrar = action({
   args: { secreto: v.string(), slug: v.string(), datos: datosRegistroEvento },
   returns: v.object({ ok: v.boolean(), motivo: v.optional(v.string()) }),
