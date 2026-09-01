@@ -16,10 +16,7 @@ const cspLanding = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob:",
   "font-src 'self' data: https://fonts.gstatic.com",
-  // El proveedor global mantiene una conexión reactiva con Convex también en
-  // las páginas públicas. Firefox bloquea la página si el HTTPS/WSS de
-  // producción no aparece de forma explícita en connect-src.
-  "connect-src 'self' https://basic-gopher-658.convex.cloud wss://basic-gopher-658.convex.cloud",
+  "connect-src 'self'",
   "upgrade-insecure-requests",
 ].join("; ");
 
@@ -60,6 +57,11 @@ const nextConfig: NextConfig = {
       {
         source: "/panel/:path*",
         destination: "/dashboard/:path*",
+        permanent: true,
+      },
+      {
+        source: "/eventos/mario-kart",
+        destination: "/events/mario-kart",
         permanent: true,
       },
     ];

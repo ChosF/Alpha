@@ -31,6 +31,7 @@ import {
   estadoMensajeCorreoValidador,
 } from "./lib/validadores";
 import { CALLING_LAF } from "../lib/calling-laf";
+import { MARIO_KART_CHALLENGE } from "../lib/mario-kart";
 
 const MAX_HILOS = 160;
 const MAX_MENSAJES = 300;
@@ -478,6 +479,106 @@ export async function enviarConfirmacionCallingLaf(
     subject: "Tu lugar en Calling LAF está registrado",
     text: textoConfirmacionCallingLaf(args),
     html: cuerpoConfirmacionCallingLaf(args, sitio),
+    replyTo: [correoContacto()],
+  });
+  return true;
+}
+
+type ConfirmacionMarioKart = {
+  nombre: string;
+  correo: string;
+};
+
+function textoConfirmacionMarioKart(args: ConfirmacionMarioKart): string {
+  const nombre = primerNombre(args.nombre);
+  return [
+    `Hola${nombre ? ` ${nombre}` : ""},`,
+    "",
+    "Tu registro para Mario Kart Challenge quedó guardado.",
+    "",
+    "La fecha se compartirá cuando quede confirmada.",
+    `Lugar: ${MARIO_KART_CHALLENGE.sede}`,
+    "",
+    "La pista es de toda la comunidad LAF.",
+    "",
+    "Si necesitas corregir algún dato, responde a este correo.",
+    "",
+    "Sociedad Estudiantil Alpha",
+    "Tecnológico de Monterrey, Campus Ciudad de México",
+  ].join("\n");
+}
+
+function cuerpoConfirmacionMarioKart(args: ConfirmacionMarioKart, sitio: string): string {
+  const nombre = escaparHtml(primerNombre(args.nombre));
+  const saludo = nombre ? `Hola, ${nombre}.` : "Hola.";
+  const logo = `${sitio}/alpha-mark-white.png`;
+  const evento = `${sitio}${MARIO_KART_CHALLENGE.ruta}`;
+
+  return `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light only">
+  <title>Tu registro para Mario Kart Challenge</title>
+</head>
+<body style="margin:0;padding:0;background:#050914;color:#EAF4FF;font-family:Montserrat,Arial,sans-serif;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Tu registro quedó guardado. Te avisaremos cuando la fecha esté confirmada.</div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#050914;">
+    <tr>
+      <td align="center" style="padding:28px 16px;">
+        <table role="presentation" width="620" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:620px;background:#081426;border-collapse:collapse;">
+          <tr>
+            <td style="padding:28px 34px;background:linear-gradient(120deg,#081426,#111D3D);border-bottom:4px solid #F0221A;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td width="54"><img src="${escaparHtml(logo)}" width="48" alt="Alpha" style="display:block;width:48px;height:auto;border:0;"></td>
+                  <td style="padding-left:12px;color:#FFFFFF;font-family:Poppins,Arial,sans-serif;font-size:20px;font-weight:600;">Alpha</td>
+                  <td align="right" style="color:#8BD9FF;font-size:9px;font-weight:600;letter-spacing:1.8px;">REGISTRO CONFIRMADO</td>
+                </tr>
+              </table>
+              <h1 style="margin:40px 0 0;color:#FFFFFF;font-family:Poppins,Arial,sans-serif;font-size:45px;font-style:italic;font-weight:600;letter-spacing:-2.2px;line-height:.94;text-transform:uppercase;">Mario Kart<br><span style="color:#27DC78;">Challenge</span></h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:38px 34px 34px;background:#F3F6FA;color:#0B1D39;">
+              <p style="margin:0;color:#E1261C;font-family:Poppins,Arial,sans-serif;font-size:13px;font-weight:600;">${saludo}</p>
+              <h2 style="margin:10px 0 0;font-family:Poppins,Arial,sans-serif;font-size:28px;font-weight:600;letter-spacing:-1px;line-height:1.1;">Ya estás en la parrilla.</h2>
+              <p style="margin:16px 0 0;color:#465870;font-size:14px;line-height:1.7;">Recibimos tu registro. La fecha se compartirá cuando quede confirmada.</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:24px;background:#E4EAF2;border-top:4px solid #167AFF;border-collapse:collapse;">
+                <tr><td style="padding:14px 17px;border-bottom:1px solid #CBD5E2;color:#69788C;font-size:9px;font-weight:600;letter-spacing:1.5px;">FECHA</td><td align="right" style="padding:14px 17px;border-bottom:1px solid #CBD5E2;font-size:13px;font-weight:600;">POR CONFIRMAR</td></tr>
+                <tr><td style="padding:14px 17px;color:#69788C;font-size:9px;font-weight:600;letter-spacing:1.5px;">LUGAR</td><td align="right" style="padding:14px 17px;font-size:13px;font-weight:600;">${escaparHtml(MARIO_KART_CHALLENGE.sede)}</td></tr>
+              </table>
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:25px;"><tr><td bgcolor="#D91B14"><a href="${escaparHtml(evento)}" style="display:inline-block;padding:14px 20px;color:#FFFFFF;font-size:12px;font-weight:600;text-decoration:none;">Ver página del evento&nbsp;&nbsp;→</a></td></tr></table>
+              <p style="margin:27px 0 0;color:#0B1D39;font-family:Poppins,Arial,sans-serif;font-size:13px;font-weight:600;line-height:1.6;">La pista es de toda la comunidad LAF.</p>
+              <p style="margin:12px 0 0;color:#68778B;font-size:10px;line-height:1.7;">Si necesitas corregir algún dato, responde a este correo.</p>
+            </td>
+          </tr>
+          <tr><td style="padding:22px 34px 28px;background:#DDE4ED;color:#5A697C;font-size:10px;line-height:1.65;">Sociedad Estudiantil Alpha<br>Tecnológico de Monterrey, Campus Ciudad de México</td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function enviarConfirmacionMarioKart(
+  ctx: ActionCtx,
+  args: ConfirmacionMarioKart,
+): Promise<boolean> {
+  const sitio = process.env.SITE_URL?.replace(/\/$/, "");
+  if (!sitio || !process.env.RESEND_API_KEY || process.env.RESEND_TEST_MODE !== "false") {
+    return false;
+  }
+
+  const auto = normalizarCorreo(process.env.ALPHA_AUTO_EMAIL ?? "auto@alphaccm.org");
+  await resend.sendEmail(ctx, {
+    from: nombreDireccion(auto, "Alpha CCM"),
+    to: normalizarCorreo(args.correo),
+    subject: "Tu registro para Mario Kart Challenge está confirmado",
+    text: textoConfirmacionMarioKart(args),
+    html: cuerpoConfirmacionMarioKart(args, sitio),
     replyTo: [correoContacto()],
   });
   return true;

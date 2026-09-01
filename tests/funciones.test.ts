@@ -220,6 +220,49 @@ describe("registro de Calling LAF", () => {
   });
 });
 
+describe("registro de Mario Kart Challenge", () => {
+  it("crea el evento de forma idempotente y lo mantiene separado de Calling LAF", async () => {
+    const t = convexTest(schema, modulos);
+    const primero = await t.action(api.ingestaEventos.asegurarMarioKart, { secreto: SECRETO });
+    const segundo = await t.action(api.ingestaEventos.asegurarMarioKart, { secreto: SECRETO });
+    expect(segundo).toBe(primero);
+
+    const evento = await t.run(async (ctx) => ctx.db.get(primero));
+    expect(evento).toMatchObject({
+      slug: "mario-kart",
+      titulo: "Mario Kart Challenge",
+      pilar: "comunidad",
+      estado: "publicado",
+      registroAbierto: true,
+    });
+  });
+
+  it("crea el evento al recibir el primer registro y no reabre uno cerrado", async () => {
+    const t = convexTest(schema, modulos);
+    await expect(
+      t.action(api.ingestaEventos.registrar, {
+        secreto: SECRETO,
+        slug: "mario-kart",
+        datos: datosEvento,
+      }),
+    ).resolves.toEqual({ ok: true });
+
+    const evento = await t.run(async (ctx) =>
+      ctx.db.query("events").withIndex("by_slug", (q) => q.eq("slug", "mario-kart")).unique(),
+    );
+    expect(evento?.totalRegistros).toBe(1);
+
+    await t.run(async (ctx) => ctx.db.patch(evento!._id, { registroAbierto: false }));
+    await expect(
+      t.action(api.ingestaEventos.registrar, {
+        secreto: SECRETO,
+        slug: "mario-kart",
+        datos: { ...datosEvento, correo: "otra-persona@tec.mx" },
+      }),
+    ).resolves.toEqual({ ok: false, motivo: "cerrado" });
+  });
+});
+
 describe("control de acceso", () => {
   it("sin sesion no se puede leer nada del panel", async () => {
     const t = convexTest(schema, modulos);

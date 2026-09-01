@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Poppins, JetBrains_Mono, Montserrat } from "next/font/google";
-import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
-import { ProveedorConvex } from "./proveedores";
 import "./globals.css";
 
 /* Las fuentes se sirven desde el propio dominio: la CSP del panel no permite
@@ -28,6 +26,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://alphaccm.org"),
   title: "Dashboard - Alpha",
   description: "Dashboard interno de la Sociedad Estudiantil Alpha.",
   applicationName: "Alpha Admin",
@@ -49,17 +48,9 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const documento = (
+  return (
     <html lang="es" className={`${poppins.variable} ${mono.variable} ${montserrat.variable}`}>
-      <body>
-        <ProveedorConvex>{children}</ProveedorConvex>
-      </body>
+      <body>{children}</body>
     </html>
   );
-
-  if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
-    return documento;
-  }
-
-  return <ConvexAuthNextjsServerProvider>{documento}</ConvexAuthNextjsServerProvider>;
 }

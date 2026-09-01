@@ -5,9 +5,11 @@ import type { Id } from "./_generated/dataModel";
 import { comparaSegura, limpiarTexto, normalizarCorreo, normalizarTelefono, sha256Hex } from "./lib/texto";
 import { CUOTAS, consumirLimite } from "./lib/limites";
 import { CALLING_LAF, registroCallingLafDisponible } from "../lib/calling-laf";
-import { enviarConfirmacionCallingLaf } from "./correo";
+import { MARIO_KART_CHALLENGE } from "../lib/mario-kart";
+import { enviarConfirmacionCallingLaf, enviarConfirmacionMarioKart } from "./correo";
 
 const SLUG_CALLING_LAF = CALLING_LAF.slug;
+const SLUG_MARIO_KART = MARIO_KART_CHALLENGE.slug;
 
 const datosRegistroEvento = v.object({
   nombre: v.string(),
@@ -68,27 +70,69 @@ export const asegurarEventoCallingLaf = internalMutation({
   },
 });
 
+/** Crea el evento de Mario Kart sin recibir contenido editable del cliente. */
+export const asegurarMarioKart = action({
+  args: { secreto: v.string() },
+  returns: v.id("events"),
+  handler: async (ctx, args): Promise<Id<"events">> => {
+    exigirSecreto(args.secreto);
+    return await ctx.runMutation(internal.ingestaEventos.asegurarEventoMarioKart, {});
+  },
+});
+
+export const asegurarEventoMarioKart = internalMutation({
+  args: {},
+  returns: v.id("events"),
+  handler: async (ctx) => {
+    const existente = await ctx.db
+      .query("events")
+      .withIndex("by_slug", (q) => q.eq("slug", SLUG_MARIO_KART))
+      .unique();
+    if (existente !== null) return existente._id;
+
+    const ahora = Date.now();
+    return await ctx.db.insert("events", {
+      slug: SLUG_MARIO_KART,
+      titulo: MARIO_KART_CHALLENGE.titulo,
+      resumen: MARIO_KART_CHALLENGE.resumen,
+      pilar: "comunidad",
+      estado: "publicado",
+      registroAbierto: true,
+      totalRegistros: 0,
+      creadoEn: ahora,
+      actualizadoEn: ahora,
+    });
+  },
+});
+
 export const registrar = action({
   args: { secreto: v.string(), slug: v.string(), datos: datosRegistroEvento },
   returns: v.object({ ok: v.boolean(), motivo: v.optional(v.string()) }),
   handler: async (ctx, args): Promise<{ ok: boolean; motivo?: string }> => {
     exigirSecreto(args.secreto);
+    const slug = limpiarTexto(args.slug, 80).toLowerCase();
+    if (slug === SLUG_MARIO_KART) {
+      await ctx.runMutation(internal.ingestaEventos.asegurarEventoMarioKart, {});
+    }
     const resultado = await ctx.runMutation(internal.ingestaEventos.guardar, {
-      slug: args.slug,
+      slug,
       datos: args.datos,
     });
     if (resultado.ok && resultado.creado && args.datos.canales.correo) {
       try {
-        const encolado = await enviarConfirmacionCallingLaf(ctx, {
-          nombre: args.datos.nombre,
-          correo: args.datos.correo,
-        });
+        const datosCorreo = { nombre: args.datos.nombre, correo: args.datos.correo };
+        const encolado =
+          slug === SLUG_MARIO_KART
+            ? await enviarConfirmacionMarioKart(ctx, datosCorreo)
+            : slug === SLUG_CALLING_LAF
+              ? await enviarConfirmacionCallingLaf(ctx, datosCorreo)
+              : false;
         if (!encolado) {
-          console.error("No se encoló la confirmación de Calling LAF: correo automático no configurado.");
+          console.error(`No se encoló la confirmación de ${slug}: correo automático no configurado.`);
         }
       } catch (error) {
         console.error(
-          "No se pudo encolar la confirmación de Calling LAF.",
+          `No se pudo encolar la confirmación de ${slug}.`,
           error instanceof Error ? error.message : "Error desconocido",
         );
       }
