@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Poppins, JetBrains_Mono, Montserrat } from "next/font/google";
+import { AnaliticaWeb } from "@/components/analitica-web";
 import "./globals.css";
 
 /* Las fuentes se sirven desde el propio dominio: la CSP del panel no permite
@@ -50,7 +51,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" className={`${poppins.variable} ${mono.variable} ${montserrat.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <AnaliticaWeb />
+      </body>
     </html>
   );
 }

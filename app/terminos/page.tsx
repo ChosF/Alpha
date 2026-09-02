@@ -39,7 +39,7 @@ export default function TerminosPage() {
           <h1>Términos<br />y condiciones</h1>
           <div className={estilos.ficha}>
             <p>Vigentes desde el 25 de agosto de 2026</p>
-            <p>Última actualización: 25 de agosto de 2026</p>
+            <p>Última actualización: 2 de septiembre de 2026</p>
           </div>
         </div>
       </section>
@@ -153,6 +153,15 @@ export default function TerminosPage() {
               datos solicitados y evita incluir información sensible en campos abiertos. La
               información de privacidad mostrada en cada formulario indicará el uso aplicable y no
               queda sustituida por estos términos.
+            </p>
+            <p>
+              Para medir el uso de las páginas públicas, usamos Vercel Web Analytics. Esta
+              herramienta puede registrar la página consultada, la fecha y hora, el sitio de
+              referencia, la ubicación aproximada, el tipo de dispositivo, el sistema operativo y el
+              navegador. Vercel procesa estos datos de forma anónima para entregar estadísticas
+              agregadas. La medición no usa cookies, excluye las rutas privadas del panel y no se
+              combina con la información enviada en formularios. Alpha no envía nombres, correos,
+              matrículas ni el contenido de los formularios a Web Analytics.
             </p>
             <p>
               Puedes solicitar acceso, corrección o eliminación de tus datos, o dejar de recibir
