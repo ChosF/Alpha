@@ -160,7 +160,10 @@
 @media (max-width: 800px) {
   .cabecera { min-height: 76px; }
   .cabecera p { display: none; }
-  .portada h1 { font-size: clamp(3.35rem, 16vw, 6rem); }
+  .portada h1 {
+    font-size: clamp(2.75rem, 12.5vw, 4.75rem);
+    letter-spacing: -.065em;
+  }
   .cuerpo { display: block; }
   .indice { display: none; }
   .documento section { padding-bottom: 48px; }
