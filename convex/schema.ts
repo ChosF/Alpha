@@ -14,6 +14,10 @@ import {
   pilarValidador,
   rolValidador,
   tipoRegistroValidador,
+  temaPanelValidador,
+  densidadPanelValidador,
+  acentoPanelValidador,
+  graficaInicioValidador,
 } from "./lib/validadores";
 
 /**
@@ -51,6 +55,17 @@ export default defineSchema({
     .index("email", ["email"])
     .index("phone", ["phone"])
     .index("by_rol", ["rol"]),
+
+  /** Preferencias personales del dashboard, sincronizadas entre dispositivos. */
+  dashboardPreferences: defineTable({
+    userId: v.id("users"),
+    tema: temaPanelValidador,
+    densidad: densidadPanelValidador,
+    acento: acentoPanelValidador,
+    barraContraida: v.boolean(),
+    graficasInicio: v.array(graficaInicioValidador),
+    actualizadoEn: v.number(),
+  }).index("by_user", ["userId"]),
 
   /** Registros que llegan del formulario publico de la landing. */
   registrations: defineTable({

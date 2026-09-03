@@ -8,7 +8,6 @@ import { ETIQUETAS } from "@/convex/lib/validadores";
 import { useCascaron } from "@/components/panel/ui/cascaron";
 import { Icono } from "@/components/panel/ui/iconos";
 import {
-  Avatar,
   Cargando,
   Encabezado,
   Pildora,
@@ -16,7 +15,6 @@ import {
   Tarjeta,
   TarjetaCabecera,
   Vacio,
-  iniciales,
   relativo,
 } from "@/components/panel/ui/primitivas";
 
@@ -27,7 +25,7 @@ import {
  * compite con el trabajo real, que sucede en Eventos.
  */
 export default function Inicio() {
-  const { yo } = useCascaron();
+  const { yo, graficasInicio } = useCascaron();
   const datos = useQuery(api.metricas.inicio, {});
 
   if (datos === undefined) {
@@ -152,27 +150,10 @@ export default function Inicio() {
             )}
           </Tarjeta>
 
-          <Tarjeta indice={6}>
-            <TarjetaCabecera titulo="Actividad" descripcion="Últimos movimientos del equipo." />
-            {datos.actividad.length === 0 ? (
-              <p className="ui-faint px-5 py-6 text-[12.5px]">Todavía no hay movimientos registrados.</p>
-            ) : (
-              <div className="ui-activity">
-                {datos.actividad.map((a) => (
-                  <div key={a._id} className="ui-activity-row">
-                    <Avatar texto={iniciales(a.actorCorreo)} tamano="sm" hue={tonoAvatar(a.actorCorreo)} />
-                    <p title={a.detalle ?? undefined}>
-                      <b>{nombreCorto(a.actorCorreo)}</b> · {a.accion}
-                      {a.detalle ? <span className="ui-faint"> · {a.detalle}</span> : null}
-                    </p>
-                    <time dateTime={new Date(a.creadoEn).toISOString()}>{relativo(a.creadoEn)}</time>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Tarjeta>
         </aside>
       </div>
+
+      <Analitica analitica={datos.analitica} visibles={graficasInicio} />
     </>
   );
 }
@@ -225,12 +206,173 @@ function saludo(nombre: string | undefined): string {
   return `${momento}, ${corto}`;
 }
 
-function nombreCorto(correo: string): string {
-  return correo.split("@")[0] ?? correo;
+type AnaliticaInicio = Datos["analitica"];
+type GraficaInicio = "tendencia" | "estados" | "tipos" | "areas";
+
+const FORMATO_SEMANA = new Intl.DateTimeFormat("es-MX", {
+  day: "numeric",
+  month: "short",
+});
+
+function Analitica({
+  analitica,
+  visibles,
+}: {
+  analitica: AnaliticaInicio;
+  visibles: GraficaInicio[];
+}) {
+  return (
+    <section className="mt-7">
+      <div className="ui-sec-h">
+        <div>
+          <h2>Análisis de registros</h2>
+          <p className="ui-faint mt-1 text-[12px]">Tendencia, composición y preferencias de la convocatoria.</p>
+        </div>
+        <Link href="/dashboard/ajustes?seccion=apariencia">
+          Personalizar <Icono nombre="ajustes" tamano={13} />
+        </Link>
+      </div>
+
+      {visibles.length === 0 ? (
+        <Tarjeta indice={6}>
+          <Vacio
+            titulo="Los gráficos están ocultos"
+            ayuda="Puedes volver a mostrarlos desde Ajustes > Apariencia."
+          />
+        </Tarjeta>
+      ) : (
+        <div className="ui-grid">
+          {visibles.includes("tendencia") ? (
+            <Tarjeta className="ui-chart-card lg-7" indice={6}>
+              <TarjetaCabecera
+                titulo="Altas por semana"
+                descripcion={`${analitica.nuevosEstaSemana} en los últimos 7 días`}
+              />
+              <GraficaTendencia datos={analitica.porSemana} />
+            </Tarjeta>
+          ) : null}
+
+          {visibles.includes("estados") ? (
+            <Tarjeta className="ui-chart-card lg-5" indice={7}>
+              <TarjetaCabecera titulo="Estado de seguimiento" descripcion="Qué necesita atención ahora." />
+              <GraficaEstados datos={analitica.porEstado} total={analitica.total} />
+            </Tarjeta>
+          ) : null}
+
+          {visibles.includes("tipos") ? (
+            <Tarjeta className="ui-chart-card lg-5" indice={8}>
+              <TarjetaCabecera titulo="Comunidad" descripcion="Miembros, aliados y canales elegidos." />
+              <GraficaComunidad analitica={analitica} />
+            </Tarjeta>
+          ) : null}
+
+          {visibles.includes("areas") ? (
+            <Tarjeta className="ui-chart-card lg-7" indice={8}>
+              <TarjetaCabecera titulo="Interés por área" descripcion="Preferencias declaradas por aliados." />
+              <GraficaAreas datos={analitica.porArea} />
+            </Tarjeta>
+          ) : null}
+        </div>
+      )}
+    </section>
+  );
 }
 
-function tonoAvatar(texto: string): number {
-  let h = 0;
-  for (let i = 0; i < texto.length; i++) h = (h * 31 + texto.charCodeAt(i)) | 0;
-  return (Math.abs(h) % 4) + 1;
+function GraficaTendencia({ datos }: { datos: AnaliticaInicio["porSemana"] }) {
+  const maximo = Math.max(1, ...datos.map((semana) => semana.total));
+  return (
+    <div className="ui-chart-trend">
+      <svg viewBox="0 0 640 180" role="img" aria-label="Registros de las últimas ocho semanas">
+        <line className="ui-chart-gridline" x1="28" y1="126" x2="620" y2="126" />
+        {datos.map((semana, indice) => {
+          const altura = Math.max(4, (semana.total / maximo) * 96);
+          const x = 36 + indice * 73;
+          const actual = indice === datos.length - 1;
+          return (
+            <g key={semana.inicio} className={actual ? "is-current" : undefined}>
+              <title>{`${FORMATO_SEMANA.format(new Date(semana.inicio))}: ${semana.total}`}</title>
+              <text className="ui-chart-value" x={x + 22} y={Math.max(15, 118 - altura)} textAnchor="middle">
+                {semana.total || ""}
+              </text>
+              <rect className="ui-chart-bar" x={x} y={126 - altura} width="44" height={altura} rx="4" />
+              <text className="ui-chart-label" x={x + 22} y="151" textAnchor="middle">
+                {FORMATO_SEMANA.format(new Date(semana.inicio)).replace(".", "")}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+function GraficaEstados({
+  datos,
+  total,
+}: {
+  datos: AnaliticaInicio["porEstado"];
+  total: number;
+}) {
+  return (
+    <div className="ui-chart-list">
+      {datos.map((fila) => (
+        <div key={fila.estado} className="ui-chart-list-row">
+          <div>
+            <span>{ETIQUETAS[fila.estado] ?? fila.estado}</span>
+            <b>{fila.total}</b>
+          </div>
+          <progress max={Math.max(total, 1)} value={fila.total} aria-label={ETIQUETAS[fila.estado] ?? fila.estado} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function GraficaComunidad({ analitica }: { analitica: AnaliticaInicio }) {
+  const miembros = analitica.porTipo.find((fila) => fila.tipo === "miembro")?.total ?? 0;
+  const aliados = analitica.porTipo.find((fila) => fila.tipo === "aliado")?.total ?? 0;
+  const total = Math.max(miembros + aliados, 1);
+  const circunferencia = 263.89;
+  const tramoMiembros = (miembros / total) * circunferencia;
+
+  return (
+    <div className="ui-community-chart">
+      <div className="ui-donut">
+        <svg viewBox="0 0 110 110" role="img" aria-label={`${miembros} miembros y ${aliados} aliados`}>
+          <circle className="ui-donut-track" cx="55" cy="55" r="42" />
+          <circle
+            className="ui-donut-value"
+            cx="55"
+            cy="55"
+            r="42"
+            strokeDasharray={`${tramoMiembros} ${circunferencia - tramoMiembros}`}
+          />
+        </svg>
+        <span><b>{miembros + aliados}</b><small>personas</small></span>
+      </div>
+      <dl className="ui-community-legend">
+        <div><dt><i data-tone="accent" />Miembros</dt><dd>{miembros}</dd></div>
+        <div><dt><i data-tone="muted" />Aliados</dt><dd>{aliados}</dd></div>
+        <div><dt>Correo</dt><dd>{analitica.porCanal.correo}</dd></div>
+        <div><dt>WhatsApp</dt><dd>{analitica.porCanal.whatsapp}</dd></div>
+      </dl>
+    </div>
+  );
+}
+
+function GraficaAreas({ datos }: { datos: AnaliticaInicio["porArea"] }) {
+  const maximo = Math.max(1, ...datos.map((fila) => fila.total));
+  return (
+    <div className="ui-chart-areas">
+      {[...datos]
+        .sort((a, b) => b.total - a.total)
+        .map((fila) => (
+          <div key={fila.area} className="ui-chart-area-row">
+            <span>{ETIQUETAS[fila.area] ?? fila.area}</span>
+            <progress max={maximo} value={fila.total} aria-label={ETIQUETAS[fila.area] ?? fila.area} />
+            <b>{fila.total}</b>
+          </div>
+        ))}
+    </div>
+  );
 }

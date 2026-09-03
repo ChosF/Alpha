@@ -56,6 +56,11 @@ export const ESTADOS_INGESTA_CORREO = [
   "fallido",
 ] as const;
 
+export const TEMAS_PANEL = ["light", "dark"] as const;
+export const DENSIDADES_PANEL = ["comfortable", "compact"] as const;
+export const ACENTOS_PANEL = ["classic", "bright"] as const;
+export const GRAFICAS_INICIO = ["tendencia", "estados", "tipos", "areas"] as const;
+
 export type Area = (typeof AREAS)[number];
 export type Rol = (typeof ROLES)[number];
 export type EstadoRegistro = (typeof ESTADOS_REGISTRO)[number];
@@ -67,6 +72,10 @@ export type EstadoAsistente = (typeof ESTADOS_ASISTENTE)[number];
 export type EstadoHiloCorreo = (typeof ESTADOS_HILO_CORREO)[number];
 export type DireccionMensajeCorreo = (typeof DIRECCIONES_MENSAJE_CORREO)[number];
 export type EstadoMensajeCorreo = (typeof ESTADOS_MENSAJE_CORREO)[number];
+export type TemaPanel = (typeof TEMAS_PANEL)[number];
+export type DensidadPanel = (typeof DENSIDADES_PANEL)[number];
+export type AcentoPanel = (typeof ACENTOS_PANEL)[number];
+export type GraficaInicio = (typeof GRAFICAS_INICIO)[number];
 
 export const areaValidador = v.union(...AREAS.map((a) => v.literal(a)));
 export const rolValidador = v.union(...ROLES.map((r) => v.literal(r)));
@@ -87,6 +96,16 @@ export const estadoMensajeCorreoValidador = v.union(
 );
 export const estadoIngestaCorreoValidador = v.union(
   ...ESTADOS_INGESTA_CORREO.map((e) => v.literal(e)),
+);
+export const temaPanelValidador = v.union(...TEMAS_PANEL.map((tema) => v.literal(tema)));
+export const densidadPanelValidador = v.union(
+  ...DENSIDADES_PANEL.map((densidad) => v.literal(densidad)),
+);
+export const acentoPanelValidador = v.union(
+  ...ACENTOS_PANEL.map((acento) => v.literal(acento)),
+);
+export const graficaInicioValidador = v.union(
+  ...GRAFICAS_INICIO.map((grafica) => v.literal(grafica)),
 );
 
 /** Etiquetas en espanol para el panel y las exportaciones. */

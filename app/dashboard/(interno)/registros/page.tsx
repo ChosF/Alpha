@@ -47,6 +47,7 @@ export default function Registros() {
     ...(tipo ? { tipo } : {}),
     ...(estado ? { estado } : {}),
   });
+  const resumen = useQuery(api.metricas.resumen, {});
   const puedeEditar = yo?.rol === "admin" || yo?.rol === "editor";
   const seleccionado = datos?.page.find((r) => r._id === abierto) ?? null;
 
@@ -57,6 +58,29 @@ export default function Registros() {
         descripcion="Convocatoria de miembros y aliados. El trabajo del día a día está en Eventos."
         acciones={yo?.rol === "admin" ? <BotonExportar tipo={tipo} estado={estado} /> : null}
       />
+
+      <div className="ui-grid mb-5">
+        <Tarjeta className="ui-stat sm-6 lg-3" indice={1}>
+          <span className="ui-stat-label">Registros totales</span>
+          <span className="ui-stat-value">{resumen?.total ?? "—"}</span>
+          <span className="ui-stat-delta">Convocatoria general</span>
+        </Tarjeta>
+        <Tarjeta className="ui-stat sm-6 lg-3" indice={2}>
+          <span className="ui-stat-label">Miembros</span>
+          <span className="ui-stat-value">{resumen?.miembros ?? "—"}</span>
+          <span className="ui-stat-delta">Comunidad LAF</span>
+        </Tarjeta>
+        <Tarjeta className="ui-stat sm-6 lg-3" indice={3}>
+          <span className="ui-stat-label">Aliados</span>
+          <span className="ui-stat-value">{resumen?.aliados ?? "—"}</span>
+          <span className="ui-stat-delta">Apoyo por áreas</span>
+        </Tarjeta>
+        <Tarjeta className="ui-stat sm-6 lg-3" indice={4}>
+          <span className="ui-stat-label">Sin contactar</span>
+          <span className="ui-stat-value">{resumen?.porEstado.nuevo ?? "—"}</span>
+          <span className="ui-stat-delta">Requieren seguimiento</span>
+        </Tarjeta>
+      </div>
 
       <div className="ui-filterbar">
         <Entrada

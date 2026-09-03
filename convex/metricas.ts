@@ -1,7 +1,17 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 import { puede, requiereRol } from "./lib/rbac";
-import { AREAS, ESTADOS_REGISTRO } from "./lib/validadores";
+import {
+  AREAS,
+  ESTADOS_REGISTRO,
+  TIPOS_REGISTRO,
+  areaValidador,
+  estadoEventoValidador,
+  estadoProgramaValidador,
+  estadoRegistroValidador,
+  pilarValidador,
+  tipoRegistroValidador,
+} from "./lib/validadores";
 
 /**
  * Resumen para la pantalla de inicio del panel.
@@ -12,6 +22,48 @@ import { AREAS, ESTADOS_REGISTRO } from "./lib/validadores";
  */
 
 const SEMANA_MS = 7 * 24 * 60 * 60 * 1000;
+
+const inicioValidador = v.object({
+  eventos: v.array(v.object({
+    _id: v.id("events"),
+    slug: v.string(),
+    titulo: v.string(),
+    resumen: v.string(),
+    pilar: pilarValidador,
+    estado: estadoEventoValidador,
+    registroAbierto: v.boolean(),
+    totalRegistros: v.number(),
+    confirmados: v.number(),
+    actualizadoEn: v.number(),
+  })),
+  resumen: v.object({
+    eventosActivos: v.number(),
+    eventosBorrador: v.number(),
+    asistentes: v.number(),
+    programasPublicados: v.number(),
+    programasTotal: v.number(),
+  }),
+  programa: v.array(v.object({
+    _id: v.id("programs"),
+    titulo: v.string(),
+    periodo: v.string(),
+    pilar: pilarValidador,
+    estado: estadoProgramaValidador,
+    publicado: v.boolean(),
+  })),
+  registrosNuevos: v.number(),
+  correo: v.union(v.null(), v.object({ abiertos: v.number(), noLeidos: v.number() })),
+  invitacionesPorVencer: v.union(v.null(), v.number()),
+  analitica: v.object({
+    total: v.number(),
+    nuevosEstaSemana: v.number(),
+    porSemana: v.array(v.object({ inicio: v.number(), total: v.number() })),
+    porEstado: v.array(v.object({ estado: estadoRegistroValidador, total: v.number() })),
+    porTipo: v.array(v.object({ tipo: tipoRegistroValidador, total: v.number() })),
+    porArea: v.array(v.object({ area: areaValidador, total: v.number() })),
+    porCanal: v.object({ correo: v.number(), whatsapp: v.number() }),
+  }),
+});
 
 export const resumen = query({
   args: {},
@@ -116,20 +168,21 @@ export const contadores = query({
  */
 export const inicio = query({
   args: {},
+  returns: inicioValidador,
   handler: async (ctx) => {
     const usuario = await requiereRol(ctx, "lector");
     const ahora = Date.now();
     const esEditor = puede(usuario, "editor");
     const esAdmin = puede(usuario, "admin");
 
-    const [eventos, programas, nuevos, actividad] = await Promise.all([
+    const [eventos, programas, registros] = await Promise.all([
       ctx.db.query("events").take(100),
       ctx.db.query("programs").withIndex("by_orden").collect(),
       ctx.db
         .query("registrations")
-        .withIndex("by_estado", (q) => q.eq("estado", "nuevo"))
-        .take(1000),
-      ctx.db.query("auditLog").withIndex("by_creado").order("desc").take(8),
+        .withIndex("by_creado")
+        .order("desc")
+        .take(5000),
     ]);
 
     // Confirmados por evento: una lectura indexada por evento, acotada.
@@ -175,6 +228,34 @@ export const inicio = query({
       return peso(a) - peso(b) || b.actualizadoEn - a.actualizadoEn;
     });
 
+    const semanas = Array.from({ length: 8 }, (_, indice) => ({
+      inicio: ahora - (8 - indice) * SEMANA_MS,
+      fin: ahora - (7 - indice) * SEMANA_MS,
+      total: 0,
+    }));
+    const porEstado = ESTADOS_REGISTRO.map((estado) => ({ estado, total: 0 }));
+    const porTipo = TIPOS_REGISTRO.map((tipo) => ({ tipo, total: 0 }));
+    const porArea = AREAS.map((area) => ({ area, total: 0 }));
+    let conCorreo = 0;
+    let conWhatsapp = 0;
+
+    for (const registro of registros) {
+      const estado = porEstado.find((fila) => fila.estado === registro.estado);
+      if (estado) estado.total += 1;
+      const tipo = porTipo.find((fila) => fila.tipo === registro.tipo);
+      if (tipo) tipo.total += 1;
+      if (registro.canales.correo) conCorreo += 1;
+      if (registro.canales.whatsapp) conWhatsapp += 1;
+      for (const areaRegistro of registro.areas) {
+        const area = porArea.find((fila) => fila.area === areaRegistro);
+        if (area) area.total += 1;
+      }
+      const semana = semanas.find(
+        (fila) => registro.creadoEn >= fila.inicio && registro.creadoEn < fila.fin,
+      );
+      if (semana) semana.total += 1;
+    }
+
     return {
       eventos: ordenados.map((e) => ({
         _id: e._id,
@@ -206,16 +287,18 @@ export const inicio = query({
           estado: p.estado,
           publicado: p.publicado,
         })),
-      registrosNuevos: nuevos.length,
+      registrosNuevos: porEstado.find((fila) => fila.estado === "nuevo")?.total ?? 0,
       correo,
       invitacionesPorVencer,
-      actividad: actividad.map((a) => ({
-        _id: a._id,
-        actorCorreo: a.actorCorreo,
-        accion: a.accion,
-        detalle: a.detalle,
-        creadoEn: a.creadoEn,
-      })),
+      analitica: {
+        total: registros.length,
+        nuevosEstaSemana: semanas[semanas.length - 1]?.total ?? 0,
+        porSemana: semanas.map(({ inicio, total }) => ({ inicio, total })),
+        porEstado,
+        porTipo,
+        porArea,
+        porCanal: { correo: conCorreo, whatsapp: conWhatsapp },
+      },
     };
   },
 });

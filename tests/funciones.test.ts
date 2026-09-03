@@ -466,6 +466,74 @@ describe("invitaciones", () => {
   });
 });
 
+describe("personalizacion e Inicio del dashboard", () => {
+  it("cada usuario guarda una sola configuracion personal del dashboard", async () => {
+    const t = convexTest(schema, modulos);
+    const { userId, sesion } = await comoUsuario(t, "lector");
+
+    await expect(sesion.query(api.preferencias.obtener, {})).resolves.toEqual({
+      guardadas: false,
+      tema: "light",
+      densidad: "comfortable",
+      acento: "bright",
+      barraContraida: false,
+      graficasInicio: ["tendencia", "estados", "tipos", "areas"],
+    });
+
+    await sesion.mutation(api.preferencias.guardar, {
+      tema: "dark",
+      densidad: "compact",
+      acento: "classic",
+      barraContraida: true,
+      graficasInicio: ["tendencia", "areas", "areas"],
+    });
+    await sesion.mutation(api.preferencias.guardar, { tema: "light" });
+
+    await expect(sesion.query(api.preferencias.obtener, {})).resolves.toEqual({
+      guardadas: true,
+      tema: "light",
+      densidad: "compact",
+      acento: "classic",
+      barraContraida: true,
+      graficasInicio: ["tendencia", "areas"],
+    });
+    const filas = await t.run(async (ctx) =>
+      ctx.db
+        .query("dashboardPreferences")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .collect(),
+    );
+    expect(filas).toHaveLength(1);
+  });
+
+  it("Inicio entrega analitica de registros y ya no consulta actividad", async () => {
+    const t = convexTest(schema, modulos);
+    const { sesion } = await comoUsuario(t, "lector");
+    await t.action(api.ingesta.registrar, { secreto: SECRETO, datos: datosBase });
+    await t.action(api.ingesta.registrar, {
+      secreto: SECRETO,
+      datos: {
+        ...datosBase,
+        tipo: "aliado",
+        correo: "aliado@tec.mx",
+        telefono: "5512345678",
+        canales: { correo: false, whatsapp: false },
+        areas: ["finanzas"],
+      },
+    });
+
+    const inicio = await sesion.query(api.metricas.inicio, {});
+    expect(inicio).not.toHaveProperty("actividad");
+    expect(inicio.analitica.total).toBe(2);
+    expect(inicio.analitica.porTipo).toEqual([
+      { tipo: "miembro", total: 1 },
+      { tipo: "aliado", total: 1 },
+    ]);
+    expect(inicio.analitica.porArea).toContainEqual({ area: "finanzas", total: 1 });
+    expect(inicio.analitica.porSemana).toHaveLength(8);
+  });
+});
+
 describe("cuentas del panel", () => {
   it("no se puede dejar el sistema sin administradores", async () => {
     const t = convexTest(schema, modulos);

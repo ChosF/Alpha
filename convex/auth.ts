@@ -1,9 +1,11 @@
 import { Password } from "@convex-dev/auth/providers/Password";
 import { convexAuth } from "@convex-dev/auth/server";
+import type { EmailConfig } from "@convex-dev/auth/server";
 import type { DataModel, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { limpiarTexto, normalizarCorreo, sha256Hex } from "./lib/texto";
 import { validarContrasena } from "./lib/contrasena";
+import { renderizarCorreoDashboard, textoConFirma } from "./lib/plantillaCorreo";
 
 /**
  * Acceso al panel: correo y contrasena, solo por invitacion.
@@ -25,9 +27,67 @@ type PerfilConInvitacion = {
   creadoEn: number;
 };
 
+const restablecimientoContrasena: EmailConfig = {
+  id: "alpha-password-reset",
+  type: "email",
+  name: "Código de seguridad Alpha",
+  from: "Alpha CCM <contacto@alphaccm.org>",
+  maxAge: 15 * 60,
+  generateVerificationToken: generarCodigoSeguro,
+  authorize: async (params, account) => {
+    if (params.email !== account.providerAccountId) {
+      throw new Error("El código no corresponde a esta cuenta.");
+    }
+  },
+  async sendVerificationRequest({ identifier, token, provider }) {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) throw new Error("RESEND_API_KEY no está configurada en Convex.");
+
+    const asunto = "Tu código para cambiar la contraseña";
+    const texto = `Tu código de seguridad es ${token}. Caduca en 15 minutos. Si no pediste este cambio, ignora este correo.`;
+    const respuesta = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: provider.from,
+        to: identifier,
+        subject: asunto,
+        text: textoConFirma(texto, "contacto@alphaccm.org"),
+        html: renderizarCorreoDashboard({
+          asunto,
+          texto,
+          segmentos: [
+            { texto: "Tu código de seguridad es ", negrita: false, cursiva: false },
+            { texto: token, negrita: true, cursiva: false },
+            { texto: ".\n\nCaduca en 15 minutos. Si no pediste este cambio, ignora este correo.", negrita: false, cursiva: false },
+          ],
+          remitente: "contacto@alphaccm.org",
+        }),
+        reply_to: "contacto@alphaccm.org",
+      }),
+    });
+    if (!respuesta.ok) {
+      throw new Error(`Resend rechazó el correo de seguridad (${respuesta.status}).`);
+    }
+  },
+};
+
+function generarCodigoSeguro(): string {
+  const limite = 0xffff_ffff - (0xffff_ffff % 1_000_000);
+  const valores = new Uint32Array(1);
+  do {
+    crypto.getRandomValues(valores);
+  } while ((valores[0] ?? limite) >= limite);
+  return String((valores[0] ?? 0) % 1_000_000).padStart(6, "0");
+}
+
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
     Password<DataModel>({
+      reset: restablecimientoContrasena,
       validatePasswordRequirements: (contrasena: string) => {
         const problema = validarContrasena(contrasena);
         if (problema !== null) throw new Error(problema);

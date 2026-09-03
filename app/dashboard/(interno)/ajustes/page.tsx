@@ -4,9 +4,17 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMutation } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "@/convex/_generated/api";
 import { ETIQUETAS } from "@/convex/lib/validadores";
-import { useCascaron } from "@/components/panel/ui/cascaron";
+import { validarContrasena } from "@/convex/lib/contrasena";
+import {
+  useCascaron,
+  type Acento,
+  type Densidad,
+  type GraficaInicio,
+  type Tema,
+} from "@/components/panel/ui/cascaron";
 import { Icono } from "@/components/panel/ui/iconos";
 import {
   Aviso,
@@ -24,10 +32,11 @@ import {
 } from "@/components/panel/ui/primitivas";
 import { Usuarios } from "./usuarios";
 
-type Seccion = "perfil" | "apariencia" | "usuarios";
+type Seccion = "perfil" | "seguridad" | "apariencia" | "usuarios";
 
 const SECCIONES: { id: Seccion; texto: string; soloAdmin?: boolean }[] = [
   { id: "perfil", texto: "Perfil" },
+  { id: "seguridad", texto: "Seguridad" },
   { id: "apariencia", texto: "Apariencia" },
   { id: "usuarios", texto: "Usuarios", soloAdmin: true },
 ];
@@ -75,6 +84,7 @@ function Contenido() {
       </nav>
 
       {seccion === "perfil" ? <Perfil /> : null}
+      {seccion === "seguridad" ? <Seguridad /> : null}
       {seccion === "apariencia" ? <Apariencia /> : null}
       {seccion === "usuarios" && esAdmin ? <Usuarios /> : null}
     </>
@@ -195,14 +205,25 @@ function Perfil() {
 }
 
 function Apariencia() {
-  const { tema, alternarTema, colapsada, alternarColapso } = useCascaron();
+  const {
+    tema,
+    cambiarTema,
+    densidad,
+    cambiarDensidad,
+    acento,
+    cambiarAcento,
+    graficasInicio,
+    cambiarGraficaInicio,
+    colapsada,
+    alternarColapso,
+  } = useCascaron();
 
   return (
     <div className="grid gap-4 lg:grid-cols-12">
       <Tarjeta className="lg:col-span-7" indice={1}>
-        <TarjetaCabecera titulo="Tema" descripcion="Se guarda en este navegador." />
+        <TarjetaCabecera titulo="Tema" descripcion="Se sincroniza entre tus dispositivos." />
         <div className="grid gap-3 p-5 sm:grid-cols-2">
-          {(["light", "dark"] as const).map((t) => (
+          {(["light", "dark"] as Tema[]).map((t) => (
             <button
               key={t}
               type="button"
@@ -210,7 +231,7 @@ function Apariencia() {
               aria-pressed={tema === t}
               data-selected={tema === t ? "true" : undefined}
               onClick={() => {
-                if (tema !== t) alternarTema();
+                if (tema !== t) cambiarTema(t);
               }}
             >
               <span className="ui-proj-mark">
@@ -233,13 +254,67 @@ function Apariencia() {
       </Tarjeta>
 
       <Tarjeta className="lg:col-span-5" indice={2}>
-        <TarjetaCabecera titulo="Barra lateral" descripcion="Solo en escritorio." />
+        <TarjetaCabecera titulo="Color de acento" descripcion="Siempre dentro de la paleta Alpha." />
+        <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-1">
+          {(["bright", "classic"] as Acento[]).map((opcion) => (
+            <button
+              key={opcion}
+              type="button"
+              className="ui-card ui-accent-choice flex items-center gap-3 p-4 text-left"
+              data-selected={acento === opcion ? "true" : undefined}
+              data-accent-option={opcion}
+              aria-pressed={acento === opcion}
+              onClick={() => cambiarAcento(opcion)}
+            >
+              <i />
+              <span>
+                <span className="block text-[13px] font-semibold">
+                  {opcion === "bright" ? "Azul brillante" : "Azul clásico"}
+                </span>
+                <span className="ui-faint block text-[12px]">
+                  {opcion === "bright" ? "#0066FF" : "#194270"}
+                </span>
+              </span>
+              {acento === opcion ? <Icono nombre="check" tamano={16} /> : null}
+            </button>
+          ))}
+        </div>
+      </Tarjeta>
+
+      <Tarjeta className="lg:col-span-7" indice={3}>
+        <TarjetaCabecera titulo="Densidad" descripcion="Ajusta cuánta información cabe sin cambiar funciones." />
+        <div className="grid gap-3 p-5 sm:grid-cols-2">
+          {(["comfortable", "compact"] as Densidad[]).map((opcion) => (
+            <button
+              key={opcion}
+              type="button"
+              className="ui-card p-4 text-left"
+              data-selected={densidad === opcion ? "true" : undefined}
+              aria-pressed={densidad === opcion}
+              onClick={() => cambiarDensidad(opcion)}
+            >
+              <span className="flex items-center justify-between gap-3">
+                <span>
+                  <span className="block text-[13px] font-semibold">
+                    {opcion === "comfortable" ? "Cómoda" : "Compacta"}
+                  </span>
+                  <span className="ui-faint mt-1 block text-[12px]">
+                    {opcion === "comfortable" ? "Más aire entre controles." : "Más filas y datos en pantalla."}
+                  </span>
+                </span>
+                {densidad === opcion ? <Icono nombre="check" tamano={16} /> : null}
+              </span>
+            </button>
+          ))}
+        </div>
+      </Tarjeta>
+
+      <Tarjeta className="lg:col-span-5" indice={4}>
+        <TarjetaCabecera titulo="Barra lateral" descripcion="Se sincroniza entre tus dispositivos." />
         <div className="flex items-center justify-between gap-4 p-5">
           <div>
             <p className="text-[13px] font-medium">Contraída por defecto</p>
-            <p className="ui-faint text-[12px]">
-              También con <Kbd>⌘</Kbd> <Kbd>B</Kbd>.
-            </p>
+            <p className="ui-faint text-[12px]">También con <Kbd>⌘</Kbd> <Kbd>B</Kbd>.</p>
           </div>
           <button
             type="button"
@@ -249,6 +324,174 @@ function Apariencia() {
             className="ui-switch"
             onClick={alternarColapso}
           />
+        </div>
+      </Tarjeta>
+
+      <Tarjeta className="lg:col-span-12" indice={5}>
+        <TarjetaCabecera
+          titulo="Gráficos de Inicio"
+          descripcion="Elige qué análisis aparecen debajo de los eventos y pendientes."
+        />
+        <div className="grid gap-2 p-4 sm:grid-cols-2 xl:grid-cols-4">
+          {GRAFICAS_CONFIG.map((grafica) => {
+            const visible = graficasInicio.includes(grafica.id);
+            return (
+              <button
+                key={grafica.id}
+                type="button"
+                className="ui-setting-toggle"
+                aria-pressed={visible}
+                onClick={() => cambiarGraficaInicio(grafica.id, !visible)}
+              >
+                <span><strong>{grafica.titulo}</strong><small>{grafica.descripcion}</small></span>
+                <span aria-hidden="true" data-checked={visible ? "true" : undefined} className="ui-switch" />
+              </button>
+            );
+          })}
+        </div>
+      </Tarjeta>
+    </div>
+  );
+}
+
+const GRAFICAS_CONFIG: Array<{ id: GraficaInicio; titulo: string; descripcion: string }> = [
+  { id: "tendencia", titulo: "Altas por semana", descripcion: "Ocho semanas" },
+  { id: "estados", titulo: "Seguimiento", descripcion: "Nuevo, contactado, activo y baja" },
+  { id: "tipos", titulo: "Comunidad", descripcion: "Miembros, aliados y canales" },
+  { id: "areas", titulo: "Interés por área", descripcion: "Preferencias de aliados" },
+];
+
+function Seguridad() {
+  const { yo, cerrarSesion } = useCascaron();
+  const { signIn } = useAuthActions();
+  const [codigoEnviado, setCodigoEnviado] = useState(false);
+  const [codigo, setCodigo] = useState("");
+  const [contrasena, setContrasena] = useState("");
+  const [repetida, setRepetida] = useState("");
+  const [ocupado, setOcupado] = useState(false);
+  const [aviso, setAviso] = useState<{ tono: "error" | "exito"; texto: string } | null>(null);
+
+  if (!yo) {
+    return <Tarjeta><Cargando que="la seguridad de tu cuenta" /></Tarjeta>;
+  }
+
+  const solicitarCodigo = async () => {
+    setOcupado(true);
+    setAviso(null);
+    try {
+      await signIn("password", { email: yo.correo, flow: "reset" });
+      setCodigoEnviado(true);
+      setAviso({ tono: "exito", texto: `Enviamos un código de 6 dígitos a ${yo.correo}.` });
+    } catch {
+      setAviso({ tono: "error", texto: "No pudimos enviar el código. Intenta de nuevo en un momento." });
+    } finally {
+      setOcupado(false);
+    }
+  };
+
+  const cambiarContrasena = async () => {
+    const problema = validarContrasena(contrasena);
+    if (problema) {
+      setAviso({ tono: "error", texto: problema });
+      return;
+    }
+    if (contrasena !== repetida) {
+      setAviso({ tono: "error", texto: "Las contraseñas no coinciden." });
+      return;
+    }
+    setOcupado(true);
+    setAviso(null);
+    try {
+      await signIn("password", {
+        email: yo.correo,
+        code: codigo.replace(/\s/g, ""),
+        newPassword: contrasena,
+        flow: "reset-verification",
+      });
+      setCodigo("");
+      setContrasena("");
+      setRepetida("");
+      setCodigoEnviado(false);
+      setAviso({ tono: "exito", texto: "Contraseña actualizada. Las demás sesiones quedaron cerradas." });
+    } catch {
+      setAviso({ tono: "error", texto: "El código no es válido o ya caducó." });
+    } finally {
+      setOcupado(false);
+    }
+  };
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-12">
+      <Tarjeta className="lg:col-span-7" indice={1}>
+        <TarjetaCabecera
+          titulo="Cambiar contraseña"
+          descripcion="Confirmamos el cambio con un código enviado a tu correo. Caduca en 15 minutos."
+        />
+        <div className="grid gap-4 p-5">
+          {!codigoEnviado ? (
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-[13px] font-medium">{yo.correo}</p>
+                <p className="ui-faint mt-1 text-[12px]">Nunca pediremos tu contraseña actual por correo.</p>
+              </div>
+              <Boton variante="primario" icono="correo" disabled={ocupado} onClick={() => void solicitarCodigo()}>
+                {ocupado ? "Enviando…" : "Enviar código"}
+              </Boton>
+            </div>
+          ) : (
+            <>
+              <Campo etiqueta="Código" htmlFor="seguridad-codigo" ayuda="6 dígitos.">
+                <Entrada
+                  id="seguridad-codigo"
+                  value={codigo}
+                  onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  placeholder="000000"
+                />
+              </Campo>
+              <Campo etiqueta="Nueva contraseña" htmlFor="seguridad-contrasena" ayuda="12 caracteres y al menos tres tipos de caracteres.">
+                <Entrada
+                  id="seguridad-contrasena"
+                  type="password"
+                  value={contrasena}
+                  onChange={(e) => setContrasena(e.target.value)}
+                  autoComplete="new-password"
+                  maxLength={128}
+                />
+              </Campo>
+              <Campo etiqueta="Repetir contraseña" htmlFor="seguridad-repetida">
+                <Entrada
+                  id="seguridad-repetida"
+                  type="password"
+                  value={repetida}
+                  onChange={(e) => setRepetida(e.target.value)}
+                  autoComplete="new-password"
+                  maxLength={128}
+                />
+              </Campo>
+              <div className="flex flex-wrap items-center gap-2">
+                <Boton
+                  variante="primario"
+                  disabled={ocupado || codigo.length !== 6 || !contrasena || !repetida}
+                  onClick={() => void cambiarContrasena()}
+                >
+                  {ocupado ? "Actualizando…" : "Actualizar contraseña"}
+                </Boton>
+                <Boton disabled={ocupado} onClick={() => void solicitarCodigo()}>Reenviar código</Boton>
+                <Boton variante="fantasma" disabled={ocupado} onClick={() => setCodigoEnviado(false)}>Cancelar</Boton>
+              </div>
+            </>
+          )}
+          {aviso ? <Aviso tono={aviso.tono}>{aviso.texto}</Aviso> : null}
+        </div>
+      </Tarjeta>
+
+      <Tarjeta className="content-start lg:col-span-5" indice={2}>
+        <TarjetaCabecera titulo="Sesiones" descripcion="El cambio de contraseña cierra todos los demás dispositivos." />
+        <div className="flex items-center justify-between gap-4 p-5">
+          <p className="ui-faint text-[12.5px]">Cierra esta sesión si el dispositivo ya no es de confianza.</p>
+          <Boton icono="salir" onClick={cerrarSesion}>Salir</Boton>
         </div>
       </Tarjeta>
     </div>
