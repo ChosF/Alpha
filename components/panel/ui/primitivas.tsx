@@ -216,6 +216,25 @@ export function Entrada({
   );
 }
 
+export function AreaTexto({
+  className = "",
+  ...resto
+}: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea className={`ui-textarea ${className}`} {...resto} />;
+}
+
+export function Seleccion({
+  className = "",
+  children,
+  ...resto
+}: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <span className={`ui-input ${className}`}>
+      <select {...resto}>{children}</select>
+    </span>
+  );
+}
+
 export function Campo({
   etiqueta,
   ayuda,
