@@ -149,7 +149,10 @@ export function Cascaron({ children }: { children: ReactNode }) {
         <BarraLateral />
         <div className="ui-frame">
           <BarraSuperior />
-          <main className="ui-main" key={ruta}>
+          <main
+            className={`ui-main${ruta.startsWith("/dashboard/correo") ? " ui-main-flush" : ""}`}
+            key={ruta}
+          >
             {children}
           </main>
         </div>

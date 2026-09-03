@@ -748,13 +748,28 @@ export const configuracion = query({
 
 export const resumen = query({
   args: {},
-  returns: v.object({ abiertos: v.number(), noLeidos: v.number(), fallidos: v.number() }),
+  returns: v.object({
+    abiertos: v.number(),
+    resueltos: v.number(),
+    spam: v.number(),
+    todos: v.number(),
+    noLeidos: v.number(),
+    fallidos: v.number(),
+  }),
   handler: async (ctx) => {
     await requiereRol(ctx, "editor");
-    const [abiertos, fallidos] = await Promise.all([
+    const [abiertos, resueltos, spam, recientes] = await Promise.all([
       ctx.db
         .query("mailThreads")
         .withIndex("by_estado_ultimo", (q) => q.eq("estado", "abierto"))
+        .take(5000),
+      ctx.db
+        .query("mailThreads")
+        .withIndex("by_estado_ultimo", (q) => q.eq("estado", "resuelto"))
+        .take(5000),
+      ctx.db
+        .query("mailThreads")
+        .withIndex("by_estado_ultimo", (q) => q.eq("estado", "spam"))
         .take(5000),
       ctx.db
         .query("mailMessages")
@@ -764,9 +779,12 @@ export const resumen = query({
     ]);
     return {
       abiertos: abiertos.length,
+      resueltos: resueltos.length,
+      spam: spam.length,
+      todos: abiertos.length + resueltos.length + spam.length,
       noLeidos: abiertos.reduce((total, hilo) => total + hilo.noLeidos, 0),
-      fallidos: fallidos.filter((mensaje) =>
-        mensaje.estado === "fallido" || mensaje.estado === "rebotado",
+      fallidos: recientes.filter(
+        (mensaje) => mensaje.estado === "fallido" || mensaje.estado === "rebotado",
       ).length,
     };
   },
