@@ -1945,6 +1945,16 @@ button.ui-card:hover {
   letter-spacing: -0.02em;
   line-height: 1.3;
 }
+.ui-mail-read-actions {
+  display: grid;
+  flex: none;
+  grid-template-columns: auto auto minmax(112px, 132px) auto;
+  align-items: center;
+  gap: 8px;
+}
+.ui-mail-state-control {
+  width: 100%;
+}
 .ui-mail-meta {
   display: flex;
   align-items: center;
@@ -2146,12 +2156,40 @@ button.ui-card:hover {
     grid-template-columns: minmax(0, 1fr) 360px;
     align-items: start;
   }
+  .ui-split[data-detail="closed"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .ui-sheet {
   --r: 10px;
   border: 1px solid var(--line);
   background: var(--bg-2);
   box-shadow: var(--shadow-card);
+  animation: ui-sheet-enter 220ms var(--ease) both;
+}
+@keyframes ui-sheet-enter {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+}
+@media (max-width: 1240px) {
+  .ui-mail-read-h {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .ui-mail-read-actions {
+    align-self: stretch;
+    grid-template-columns: auto auto minmax(110px, 1fr) auto;
+  }
+}
+@media (max-width: 520px) {
+  .ui-mail-read-actions {
+    grid-template-columns: auto minmax(105px, 1fr) auto;
+  }
+  .ui-mail-read-actions > :first-child {
+    display: none;
+  }
 }
 @media (max-width: 899px) {
   .ui-mail-folders {

@@ -783,7 +783,7 @@ function Conversacion({
             </p>
           </div>
         </div>
-        <div className="flex flex-none flex-wrap items-center gap-2">
+        <div className="ui-mail-read-actions">
           <Pildora tono={TONO_ESTADO[hilo.estado] ?? "neutro"} sm>
             {ETIQUETAS[hilo.estado]}
           </Pildora>
@@ -794,6 +794,7 @@ function Conversacion({
             id={`estado-hilo-${hilo._id}`}
             ariaLabel="Estado de la conversacion"
             variante="compacto"
+            className="ui-mail-state-control"
             valor={hilo.estado}
             opciones={ESTADOS_HILO_CORREO.map((opcion) => ({
               valor: opcion,

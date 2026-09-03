@@ -195,7 +195,7 @@ function DetalleEvento({
         </Tarjeta>
       </div>
 
-      <div className="ui-split">
+      <div className="ui-split" data-detail={seleccionado ? "open" : "closed"}>
         <Tarjeta>
           <div className="ui-filterbar p-4 pb-0">
             <Entrada

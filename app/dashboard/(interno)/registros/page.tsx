@@ -108,7 +108,7 @@ export default function Registros() {
         </Seleccion>
       </div>
 
-      <div className="ui-split">
+      <div className="ui-split" data-detail={seleccionado ? "open" : "closed"}>
         <Tarjeta>
           {datos === undefined ? (
             <Cargando que="los registros" />
