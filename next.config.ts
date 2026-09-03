@@ -55,6 +55,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/dashboard/usuarios",
+        destination: "/dashboard/ajustes?seccion=usuarios",
+        permanent: true,
+      },
+      {
         source: "/panel/:path*",
         destination: "/dashboard/:path*",
         permanent: true,
@@ -86,10 +91,10 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Todo lo demas (la landing). Excluye /dashboard, /panel y /api con un lookahead
-        // negativo: Next aplica TODAS las reglas que coincidan y la ultima
-        // gana, asi que un "/:path*" a secas pisaria la CSP estricta del panel
-        // con la permisiva de la landing.
+        // Todo lo demas (la landing). Excluye /dashboard, /panel y /api con
+        // un lookahead negativo: Next aplica TODAS las reglas que coincidan y
+        // la ultima gana, asi que un "/:path*" a secas pisaria la CSP
+        // estricta del panel con la permisiva de la landing.
         source: "/((?!dashboard|panel|api).*)",
         headers: [...cabecerasComunes, { key: "Content-Security-Policy", value: cspLanding }],
       },

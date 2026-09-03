@@ -5,23 +5,21 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { ETIQUETAS, ROLES, type Rol } from "@/convex/lib/validadores";
-import { Aviso, Bandeja, Cargando, Titulo, fecha } from "@/components/panel/piezas";
+import { Aviso, Bandeja, Cargando, fecha } from "@/components/panel/piezas";
 import { SelectorPersonalizado } from "@/components/panel/selector-personalizado";
 
 /**
- * Usuarios del panel.
+ * Usuarios del panel (seccion de Ajustes, solo administracion).
  *
  * El enlace de invitacion se muestra una sola vez. Si Resend esta configurado,
  * tambien se envia desde auto@alphaccm.org y queda registrado en Correo.
  */
-export default function Usuarios() {
+export function Usuarios() {
   const usuarios = useQuery(api.usuarios.listar, {});
   const pendientes = useQuery(api.usuarios.invitacionesPendientes, {});
 
   return (
     <>
-      <Titulo cejilla="Mesa directiva">Usuarios</Titulo>
-
       <div className="grid min-w-0 gap-4 lg:grid-cols-12">
         <div className="min-w-0 lg:col-span-7">
           <Bandeja>

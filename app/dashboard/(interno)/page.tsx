@@ -1,208 +1,236 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import { useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { api } from "@/convex/_generated/api";
-import { AREAS, ETIQUETAS, ESTADOS_REGISTRO } from "@/convex/lib/validadores";
-import { Bandeja, Cargando, Titulo, fechaHora } from "@/components/panel/piezas";
+import { ETIQUETAS } from "@/convex/lib/validadores";
+import { useCascaron } from "@/components/panel/ui/cascaron";
+import { Icono } from "@/components/panel/ui/iconos";
+import {
+  Avatar,
+  Cargando,
+  Encabezado,
+  Pildora,
+  TONO_ESTADO,
+  Tarjeta,
+  TarjetaCabecera,
+  Vacio,
+  iniciales,
+  relativo,
+} from "@/components/panel/ui/primitivas";
 
 /**
- * Inicio: el estado de la convocatoria de un vistazo.
+ * Inicio: los eventos primero, y una lista corta de lo que pide una accion.
  *
- * La cifra grande no es decorativa; es la que se pregunta primero cada semana.
- * El resto se ordena por lo que exige accion: cuantos siguen sin contactar.
+ * Tres cifras, una cuadricula de eventos y dos columnas de apoyo. Nada aqui
+ * compite con el trabajo real, que sucede en Eventos.
  */
 export default function Inicio() {
-  const [actividadVisible, setActividadVisible] = useState(true);
-  const datos = useQuery(api.metricas.resumen, {});
-  const actividad = useQuery(api.metricas.actividad, { limite: 50 });
+  const { yo } = useCascaron();
+  const datos = useQuery(api.metricas.inicio, {});
 
   if (datos === undefined) {
     return (
       <>
-        <Titulo cejilla="Convocatoria 2026 — 2027">Inicio</Titulo>
-        <Bandeja>
+        <Encabezado titulo="Inicio" descripcion="Los eventos primero, y lo que pide una decisión." />
+        <Tarjeta>
           <Cargando que="el resumen" />
-        </Bandeja>
+        </Tarjeta>
       </>
     );
   }
 
-  const pico = Math.max(1, ...datos.porSemana.map((s) => s.total));
-  const areasOrdenadas = [...AREAS].sort(
-    (a, b) => (datos.porArea[b] ?? 0) - (datos.porArea[a] ?? 0),
-  );
+  const { resumen } = datos;
+  const pendientes = construirPendientes(datos);
 
   return (
     <>
-      <Titulo cejilla="Convocatoria 2026 — 2027">Inicio</Titulo>
+      <Encabezado
+        titulo={saludo(yo?.nombre || yo?.correo)}
+        descripcion="Los eventos primero, y lo que pide una decisión."
+      />
 
-      <div className="grid gap-4 lg:grid-cols-12">
-        {/* Cifra principal */}
-        <Bandeja oscura className="lg:col-span-5">
-          <div className="min-h-[184px] p-5 sm:min-h-[220px] sm:p-8 lg:p-10 flex flex-col justify-between">
-            <p className="rotulo text-white/50">Registros totales</p>
-            <div>
-              <p className="cifra text-[clamp(3rem,7vw,5rem)] font-bold leading-none">
-                {datos.total}
-              </p>
-              <p className="mt-4 text-[13px] font-light text-white/65">
-                {datos.nuevosEstaSemana} esta semana · {datos.miembros} miembros ·{" "}
-                {datos.aliados} aliados
-              </p>
-            </div>
+      <div className="ui-grid">
+        <Tarjeta className="ui-stat lg-4" indice={1}>
+          <span className="ui-stat-label">Eventos con registro abierto</span>
+          <span className="ui-stat-value">{resumen.eventosActivos}</span>
+          <span className="ui-stat-delta">
+            {resumen.eventosBorrador > 0
+              ? `${resumen.eventosBorrador} en borrador`
+              : "Sin borradores pendientes"}
+          </span>
+        </Tarjeta>
+        <Tarjeta className="ui-stat lg-4" indice={2}>
+          <span className="ui-stat-label">Asistentes registrados</span>
+          <span className="ui-stat-value">{resumen.asistentes}</span>
+          <span className="ui-stat-delta">Suma de todos los eventos</span>
+        </Tarjeta>
+        <Tarjeta className="ui-stat lg-4" indice={3}>
+          <span className="ui-stat-label">Programa publicado</span>
+          <span className="ui-stat-value">
+            {resumen.programasPublicados}
+            <span className="ui-faint text-[16px] font-medium"> / {resumen.programasTotal}</span>
+          </span>
+          <span className="ui-stat-delta">Visible en la landing</span>
+        </Tarjeta>
+      </div>
+
+      <div className="ui-grid mt-6">
+        <section className="lg-8">
+          <div className="ui-sec-h">
+            <h2>Eventos</h2>
+            <Link href="/dashboard/eventos">
+              Ver todos <Icono nombre="chevronDerecha" tamano={13} />
+            </Link>
           </div>
-        </Bandeja>
 
-        {/* Altas por semana */}
-        <Bandeja className="lg:col-span-7">
-          <div className="min-h-[204px] p-5 sm:min-h-[220px] sm:p-8 lg:p-10 flex flex-col justify-between">
-            <p className="rotulo">Altas por semana</p>
-            <div className="mt-6 flex items-end gap-2 h-[110px]">
-              {datos.porSemana.map((semana, i) => (
-                <div key={semana.inicio} className="flex-1 flex flex-col justify-end h-full">
-                  <span className="cifra text-[10px] text-[var(--color-n600)] mb-1 text-center">
-                    {semana.total > 0 ? semana.total : ""}
-                  </span>
-                  <div
-                    className="w-full transition-all duration-700"
-                    style={{
-                      height: `${Math.max(2, (semana.total / pico) * 100)}%`,
-                      background:
-                        i === datos.porSemana.length - 1
-                          ? "var(--color-accent)"
-                          : "var(--color-n300)",
-                    }}
-                  />
-                </div>
+          {datos.eventos.length === 0 ? (
+            <Tarjeta indice={4}>
+              <Vacio
+                titulo="Todavía no hay eventos"
+                ayuda="Crea el primero desde Eventos. Aquí aparecerán los que tengan registro abierto y los borradores."
+              />
+            </Tarjeta>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {datos.eventos.slice(0, 6).map((e, i) => (
+                <Tarjeta key={e._id} className="ui-proj" indice={Math.min(4 + i, 8)}>
+                  <Link href="/dashboard/eventos" className="ui-proj-head" aria-label={`Abrir ${e.titulo}`}>
+                    <span className="ui-proj-mark">
+                      <Icono nombre="eventos" tamano={15} />
+                    </span>
+                    <span className="ui-proj-text">
+                      <strong>{e.titulo}</strong>
+                      <span>alphaccm.org/eventos/{e.slug}</span>
+                    </span>
+                    <span className="ui-proj-side">
+                      {e.confirmados}/{e.totalRegistros}
+                    </span>
+                  </Link>
+                  <p className="ui-proj-note">
+                    <Icono nombre="commit" tamano={14} />
+                    <span>{e.resumen || ETIQUETAS[e.pilar] || "Sin resumen"}</span>
+                  </p>
+                  <div className="ui-proj-foot">
+                    <span className="ui-proj-who">
+                      <Icono nombre="reloj" tamano={13} />
+                      <span>{relativo(e.actualizadoEn)}</span>
+                    </span>
+                    <span className="ui-proj-meta">
+                      <Pildora tono={TONO_ESTADO[e.estado] ?? "neutro"} sm>
+                        {e.registroAbierto && e.estado === "publicado"
+                          ? "Registro abierto"
+                          : ETIQUETAS[e.estado] ?? e.estado}
+                      </Pildora>
+                    </span>
+                  </div>
+                </Tarjeta>
               ))}
             </div>
-            <p className="mt-4 text-[11px] text-[var(--color-n600)]">
-              Ocho semanas. La barra azul es la semana en curso.
-            </p>
-          </div>
-        </Bandeja>
+          )}
+        </section>
 
-        {/* Estados */}
-        <Bandeja className="lg:col-span-4">
-          <div className="p-5 sm:p-8">
-            <p className="rotulo">Atencion</p>
-            <ul className="mt-5">
-              {ESTADOS_REGISTRO.map((estado) => (
-                <li key={estado} className="fila flex items-center justify-between py-3">
-                  <span className="text-[13px]">{ETIQUETAS[estado]}</span>
-                  <span className="cifra text-[15px] font-medium">
-                    {datos.porEstado[estado] ?? 0}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </Bandeja>
-
-        {/* Canales */}
-        <Bandeja className="lg:col-span-3">
-          <div className="p-5 sm:p-8">
-            <p className="rotulo">Canales elegidos</p>
-            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-1 sm:gap-5">
+        <aside className="lg-4 grid gap-4 content-start">
+          <Tarjeta indice={5}>
+            <TarjetaCabecera titulo="Pendientes" descripcion="Requieren una decisión o acción." />
+            {pendientes.length === 0 ? (
+              <p className="ui-faint px-5 py-6 text-[12.5px]">Nada urgente. Todo al día.</p>
+            ) : (
               <div>
-                <p className="cifra text-[28px] font-semibold leading-none">{datos.conCorreo}</p>
-                <p className="mt-1.5 text-[12px] text-[var(--color-n600)]">Avisos por correo</p>
-              </div>
-              <div>
-                <p className="cifra text-[28px] font-semibold leading-none">{datos.conWhatsapp}</p>
-                <p className="mt-1.5 text-[12px] text-[var(--color-n600)]">Grupo de WhatsApp</p>
-              </div>
-            </div>
-          </div>
-        </Bandeja>
-
-        {/* Areas pedidas por aliados */}
-        <Bandeja className="lg:col-span-5">
-          <div className="p-5 sm:p-8">
-            <p className="rotulo">Areas que piden los aliados</p>
-            <ul className="mt-5 grid gap-2.5">
-              {areasOrdenadas.map((area) => {
-                const total = datos.porArea[area] ?? 0;
-                const maximo = Math.max(1, ...AREAS.map((a) => datos.porArea[a] ?? 0));
-                return (
-                  <li key={area} className="grid grid-cols-[1fr_auto] gap-3 items-center">
-                    <div>
-                      <p className="text-[12px]">{ETIQUETAS[area]}</p>
-                      <div className="mt-1.5 h-[3px] bg-[var(--hair-2)]">
-                        <div
-                          className="h-full bg-[var(--color-accent)] transition-all duration-700"
-                          style={{ width: `${(total / maximo) * 100}%` }}
-                        />
-                      </div>
+                {pendientes.map((p) => (
+                  <Link key={p.texto} href={p.href} className="ui-todo">
+                    <i className="ui-dot" data-tone={p.tono} />
+                    <div className="min-w-0">
+                      <strong>{p.texto}</strong>
+                      <span>{p.detalle}</span>
                     </div>
-                    <span className="cifra text-[13px] text-[var(--color-n700)]">{total}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </Bandeja>
-
-        {/* Bitacora */}
-        <Bandeja className="lg:col-span-12">
-          <div className="p-5 sm:p-8">
-            <div className="t-acc panel-actividad" data-open={actividadVisible}>
-              <button
-                type="button"
-                aria-expanded={actividadVisible}
-                aria-controls="actividad-lista"
-                onClick={() => setActividadVisible((visible) => !visible)}
-                className="t-acc-head panel-actividad-cabecera group"
-              >
-                <span className="rotulo">Actividad del equipo</span>
-                <span className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--color-n600)] transition-colors group-hover:text-[var(--color-accent)]">
-                  {actividadVisible ? "Ocultar" : "Mostrar"}
-                  <svg
-                    viewBox="0 0 16 16"
-                    aria-hidden="true"
-                    className="t-acc-chevron size-4 fill-none stroke-current stroke-[1.5]"
-                  >
-                    <path d="m4 6 4 4 4-4" />
-                  </svg>
-                </span>
-              </button>
-
-              <div className="t-acc-panel">
-                <div id="actividad-lista" className="t-acc-panel-inner panel-actividad-contenido">
-                  {actividad === undefined ? (
-                    <p className="mt-5 text-[12px] text-[var(--color-n600)]">Cargando…</p>
-                  ) : actividad.length === 0 ? (
-                    <p className="mt-5 text-[12px] text-[var(--color-n600)]">
-                      Todavia no hay movimientos registrados.
-                    </p>
-                  ) : (
-                    <ul className="correo-scroll mt-5 max-h-[445px] overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable]">
-                      {actividad.map((linea) => (
-                        <li
-                          key={linea._id}
-                          className="fila grid grid-cols-1 sm:grid-cols-[130px_1fr_auto] gap-x-5 gap-y-1 py-3 items-baseline"
-                        >
-                          <span className="cifra text-[11px] text-[var(--color-n500)]">
-                            {fechaHora(linea.creadoEn)}
-                          </span>
-                          <span className="text-[12.5px]">
-                            <span className="text-[var(--color-n700)]">{linea.actorCorreo}</span>{" "}
-                            {linea.accion}
-                            {linea.detalle ? (
-                              <span className="text-[var(--color-n600)]"> · {linea.detalle}</span>
-                            ) : null}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                    <Icono nombre="chevronDerecha" tamano={14} />
+                  </Link>
+                ))}
               </div>
-            </div>
-          </div>
-        </Bandeja>
+            )}
+          </Tarjeta>
+
+          <Tarjeta indice={6}>
+            <TarjetaCabecera titulo="Actividad" descripcion="Últimos movimientos del equipo." />
+            {datos.actividad.length === 0 ? (
+              <p className="ui-faint px-5 py-6 text-[12.5px]">Todavía no hay movimientos registrados.</p>
+            ) : (
+              <div className="ui-activity">
+                {datos.actividad.map((a) => (
+                  <div key={a._id} className="ui-activity-row">
+                    <Avatar texto={iniciales(a.actorCorreo)} tamano="sm" hue={tonoAvatar(a.actorCorreo)} />
+                    <p title={a.detalle ?? undefined}>
+                      <b>{nombreCorto(a.actorCorreo)}</b> · {a.accion}
+                      {a.detalle ? <span className="ui-faint"> · {a.detalle}</span> : null}
+                    </p>
+                    <time dateTime={new Date(a.creadoEn).toISOString()}>{relativo(a.creadoEn)}</time>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Tarjeta>
+        </aside>
       </div>
     </>
   );
+}
+
+type Datos = FunctionReturnType<typeof api.metricas.inicio>;
+
+function construirPendientes(d: Datos) {
+  const lista: { texto: string; detalle: string; href: string; tono: "accent" | "warn" | "bad" | "neutro" }[] = [];
+  const borradores = d.eventos.filter((e) => e.estado === "borrador");
+  if (borradores.length > 0) {
+    lista.push({
+      texto: `${borradores.length} ${borradores.length === 1 ? "evento en borrador" : "eventos en borrador"}`,
+      detalle: borradores.map((e) => e.titulo).slice(0, 2).join(", ") + (borradores.length > 2 ? "…" : ""),
+      href: "/dashboard/eventos",
+      tono: "neutro",
+    });
+  }
+  if (d.correo && d.correo.noLeidos > 0) {
+    lista.push({
+      texto: `${d.correo.noLeidos} ${d.correo.noLeidos === 1 ? "correo sin leer" : "correos sin leer"}`,
+      detalle: `${d.correo.abiertos} ${d.correo.abiertos === 1 ? "hilo abierto" : "hilos abiertos"}`,
+      href: "/dashboard/correo",
+      tono: "accent",
+    });
+  }
+  if (d.invitacionesPorVencer !== null && d.invitacionesPorVencer > 0) {
+    lista.push({
+      texto: `${d.invitacionesPorVencer} ${d.invitacionesPorVencer === 1 ? "invitación expira" : "invitaciones expiran"} pronto`,
+      detalle: "Vencen en menos de 3 días",
+      href: "/dashboard/ajustes?seccion=usuarios",
+      tono: "warn",
+    });
+  }
+  if (d.registrosNuevos > 0) {
+    lista.push({
+      texto: `${d.registrosNuevos} ${d.registrosNuevos === 1 ? "registro nuevo" : "registros nuevos"} sin contactar`,
+      detalle: "Convocatoria general",
+      href: "/dashboard/registros",
+      tono: "neutro",
+    });
+  }
+  return lista;
+}
+
+function saludo(nombre: string | undefined): string {
+  const h = new Date().getHours();
+  const momento = h < 12 ? "Buenos días" : h < 19 ? "Buenas tardes" : "Buenas noches";
+  if (!nombre) return momento;
+  const corto = nombre.includes("@") ? nombre.split("@")[0] ?? nombre : nombre.split(/\s+/)[0] ?? nombre;
+  return `${momento}, ${corto}`;
+}
+
+function nombreCorto(correo: string): string {
+  return correo.split("@")[0] ?? correo;
+}
+
+function tonoAvatar(texto: string): number {
+  let h = 0;
+  for (let i = 0; i < texto.length; i++) h = (h * 31 + texto.charCodeAt(i)) | 0;
+  return (Math.abs(h) % 4) + 1;
 }

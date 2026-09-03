@@ -36,6 +36,28 @@ export const yo = query({
   },
 });
 
+/** La propia persona cambia como aparece en la bitacora y en los correos. */
+export const actualizarNombre = mutation({
+  args: { nombre: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "lector");
+    const nombre = limpiarTexto(args.nombre, 80);
+    if (nombre.length < 2) throw new Error("El nombre necesita al menos 2 caracteres.");
+    if (nombre === (actor.name ?? "")) return null;
+
+    await ctx.db.patch(actor._id, { name: nombre });
+    await registrarEnBitacora(ctx, {
+      actor,
+      accion: "usuario.nombre",
+      entidad: "users",
+      entidadId: actor._id,
+      detalle: nombre,
+    });
+    return null;
+  },
+});
+
 export const listar = query({
   args: {},
   handler: async (ctx) => {

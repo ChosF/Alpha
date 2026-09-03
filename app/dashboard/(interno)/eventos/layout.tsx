@@ -5,9 +5,11 @@ import { NavegacionEventos } from "./navegacion-eventos";
 export default function EventosLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      <Titulo cejilla="Gestión de eventos">Eventos</Titulo>
+      <Titulo cejilla="Gestión de eventos" descripcion="Asistentes por evento y programa de trabajo del semestre.">
+        Eventos
+      </Titulo>
       <NavegacionEventos />
-      <div className="mt-5">{children}</div>
+      <div>{children}</div>
     </>
   );
 }
