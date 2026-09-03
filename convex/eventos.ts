@@ -1,9 +1,14 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, type QueryCtx } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
 import { registrarEnBitacora } from "./lib/auditoria";
 import { requiereRol } from "./lib/rbac";
 import { limpiarMultilinea, limpiarTexto } from "./lib/texto";
-import { estadoAsistenteValidador } from "./lib/validadores";
+import {
+  estadoAsistenteValidador,
+  estadoEventoValidador,
+  pilarValidador,
+} from "./lib/validadores";
 
 const eventoValidador = v.object({
   _id: v.id("events"),
@@ -15,6 +20,7 @@ const eventoValidador = v.object({
   estado: v.union(v.literal("borrador"), v.literal("publicado"), v.literal("cerrado")),
   registroAbierto: v.boolean(),
   totalRegistros: v.number(),
+  confirmados: v.number(),
   creadoEn: v.number(),
   actualizadoEn: v.number(),
 });
@@ -39,12 +45,115 @@ const asistenteValidador = v.object({
   actualizadoEn: v.number(),
 });
 
+function slugDe(titulo: string): string {
+  const base = titulo
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+  return base || "evento";
+}
+
+async function conConfirmados(ctx: QueryCtx, eventos: Doc<"events">[]) {
+  const pares = await Promise.all(
+    eventos.map(async (evento) => {
+      const filas = await ctx.db
+        .query("eventRegistrations")
+        .withIndex("by_event_and_estado", (q) =>
+          q.eq("eventId", evento._id).eq("estado", "confirmado"),
+        )
+        .take(5000);
+      return [evento._id, filas.length] as const;
+    }),
+  );
+  const mapa = new Map(pares);
+  return eventos.map((evento) => ({ ...evento, confirmados: mapa.get(evento._id) ?? 0 }));
+}
+
 export const listar = query({
   args: {},
   returns: v.array(eventoValidador),
   handler: async (ctx) => {
     await requiereRol(ctx, "lector");
-    return await ctx.db.query("events").take(100);
+    const eventos = await ctx.db.query("events").take(100);
+    return await conConfirmados(ctx, eventos);
+  },
+});
+
+export const crear = mutation({
+  args: {
+    titulo: v.string(),
+    resumen: v.string(),
+    pilar: pilarValidador,
+    slug: v.optional(v.string()),
+  },
+  returns: v.id("events"),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "editor");
+    const titulo = limpiarTexto(args.titulo, 120);
+    if (titulo.length < 3) throw new Error("El titulo necesita al menos 3 caracteres.");
+    const resumen = limpiarMultilinea(args.resumen, 400);
+    let slug = slugDe(limpiarTexto(args.slug ?? titulo, 60));
+    const choque = await ctx.db
+      .query("events")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .first();
+    if (choque) slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
+    const ahora = Date.now();
+    const id = await ctx.db.insert("events", {
+      slug,
+      titulo,
+      resumen,
+      pilar: args.pilar,
+      estado: "borrador",
+      registroAbierto: false,
+      totalRegistros: 0,
+      creadoEn: ahora,
+      actualizadoEn: ahora,
+    });
+    await registrarEnBitacora(ctx, {
+      actor,
+      accion: "evento.creado",
+      entidad: "events",
+      entidadId: id,
+      detalle: titulo,
+    });
+    return id;
+  },
+});
+
+export const actualizar = mutation({
+  args: {
+    id: v.id("events"),
+    titulo: v.string(),
+    resumen: v.string(),
+    pilar: pilarValidador,
+    estado: estadoEventoValidador,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "editor");
+    const previo = await ctx.db.get(args.id);
+    if (previo === null) throw new Error("Ese evento ya no existe.");
+    const titulo = limpiarTexto(args.titulo, 120);
+    if (titulo.length < 3) throw new Error("El titulo necesita al menos 3 caracteres.");
+    await ctx.db.patch(args.id, {
+      titulo,
+      resumen: limpiarMultilinea(args.resumen, 400),
+      pilar: args.pilar,
+      estado: args.estado,
+      actualizadoEn: Date.now(),
+    });
+    await registrarEnBitacora(ctx, {
+      actor,
+      accion: "evento.actualizado",
+      entidad: "events",
+      entidadId: args.id,
+      detalle: titulo,
+    });
+    return null;
   },
 });
 
