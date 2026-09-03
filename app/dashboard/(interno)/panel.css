@@ -1596,8 +1596,12 @@ button.ui-card:hover {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: 18px 20px;
   min-height: 154px;
+  overflow: hidden;
 }
 .ui-proj-head {
   display: flex;
@@ -1649,9 +1653,22 @@ button.ui-card:hover {
   flex: none;
 }
 .ui-proj-note span {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+@media (max-width: 639px) {
+  .ui-proj-note {
+    align-items: flex-start;
+  }
+  .ui-proj-note span {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
 }
 .ui-proj-side {
   flex: none;
@@ -2280,6 +2297,7 @@ button.ui-card:hover {
 }
 .ui-grid > * {
   grid-column: span 12;
+  min-width: 0;
 }
 @media (min-width: 640px) {
   .ui-grid .sm-6 {
