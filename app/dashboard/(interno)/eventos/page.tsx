@@ -219,7 +219,7 @@ function DetalleEvento({
         </Tarjeta>
       </div>
 
-      <div className="ui-split" data-detail={seleccionado ? "open" : "closed"}>
+      <div className="ui-split evento-asistentes-split" data-detail={seleccionado ? "open" : "closed"}>
         <Tarjeta>
           <div className="ui-filterbar p-4 pb-0">
             <Entrada
@@ -305,7 +305,7 @@ function FichaAsistente({
   const numero = telefono.length === 10 ? `52${telefono}` : telefono;
 
   return (
-    <aside className="ui-sheet">
+    <aside className="ui-sheet evento-asistente-sheet">
       <div className="ui-card-h">
         <h3 className="ui-h2">{registro.nombre}</h3>
         <Boton tamano="sm" variante="fantasma" soloIcono icono="cerrar" etiqueta="Cerrar ficha" onClick={alCerrar} />

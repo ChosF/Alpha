@@ -2190,6 +2190,26 @@ button.ui-card:hover {
   .ui-split[data-detail="closed"] {
     grid-template-columns: minmax(0, 1fr);
   }
+  .evento-asistentes-split {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .evento-asistentes-split > .ui-card:first-child {
+    grid-column: span 2;
+  }
+  .evento-asistentes-split[data-detail="closed"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .evento-asistentes-split[data-detail="closed"] > .ui-card:first-child {
+    grid-column: 1 / -1;
+  }
+  .evento-asistente-sheet {
+    position: sticky;
+    top: calc(var(--top-h) + 16px);
+    max-height: calc(100dvh - var(--top-h) - 32px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
 }
 .ui-sheet {
   --r: 10px;
