@@ -2364,16 +2364,6 @@ button.ui-card:hover {
 [data-panel] .selector-personalizado-opcion:focus-visible {
   background: var(--bg-3);
 }
-[data-panel] .selector-personalizado-opcion[data-selected] {
-  background: var(--accent-soft);
-  color: var(--fg);
-}
-[data-panel] .selector-personalizado-opcion[data-selected] .selector-personalizado-marca {
-  border-color: var(--accent);
-  background: var(--accent);
-  box-shadow: inset 0 0 0 4px var(--bg-2);
-}
-
 /* Grid de Inicio */
 .ui-grid {
   display: grid;
@@ -2771,3 +2761,15 @@ a.ui-todo:hover {
 }
 
 } /* @layer components */
+
+/* El selector compartido vive fuera de las capas de Tailwind. Estas reglas
+   tambien deben quedar sin capa para ganar la cascada dentro del panel. */
+[data-panel] .selector-personalizado-opcion[data-selected] {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+[data-panel] .selector-personalizado-opcion[data-selected] .selector-personalizado-marca {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 4px var(--bg-2);
+}
