@@ -6,7 +6,9 @@ import {
   tokensEnEnlacesInvitacion,
 } from "./correo";
 import { limpiarTexto, normalizarCorreo, sha256Hex } from "./lib/texto";
-import { ESTADOS_PROGRAMA, PILARES } from "./lib/validadores";
+import type { EstadoEvento, EstadoPrograma, Pilar } from "./lib/validadores";
+import { CALLING_LAF } from "../lib/calling-laf";
+import { MARIO_KART_CHALLENGE } from "../lib/mario-kart";
 
 /**
  * Arranque del sistema.
@@ -216,46 +218,131 @@ export const remediarInvitacionesExpuestas = internalMutation({
   },
 });
 
-/** Carga el programa 2026-2027 que hoy esta escrito a mano en la landing. */
-export const sembrarProgramas = internalMutation({
+type FilaPrograma = {
+  slug: string;
+  titulo: string;
+  periodo: string;
+  pilar: Pilar;
+  estado: EstadoPrograma;
+  resumen?: string;
+  rutaPublica?: string;
+  fechaEvento?: string;
+  horaInicio?: string;
+  horaFin?: string;
+  sede?: string;
+  estadoEvento?: EstadoEvento;
+  registroAbierto?: boolean;
+};
+
+const PROGRAMA_2026_2027: FilaPrograma[] = [
+  {
+    slug: "calling-laf",
+    titulo: "Calling LAF",
+    periodo: "Ago — Dic 2026",
+    pilar: "desarrollo",
+    estado: "planeacion",
+    resumen:
+      "Un encuentro para entender concentraciones, certificaciones y rutas profesionales antes de elegir el siguiente paso de la carrera.",
+    rutaPublica: "/eventos/calling-laf",
+    fechaEvento: CALLING_LAF.fechaIso,
+    horaInicio: "15:00",
+    horaFin: "17:00",
+    sede: `${CALLING_LAF.sede}, ${CALLING_LAF.campus}`,
+    estadoEvento: "publicado",
+    registroAbierto: true,
+  },
+  {
+    slug: "mario-kart",
+    titulo: MARIO_KART_CHALLENGE.titulo,
+    periodo: "Sep 2026",
+    pilar: "comunidad",
+    estado: "planeacion",
+    resumen: MARIO_KART_CHALLENGE.resumen,
+    rutaPublica: MARIO_KART_CHALLENGE.ruta,
+    fechaEvento: MARIO_KART_CHALLENGE.fechaIso,
+    horaInicio: "13:00",
+    horaFin: "17:00",
+    sede: `${MARIO_KART_CHALLENGE.sede}, ${MARIO_KART_CHALLENGE.campus}`,
+    estadoEvento: "publicado",
+    registroAbierto: true,
+  },
+  { slug: "alpha-integration", titulo: "Alpha Integration", periodo: "Ago — Dic 2026", pilar: "comunidad", estado: "planeacion" },
+  { slug: "quantitative-finance-workshop", titulo: "Quantitative Finance Workshop", periodo: "Ago — Dic 2026", pilar: "desarrollo", estado: "planeacion" },
+  { slug: "networking-night", titulo: "Networking Night", periodo: "Ago — Dic 2026", pilar: "industria", estado: "planeacion" },
+  { slug: "finance-bootcamp", titulo: "Finance Bootcamp", periodo: "Ago — Dic 2026", pilar: "desarrollo", estado: "planeacion" },
+  { slug: "finanzas-para-todos", titulo: "Finanzas para Todos", periodo: "Ago — Dic 2026", pilar: "comunidad", estado: "propuesto" },
+  { slug: "viaje-academico-wall-street", titulo: "Viaje académico a Wall Street", periodo: "Dic 2026", pilar: "industria", estado: "exploratorio" },
+  { slug: "servicio-social-asesoria-financiera", titulo: "Servicio social de asesoría financiera", periodo: "Ago — Dic 2026", pilar: "comunidad", estado: "exploratorio" },
+  { slug: "welcome-laf", titulo: "Welcome LAF", periodo: "Feb — Jun 2027", pilar: "comunidad", estado: "propuesto" },
+  { slug: "flag-football-super-bowl", titulo: "Flag Football · Super Bowl", periodo: "Feb 2027", pilar: "comunidad", estado: "propuesto" },
+  { slug: "quantitative-finance-bootcamp-modulo-2", titulo: "Quantitative Finance Bootcamp · Módulo 2", periodo: "Feb — Jun 2027", pilar: "desarrollo", estado: "propuesto" },
+  { slug: "finanzas-para-todos-2-edicion", titulo: "Finanzas para Todos · 2.ª edición", periodo: "Feb — Jun 2027", pilar: "comunidad", estado: "propuesto" },
+  { slug: "mastering-money", titulo: "Mastering Money", periodo: "Feb — Jun 2027", pilar: "desarrollo", estado: "propuesto" },
+  { slug: "cena-cierre-reconocimiento", titulo: "Cena de cierre y reconocimiento", periodo: "Jun 2027", pilar: "comunidad", estado: "propuesto" },
+];
+
+/**
+ * Convierte el catalogo de la landing en eventos reales, sin reemplazar las
+ * filas existentes de Calling LAF o Mario Kart ni sus registros asociados.
+ */
+export const migrarProgramaAEventos = internalMutation({
   args: {},
-  returns: v.number(),
+  returns: v.object({
+    creados: v.number(),
+    actualizados: v.number(),
+    legadosEliminados: v.number(),
+    total: v.number(),
+  }),
   handler: async (ctx) => {
-    const existentes = await ctx.db.query("programs").collect();
-    if (existentes.length > 0) return 0;
-
-    const base: Array<[string, string, (typeof PILARES)[number], (typeof ESTADOS_PROGRAMA)[number]]> = [
-      ["Calling LAF's", "Ago - Dic 2026", "comunidad", "planeacion"],
-      ["Alpha Integration", "Ago - Dic 2026", "comunidad", "planeacion"],
-      ["Quantitative Finance Workshop", "Ago - Dic 2026", "desarrollo", "planeacion"],
-      ["Networking Night", "Ago - Dic 2026", "industria", "planeacion"],
-      ["Finance Bootcamp", "Ago - Dic 2026", "desarrollo", "planeacion"],
-      ["Finanzas para Todos", "Ago - Dic 2026", "comunidad", "propuesto"],
-      ["Viaje academico a Wall Street", "Dic 2026", "industria", "exploratorio"],
-      ["Servicio social de asesoria financiera", "Ago - Dic 2026", "comunidad", "exploratorio"],
-      ["Welcome LAF", "Feb - Jun 2027", "comunidad", "propuesto"],
-      ["Flag Football / Super Bowl", "Feb 2027", "comunidad", "propuesto"],
-      ["Quantitative Finance Bootcamp - Modulo 2", "Feb - Jun 2027", "desarrollo", "propuesto"],
-      ["Finanzas para Todos - 2.a edicion", "Feb - Jun 2027", "comunidad", "propuesto"],
-      ["Mastering Money", "Feb - Jun 2027", "desarrollo", "propuesto"],
-      ["Cena de cierre y reconocimiento", "Jun 2027", "comunidad", "propuesto"],
-    ];
-
     const ahora = Date.now();
-    let orden = 1;
-    for (const [titulo, periodo, pilar, estado] of base) {
-      await ctx.db.insert("programs", {
-        titulo,
-        periodo,
-        pilar,
-        estado,
-        orden,
-        publicado: true,
-        creadoEn: ahora,
+    let creados = 0;
+    let actualizados = 0;
+
+    for (const [indice, fila] of PROGRAMA_2026_2027.entries()) {
+      const existente = await ctx.db
+        .query("events")
+        .withIndex("by_slug", (q) => q.eq("slug", fila.slug))
+        .unique();
+      const programa = {
+        titulo: fila.titulo,
+        pilar: fila.pilar,
+        periodoPrograma: fila.periodo,
+        estadoPrograma: fila.estado,
+        ordenPrograma: indice + 1,
+        publicadoEnLanding: true,
+        ...(fila.rutaPublica ? { rutaPublica: fila.rutaPublica } : {}),
+        ...(fila.fechaEvento ? { fechaEvento: fila.fechaEvento } : {}),
+        ...(fila.horaInicio ? { horaInicio: fila.horaInicio } : {}),
+        ...(fila.horaFin ? { horaFin: fila.horaFin } : {}),
+        ...(fila.sede ? { sede: fila.sede } : {}),
         actualizadoEn: ahora,
+      };
+
+      if (existente) {
+        await ctx.db.patch(existente._id, programa);
+        actualizados += 1;
+        continue;
+      }
+
+      await ctx.db.insert("events", {
+        slug: fila.slug,
+        resumen: fila.resumen ?? "",
+        estado: fila.estadoEvento ?? "borrador",
+        registroAbierto: fila.registroAbierto ?? false,
+        totalRegistros: 0,
+        creadoEn: ahora,
+        ...programa,
       });
-      orden += 1;
+      creados += 1;
     }
-    return base.length;
+
+    const legados = await ctx.db.query("programs").collect();
+    await Promise.all(legados.map((fila) => ctx.db.delete(fila._id)));
+    return {
+      creados,
+      actualizados,
+      legadosEliminados: legados.length,
+      total: PROGRAMA_2026_2027.length,
+    };
   },
 });

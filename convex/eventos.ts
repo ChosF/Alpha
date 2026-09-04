@@ -7,6 +7,7 @@ import { limpiarMultilinea, limpiarTexto, normalizarCorreo } from "./lib/texto";
 import {
   estadoAsistenteValidador,
   estadoEventoValidador,
+  estadoProgramaValidador,
   pilarValidador,
 } from "./lib/validadores";
 import { esFechaEventoValida, esHoraEventoValida } from "../lib/correo-evento";
@@ -25,9 +26,36 @@ const eventoValidador = v.object({
   estado: v.union(v.literal("borrador"), v.literal("publicado"), v.literal("cerrado")),
   registroAbierto: v.boolean(),
   totalRegistros: v.number(),
+  periodoPrograma: v.optional(v.string()),
+  estadoPrograma: v.optional(estadoProgramaValidador),
+  ordenPrograma: v.optional(v.number()),
+  publicadoEnLanding: v.optional(v.boolean()),
+  responsablePrograma: v.optional(v.string()),
+  notasPrograma: v.optional(v.string()),
+  rutaPublica: v.optional(v.string()),
   confirmados: v.number(),
   creadoEn: v.number(),
   actualizadoEn: v.number(),
+});
+
+const programaPublicoValidador = v.object({
+  slug: v.string(),
+  titulo: v.string(),
+  periodo: v.string(),
+  pilar: pilarValidador,
+  estado: estadoProgramaValidador,
+  orden: v.number(),
+  rutaPublica: v.optional(v.string()),
+});
+
+const eventoDestacadoValidador = v.object({
+  slug: v.string(),
+  titulo: v.string(),
+  fechaEvento: v.string(),
+  horaInicio: v.optional(v.string()),
+  horaFin: v.optional(v.string()),
+  sede: v.optional(v.string()),
+  rutaPublica: v.string(),
 });
 
 const asistenteValidador = v.object({
@@ -83,7 +111,69 @@ export const listar = query({
   handler: async (ctx) => {
     await requiereRol(ctx, "lector");
     const eventos = await ctx.db.query("events").take(100);
-    return await conConfirmados(ctx, eventos);
+    const ordenados = [...eventos].sort((a, b) => {
+      const ordenA = a.ordenPrograma ?? Number.MAX_SAFE_INTEGER;
+      const ordenB = b.ordenPrograma ?? Number.MAX_SAFE_INTEGER;
+      return ordenA - ordenB || b.actualizadoEn - a.actualizadoEn;
+    });
+    return await conConfirmados(ctx, ordenados);
+  },
+});
+
+/**
+ * Proyeccion publica de la landing. El programa y los avisos de eventos salen
+ * de las mismas filas que administran registros, asistencia y correos.
+ */
+export const publicosLanding = query({
+  args: {},
+  returns: v.object({
+    programas: v.array(programaPublicoValidador),
+    destacados: v.array(eventoDestacadoValidador),
+  }),
+  handler: async (ctx) => {
+    const programas = await ctx.db
+      .query("events")
+      .withIndex("by_landing_order", (q) => q.eq("publicadoEnLanding", true))
+      .take(100);
+
+    const destacados = programas
+      .filter(
+        (evento) =>
+          evento.estado === "publicado" &&
+          evento.registroAbierto &&
+          evento.fechaEvento !== undefined &&
+          evento.rutaPublica !== undefined,
+      )
+      .sort((a, b) => a.fechaEvento!.localeCompare(b.fechaEvento!))
+      .map((evento) => ({
+        slug: evento.slug,
+        titulo: evento.titulo,
+        fechaEvento: evento.fechaEvento!,
+        horaInicio: evento.horaInicio,
+        horaFin: evento.horaFin,
+        sede: evento.sede,
+        rutaPublica: evento.rutaPublica!,
+      }));
+
+    return {
+      programas: programas
+        .filter(
+          (evento) =>
+            evento.periodoPrograma !== undefined &&
+            evento.estadoPrograma !== undefined &&
+            evento.ordenPrograma !== undefined,
+        )
+        .map((evento) => ({
+          slug: evento.slug,
+          titulo: evento.titulo,
+          periodo: evento.periodoPrograma!,
+          pilar: evento.pilar,
+          estado: evento.estadoPrograma!,
+          orden: evento.ordenPrograma!,
+          rutaPublica: evento.rutaPublica,
+        })),
+      destacados,
+    };
   },
 });
 
@@ -172,6 +262,135 @@ export const actualizar = mutation({
       entidad: "events",
       entidadId: args.id,
       detalle: titulo,
+    });
+    return null;
+  },
+});
+
+export const crearDesdePrograma = mutation({
+  args: {
+    titulo: v.string(),
+    periodo: v.string(),
+    pilar: pilarValidador,
+    estado: estadoProgramaValidador,
+    responsable: v.optional(v.string()),
+    notas: v.optional(v.string()),
+    publicado: v.boolean(),
+  },
+  returns: v.id("events"),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "editor");
+    const titulo = limpiarTexto(args.titulo, 120);
+    if (titulo.length < 3) throw new Error("El titulo necesita al menos 3 caracteres.");
+    const eventos = await ctx.db.query("events").take(100);
+    let slug = slugDe(titulo);
+    if (eventos.some((evento) => evento.slug === slug)) {
+      slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
+    }
+    const ordenPrograma =
+      eventos.reduce((maximo, evento) => Math.max(maximo, evento.ordenPrograma ?? 0), 0) + 1;
+    const ahora = Date.now();
+    const id = await ctx.db.insert("events", {
+      slug,
+      titulo,
+      resumen: "",
+      pilar: args.pilar,
+      estado: "borrador",
+      registroAbierto: false,
+      totalRegistros: 0,
+      periodoPrograma: limpiarTexto(args.periodo, 40),
+      estadoPrograma: args.estado,
+      ordenPrograma,
+      publicadoEnLanding: args.publicado,
+      ...(args.responsable
+        ? { responsablePrograma: limpiarTexto(args.responsable, 60) }
+        : {}),
+      ...(args.notas ? { notasPrograma: limpiarMultilinea(args.notas, 1000) } : {}),
+      creadoEn: ahora,
+      actualizadoEn: ahora,
+    });
+    await registrarEnBitacora(ctx, {
+      actor,
+      accion: "evento.programa.creado",
+      entidad: "events",
+      entidadId: id,
+      detalle: titulo,
+    });
+    return id;
+  },
+});
+
+export const actualizarPrograma = mutation({
+  args: {
+    id: v.id("events"),
+    titulo: v.string(),
+    periodo: v.string(),
+    pilar: pilarValidador,
+    estado: estadoProgramaValidador,
+    responsable: v.optional(v.string()),
+    notas: v.optional(v.string()),
+    publicado: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "editor");
+    const previo = await ctx.db.get(args.id);
+    if (previo === null) throw new Error("Ese evento ya no existe.");
+    const titulo = limpiarTexto(args.titulo, 120);
+    if (titulo.length < 3) throw new Error("El titulo necesita al menos 3 caracteres.");
+    const ordenPrograma =
+      previo.ordenPrograma ??
+      (await ctx.db
+        .query("events")
+        .take(100))
+        .reduce((maximo, evento) => Math.max(maximo, evento.ordenPrograma ?? 0), 0) +
+        1;
+    await ctx.db.patch(args.id, {
+      titulo,
+      pilar: args.pilar,
+      periodoPrograma: limpiarTexto(args.periodo, 40),
+      estadoPrograma: args.estado,
+      ordenPrograma,
+      publicadoEnLanding: args.publicado,
+      responsablePrograma: args.responsable
+        ? limpiarTexto(args.responsable, 60)
+        : undefined,
+      notasPrograma: args.notas ? limpiarMultilinea(args.notas, 1000) : undefined,
+      actualizadoEn: Date.now(),
+    });
+    await registrarEnBitacora(ctx, {
+      actor,
+      accion: "evento.programa.actualizado",
+      entidad: "events",
+      entidadId: args.id,
+      detalle: titulo,
+    });
+    return null;
+  },
+});
+
+export const quitarDelPrograma = mutation({
+  args: { id: v.id("events") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "admin");
+    const evento = await ctx.db.get(args.id);
+    if (evento === null || evento.estadoPrograma === undefined) return null;
+    await ctx.db.patch(args.id, {
+      periodoPrograma: undefined,
+      estadoPrograma: undefined,
+      ordenPrograma: undefined,
+      publicadoEnLanding: false,
+      responsablePrograma: undefined,
+      notasPrograma: undefined,
+      actualizadoEn: Date.now(),
+    });
+    await registrarEnBitacora(ctx, {
+      actor,
+      accion: "evento.programa.retirado",
+      entidad: "events",
+      entidadId: args.id,
+      detalle: evento.titulo,
     });
     return null;
   },

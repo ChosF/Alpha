@@ -670,19 +670,76 @@ describe("cuentas del panel", () => {
 });
 
 describe("programa publico", () => {
-  it("la consulta abierta no expone notas ni responsable", async () => {
+  it("migra el catalogo a eventos sin duplicar Calling LAF ni Mario Kart", async () => {
     const t = convexTest(schema, modulos);
-    await t.mutation(internal.admin.sembrarProgramas, {});
+    const callingId = await t.action(api.ingestaEventos.asegurarCallingLaf, { secreto: SECRETO });
+    const marioId = await t.action(api.ingestaEventos.asegurarMarioKart, { secreto: SECRETO });
     await t.run(async (ctx) => {
-      const fila = await ctx.db.query("programs").first();
-      await ctx.db.patch(fila!._id, { notas: "secreto interno", responsable: "Cynthia" });
+      await ctx.db.patch(callingId, {
+        totalRegistros: 75,
+        notasPrograma: "secreto interno",
+        responsablePrograma: "Cynthia",
+      });
+      await ctx.db.insert("programs", {
+        titulo: "Fila heredada",
+        periodo: "2026",
+        pilar: "comunidad",
+        estado: "propuesto",
+        orden: 1,
+        publicado: true,
+        creadoEn: Date.now(),
+        actualizadoEn: Date.now(),
+      });
     });
 
-    const publicos = await t.query(api.programas.publicos, {});
-    expect(publicos.length).toBeGreaterThan(0);
-    for (const p of publicos) {
-      expect(p).not.toHaveProperty("notas");
-      expect(p).not.toHaveProperty("responsable");
+    await expect(t.mutation(internal.admin.migrarProgramaAEventos, {})).resolves.toEqual({
+      creados: 13,
+      actualizados: 2,
+      legadosEliminados: 1,
+      total: 15,
+    });
+    await expect(t.mutation(internal.admin.migrarProgramaAEventos, {})).resolves.toMatchObject({
+      creados: 0,
+      actualizados: 15,
+      total: 15,
+    });
+
+    const contenido = await t.query(api.eventos.publicosLanding, {});
+    expect(contenido.programas).toHaveLength(15);
+    expect(contenido.programas.slice(0, 2)).toMatchObject([
+      { slug: "calling-laf", rutaPublica: "/eventos/calling-laf", orden: 1 },
+      { slug: "mario-kart", rutaPublica: "/events/mario-kart", orden: 2 },
+    ]);
+    expect(contenido.destacados.map((evento) => evento.slug)).toEqual([
+      "calling-laf",
+      "mario-kart",
+    ]);
+    for (const p of contenido.programas) {
+      expect(p).not.toHaveProperty("notasPrograma");
+      expect(p).not.toHaveProperty("responsablePrograma");
     }
+
+    const estado = await t.run(async (ctx) => ({
+      eventos: await ctx.db.query("events").collect(),
+      programasLegados: await ctx.db.query("programs").collect(),
+      calling: await ctx.db.get(callingId),
+      mario: await ctx.db.get(marioId),
+    }));
+    expect(estado.eventos).toHaveLength(15);
+    expect(estado.programasLegados).toHaveLength(0);
+    expect(estado.calling?.totalRegistros).toBe(75);
+    expect(estado.calling?._id).toBe(callingId);
+    expect(estado.mario?._id).toBe(marioId);
+  });
+
+  it("los eventos migrados aparecen en la lista autenticada del dashboard", async () => {
+    const t = convexTest(schema, modulos);
+    await t.mutation(internal.admin.migrarProgramaAEventos, {});
+    const lector = await comoUsuario(t, "lector");
+
+    const eventos = await lector.sesion.query(api.eventos.listar, {});
+    expect(eventos).toHaveLength(15);
+    expect(eventos[0]).toMatchObject({ slug: "calling-laf", ordenPrograma: 1 });
+    expect(eventos[1]).toMatchObject({ slug: "mario-kart", ordenPrograma: 2 });
   });
 });

@@ -974,7 +974,7 @@ img,svg{display:block;max-width:100%}
         </div></div>
         <div class="tray up"><div class="core p-6 sm:p-8 flex flex-col justify-between min-h-[150px]">
           <span class="kicker">Programas</span>
-          <span class="tnum d2 mt-6" style="color:var(--accent)" data-count="14">0</span>
+          <span class="tnum d2 mt-6" style="color:var(--accent)" data-count="0" data-program-count>0</span>
         </div></div>
         <div class="tray up"><div class="core p-6 sm:p-8 flex flex-col justify-between min-h-[150px]">
           <span class="kicker">Semestres</span>
@@ -1075,31 +1075,18 @@ img,svg{display:block;max-width:100%}
       </div>
 
       <div class="flex flex-wrap gap-2 mt-12 up" id="chips">
-        <button class="chip" data-f="all" aria-pressed="true">Todo · 14</button>
-        <button class="chip" data-f="plan" aria-pressed="false">En planeación · 5</button>
-        <button class="chip" data-f="prop" aria-pressed="false">Propuesto · 7</button>
-        <button class="chip" data-f="expl" aria-pressed="false">Exploratorio · 2</button>
+        <button class="chip" data-f="all" aria-pressed="true">Todo · …</button>
+        <button class="chip" data-f="plan" aria-pressed="false">En planeación · …</button>
+        <button class="chip" data-f="prop" aria-pressed="false">Propuesto · …</button>
+        <button class="chip" data-f="expl" aria-pressed="false">Exploratorio · …</button>
       </div>
 
       <div class="mt-10 up" id="idx">
-        <div class="row" data-s="plan"><span class="ix tnum">01</span><div><h3 class="nm">Calling LAF’s</h3><div class="meta tnum"><span>Ago — Dic 2026</span><span>Comunidad</span><span class="st st-p"><b></b>En planeación</span></div></div></div>
-        <div class="row" data-s="plan"><span class="ix tnum">02</span><div><h3 class="nm">Alpha Integration</h3><div class="meta tnum"><span>Ago — Dic 2026</span><span>Comunidad</span><span class="st st-p"><b></b>En planeación</span></div></div></div>
-        <div class="row" data-s="plan"><span class="ix tnum">03</span><div><h3 class="nm">Quantitative Finance Workshop</h3><div class="meta tnum"><span>Ago — Dic 2026</span><span>Desarrollo profesional</span><span class="st st-p"><b></b>En planeación</span></div></div></div>
-        <div class="row" data-s="plan"><span class="ix tnum">04</span><div><h3 class="nm">Networking Night</h3><div class="meta tnum"><span>Ago — Dic 2026</span><span>Industria</span><span class="st st-p"><b></b>En planeación</span></div></div></div>
-        <div class="row" data-s="plan"><span class="ix tnum">05</span><div><h3 class="nm">Finance Bootcamp</h3><div class="meta tnum"><span>Ago — Dic 2026</span><span>Desarrollo profesional</span><span class="st st-p"><b></b>En planeación</span></div></div></div>
-        <div class="row" data-s="prop"><span class="ix tnum">06</span><div><h3 class="nm">Finanzas para Todos</h3><div class="meta tnum"><span>Ago — Dic 2026</span><span>Comunidad</span><span class="st st-r"><b></b>Propuesto</span></div></div></div>
-        <div class="row" data-s="expl"><span class="ix tnum">07</span><div><h3 class="nm">Viaje académico a Wall Street</h3><div class="meta tnum"><span>Dic 2026</span><span>Industria</span><span class="st st-e"><b></b>Exploratorio</span></div></div></div>
-        <div class="row" data-s="expl"><span class="ix tnum">08</span><div><h3 class="nm">Servicio social de asesoría financiera</h3><div class="meta tnum"><span>Ago — Dic 2026</span><span>Comunidad</span><span class="st st-e"><b></b>Exploratorio</span></div></div></div>
-        <div class="row" data-s="prop"><span class="ix tnum">09</span><div><h3 class="nm">Welcome LAF</h3><div class="meta tnum"><span>Feb — Jun 2027</span><span>Comunidad</span><span class="st st-r"><b></b>Propuesto</span></div></div></div>
-        <div class="row" data-s="prop"><span class="ix tnum">10</span><div><h3 class="nm">Flag Football · Super Bowl</h3><div class="meta tnum"><span>Feb 2027</span><span>Comunidad</span><span class="st st-r"><b></b>Propuesto</span></div></div></div>
-        <div class="row" data-s="prop"><span class="ix tnum">11</span><div><h3 class="nm">Quantitative Finance Bootcamp · Módulo 2</h3><div class="meta tnum"><span>Feb — Jun 2027</span><span>Desarrollo profesional</span><span class="st st-r"><b></b>Propuesto</span></div></div></div>
-        <div class="row" data-s="prop"><span class="ix tnum">12</span><div><h3 class="nm">Finanzas para Todos · 2.ª edición</h3><div class="meta tnum"><span>Feb — Jun 2027</span><span>Comunidad</span><span class="st st-r"><b></b>Propuesto</span></div></div></div>
-        <div class="row" data-s="prop"><span class="ix tnum">13</span><div><h3 class="nm">Mastering Money</h3><div class="meta tnum"><span>Feb — Jun 2027</span><span>Desarrollo profesional</span><span class="st st-r"><b></b>Propuesto</span></div></div></div>
-        <div class="row" data-s="prop"><span class="ix tnum">14</span><div><h3 class="nm">Cena de cierre y reconocimiento</h3><div class="meta tnum"><span>Jun 2027</span><span>Comunidad</span><span class="st st-r"><b></b>Propuesto</span></div></div></div>
+        <p class="lede text-[13px]" id="program-status">Cargando el programa actualizado…</p>
       </div>
 
       <button class="program-more up" id="program-more" type="button" aria-expanded="false">
-        <span>Ver los 14 programas</span>
+        <span>Ver más programas</span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg>
       </button>
 
@@ -1396,38 +1383,44 @@ img,svg{display:block;max-width:100%}
   const eventBanner = document.getElementById("event-banner");
   const eventGatewayBanner = document.getElementById("event-gateway-banner");
   const eventBanners = [eventBanner,eventGatewayBanner];
-  const callingCierre = Date.parse("2026-09-04T22:00:00.000Z"); // 16:00 en Ciudad de México
-  const promocionesEvento = {
-    callingLaf: {
-      href:"/eventos/calling-laf",
-      etiqueta:"Calling LAF ya está aquí, abrir registro",
-      titulo:"Calling LAF ya está aquí.",
-      detalles:"04 SEP · SUM 1102 · 3:00–5:00 PM"
-    },
-    marioKart: {
-      href:"/events/mario-kart",
-      etiqueta:"Mario Kart Challenge ya está aquí, abrir evento",
-      titulo:"Mario Kart Challenge ya está aquí.",
-      detalles:"21 SEP · SUM 2103 · 13:00–17:00"
-    }
-  };
+  const contenidoLandingPromise = fetch("/api/programa", {
+    headers:{accept:"application/json"},cache:"no-store"
+  }).then(respuesta => {
+    if (!respuesta.ok) throw new Error("Programa no disponible");
+    return respuesta.json();
+  }).catch(() => null);
   const aplicarPromocionEvento = promocion => {
     eventBanners.forEach(banner => {
       const enlace = banner.matches("a") ? banner : banner.querySelector("a");
-      enlace.href = promocion.href;
-      enlace.setAttribute("aria-label",promocion.etiqueta);
-      banner.querySelector("[data-event-title]").textContent = promocion.titulo;
-      banner.querySelector("[data-event-details]").textContent = promocion.detalles;
+      enlace.href = promocion.rutaPublica;
+      enlace.setAttribute("aria-label",`${promocion.titulo}, abrir evento`);
+      banner.querySelector("[data-event-title]").textContent = `${promocion.titulo} ya está aquí.`;
+      banner.querySelector("[data-event-details]").textContent = detallesEvento(promocion);
       banner.hidden = false;
     });
     requestAnimationFrame(() => eventBanners.forEach(banner => banner.classList.add("on")));
   };
-  const sincronizarPromocionEvento = () => {
-    const restante = callingCierre-Date.now();
-    aplicarPromocionEvento(restante > 0 ? promocionesEvento.callingLaf : promocionesEvento.marioKart);
-    if (restante > 0) setTimeout(sincronizarPromocionEvento,Math.min(restante,2147483647));
+  const ocultarPromocionEvento = () => {
+    eventBanners.forEach(banner => {
+      banner.classList.remove("on");
+      banner.hidden = true;
+    });
   };
-  sincronizarPromocionEvento();
+  const detallesEvento = evento => {
+    const fecha = new Intl.DateTimeFormat("es-MX",{day:"2-digit",month:"short",timeZone:"America/Mexico_City"})
+      .format(new Date(`${evento.fechaEvento}T12:00:00-06:00`)).replace(".","").toUpperCase();
+    const horas = evento.horaInicio
+      ? `${evento.horaInicio}${evento.horaFin ? `–${evento.horaFin}` : ""}`
+      : "";
+    return [fecha,evento.sede,horas].filter(Boolean).join(" · ");
+  };
+  const elegirPromocionEvento = destacados => {
+    const ahora = Date.now();
+    return destacados.find(evento => {
+      const cierre = evento.horaFin || evento.horaInicio || "23:59";
+      return Date.parse(`${evento.fechaEvento}T${cierre}:00-06:00`) >= ahora;
+    }) || null;
+  };
 
   /* ─── Estrellas fugaces sobre el campo navy ─────────────────────── */
   if (!RM && cv) {
@@ -1926,9 +1919,60 @@ img,svg{display:block;max-width:100%}
 
   /* ─── Programa: filtro y divulgación progresiva en móvil ───────── */
   const chips = document.getElementById("chips");
-  const programRows = [...document.querySelectorAll("#idx .row")];
+  const programIndex = document.getElementById("idx");
+  let programRows = [];
   const programMore = document.getElementById("program-more");
   let programFilter = "all", programExpanded = false;
+
+  const estadosPrograma = {
+    planeacion:{filtro:"plan",clase:"st-p",etiqueta:"En planeación"},
+    propuesto:{filtro:"prop",clase:"st-r",etiqueta:"Propuesto"},
+    exploratorio:{filtro:"expl",clase:"st-e",etiqueta:"Exploratorio"}
+  };
+  const pilaresPrograma = {
+    desarrollo:"Desarrollo profesional",
+    industria:"Industria",
+    comunidad:"Comunidad"
+  };
+
+  const crearFilaPrograma = (programa,indice) => {
+    const estado = estadosPrograma[programa.estado];
+    const row = document.createElement("div");
+    row.className = "row";
+    row.dataset.s = estado.filtro;
+
+    const numero = document.createElement("span");
+    numero.className = "ix tnum";
+    numero.textContent = String(indice+1).padStart(2,"0");
+
+    const cuerpo = document.createElement("div");
+    const titulo = document.createElement("h3");
+    titulo.className = "nm";
+    if (programa.rutaPublica) {
+      const enlace = document.createElement("a");
+      enlace.href = programa.rutaPublica;
+      enlace.textContent = programa.titulo;
+      enlace.setAttribute("aria-label",`${programa.titulo}, abrir evento`);
+      titulo.append(enlace);
+    } else {
+      titulo.textContent = programa.titulo;
+    }
+
+    const meta = document.createElement("div");
+    meta.className = "meta tnum";
+    const periodo = document.createElement("span");
+    periodo.textContent = programa.periodo;
+    const pilar = document.createElement("span");
+    pilar.textContent = pilaresPrograma[programa.pilar] || programa.pilar;
+    const estadoEl = document.createElement("span");
+    estadoEl.className = `st ${estado.clase}`;
+    const punto = document.createElement("b");
+    estadoEl.append(punto,document.createTextNode(estado.etiqueta));
+    meta.append(periodo,pilar,estadoEl);
+    cuerpo.append(titulo,meta);
+    row.append(numero,cuerpo);
+    return row;
+  };
 
   const renderProgram = () => {
     const compact = innerWidth < 768;
@@ -1947,6 +1991,35 @@ img,svg{display:block;max-width:100%}
     programMore.setAttribute("aria-expanded", String(programExpanded));
     programMore.querySelector("span").textContent = `Ver ${hiddenByLimit} programas más`;
   };
+
+  const actualizarPrograma = programas => {
+    const ordenados = [...programas].sort((a,b) => a.orden-b.orden);
+    programIndex.replaceChildren(...ordenados.map(crearFilaPrograma));
+    programRows = [...programIndex.querySelectorAll(".row")];
+
+    const conteos = {all:ordenados.length,plan:0,prop:0,expl:0};
+    ordenados.forEach(programa => { conteos[estadosPrograma[programa.estado].filtro]++; });
+    const etiquetas = {all:"Todo",plan:"En planeación",prop:"Propuesto",expl:"Exploratorio"};
+    chips.querySelectorAll(".chip").forEach(chip => {
+      chip.textContent = `${etiquetas[chip.dataset.f]} · ${conteos[chip.dataset.f]}`;
+    });
+    const contador = document.querySelector("[data-program-count]");
+    contador.dataset.count = String(ordenados.length);
+    contador.textContent = String(ordenados.length).padStart(2,"0");
+    renderProgram();
+  };
+
+  contenidoLandingPromise.then(contenido => {
+    if (!contenido) {
+      document.getElementById("program-status").textContent = "El programa no pudo cargarse. Intenta de nuevo en unos minutos.";
+      ocultarPromocionEvento();
+      return;
+    }
+    actualizarPrograma(contenido.programas);
+    const promocion = elegirPromocionEvento(contenido.destacados);
+    if (promocion) aplicarPromocionEvento(promocion);
+    else ocultarPromocionEvento();
+  });
 
   chips.addEventListener("click", event => {
     const button = event.target.closest(".chip"); if (!button) return;

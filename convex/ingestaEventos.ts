@@ -58,6 +58,11 @@ export const asegurarEventoCallingLaf = internalMutation({
         horaInicio: "15:00",
         horaFin: "17:00",
         sede: `${CALLING_LAF.sede}, ${CALLING_LAF.campus}`,
+        periodoPrograma: "Ago — Dic 2026",
+        estadoPrograma: "planeacion",
+        ordenPrograma: 1,
+        publicadoEnLanding: true,
+        rutaPublica: "/eventos/calling-laf",
         actualizadoEn: Date.now(),
       });
       return existente._id;
@@ -77,6 +82,11 @@ export const asegurarEventoCallingLaf = internalMutation({
       estado: "publicado",
       registroAbierto: true,
       totalRegistros: 0,
+      periodoPrograma: "Ago — Dic 2026",
+      estadoPrograma: "planeacion",
+      ordenPrograma: 1,
+      publicadoEnLanding: true,
+      rutaPublica: "/eventos/calling-laf",
       creadoEn: ahora,
       actualizadoEn: ahora,
     });
@@ -115,6 +125,11 @@ export const asegurarEventoMarioKart = internalMutation({
           sede: `${MARIO_KART_CHALLENGE.sede}, ${MARIO_KART_CHALLENGE.campus}`,
           estado: "publicado",
           registroAbierto: true,
+          periodoPrograma: "Sep 2026",
+          estadoPrograma: "planeacion",
+          ordenPrograma: 2,
+          publicadoEnLanding: true,
+          rutaPublica: MARIO_KART_CHALLENGE.ruta,
           actualizadoEn: Date.now(),
         });
       }
@@ -134,6 +149,11 @@ export const asegurarEventoMarioKart = internalMutation({
       estado: "publicado",
       registroAbierto: true,
       totalRegistros: 0,
+      periodoPrograma: "Sep 2026",
+      estadoPrograma: "planeacion",
+      ordenPrograma: 2,
+      publicadoEnLanding: true,
+      rutaPublica: MARIO_KART_CHALLENGE.ruta,
       creadoEn: ahora,
       actualizadoEn: ahora,
     });

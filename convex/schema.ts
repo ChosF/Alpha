@@ -122,9 +122,19 @@ export default defineSchema({
     estado: estadoEventoValidador,
     registroAbierto: v.boolean(),
     totalRegistros: v.number(),
+    /** Metadatos del plan de trabajo. Si existen, esta misma fila aparece en la landing. */
+    periodoPrograma: v.optional(v.string()),
+    estadoPrograma: v.optional(estadoProgramaValidador),
+    ordenPrograma: v.optional(v.number()),
+    publicadoEnLanding: v.optional(v.boolean()),
+    responsablePrograma: v.optional(v.string()),
+    notasPrograma: v.optional(v.string()),
+    rutaPublica: v.optional(v.string()),
     creadoEn: v.number(),
     actualizadoEn: v.number(),
-  }).index("by_slug", ["slug"]),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_landing_order", ["publicadoEnLanding", "ordenPrograma"]),
 
   /** Personas registradas a un evento. No se mezclan con la convocatoria de miembros. */
   eventRegistrations: defineTable({
@@ -191,7 +201,11 @@ export default defineSchema({
     .index("by_tokenHash", ["tokenHash"])
     .index("by_correo", ["correo"]),
 
-  /** Programa de trabajo que la landing publica. */
+  /**
+   * Tabla heredada. La migracion `admin:migrarProgramaAEventos` vacia sus
+   * filas; se conserva durante una version para que el despliegue pueda leer
+   * y retirar datos antiguos sin mantener dos fuentes de verdad.
+   */
   programs: defineTable({
     titulo: v.string(),
     periodo: v.string(),

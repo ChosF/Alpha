@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { api } from "@/convex/_generated/api";
-import type { Doc, Id } from "@/convex/_generated/dataModel";
+import type { Id } from "@/convex/_generated/dataModel";
 import {
   ESTADOS_PROGRAMA,
   ETIQUETAS,
@@ -27,19 +28,22 @@ import {
 } from "@/components/panel/ui/primitivas";
 import { useCascaron } from "@/components/panel/ui/cascaron";
 
+type EventoPrograma = FunctionReturnType<typeof api.eventos.listar>[number];
+
 export function ProgramaEventos({ integrado = false }: { integrado?: boolean }) {
   const { yo } = useCascaron();
-  const programas = useQuery(api.programas.listar, {});
-  const [editando, setEditando] = useState<Id<"programs"> | "nuevo" | null>(null);
+  const eventos = useQuery(api.eventos.listar, {});
+  const programas = eventos?.filter((evento) => evento.estadoPrograma !== undefined);
+  const [editando, setEditando] = useState<Id<"events"> | "nuevo" | null>(null);
   const puedeEditar = yo?.rol === "admin" || yo?.rol === "editor";
-  const actual = programas?.find((p) => p._id === editando) ?? null;
+  const actual = eventos?.find((evento) => evento._id === editando) ?? null;
 
   return (
     <>
       {!integrado ? (
         <Encabezado
           titulo="Programa"
-          descripcion="Lo publicado sale en la landing."
+          descripcion="Los mismos eventos alimentan el dashboard y la landing."
           acciones={
             puedeEditar ? (
               <Boton variante="primario" icono="mas" onClick={() => setEditando("nuevo")}>
@@ -62,7 +66,7 @@ export function ProgramaEventos({ integrado = false }: { integrado?: boolean }) 
         ) : programas.length === 0 ? (
           <Vacio
             titulo="Todavía no hay programas"
-            ayuda="Carga el plan con el comando de siembra, o agrega el primero a mano."
+            ayuda="Agrega el primero. También aparecerá como evento en el dashboard."
           />
         ) : (
           <div className="ui-table-wrap">
@@ -86,17 +90,17 @@ export function ProgramaEventos({ integrado = false }: { integrado?: boolean }) 
                     <td className="ui-td-tight ui-faint">{String(i + 1).padStart(2, "0")}</td>
                     <td>
                       <span className="block font-medium">{p.titulo}</span>
-                      <span className="ui-faint text-[12px]">{p.periodo}</span>
+                      <span className="ui-faint text-[12px]">{p.periodoPrograma}</span>
                     </td>
                     <td>{ETIQUETAS[p.pilar]}</td>
                     <td>
-                      <Pildora tono={TONO_ESTADO[p.estado] ?? "neutro"} sm>
-                        {ETIQUETAS[p.estado]}
+                      <Pildora tono={TONO_ESTADO[p.estadoPrograma ?? ""] ?? "neutro"} sm>
+                        {ETIQUETAS[p.estadoPrograma ?? ""]}
                       </Pildora>
                     </td>
                     <td>
-                      <Pildora tono={p.publicado ? "ok" : "neutro"} sm punto={false}>
-                        {p.publicado ? "Publicado" : "Oculto"}
+                      <Pildora tono={p.publicadoEnLanding ? "ok" : "neutro"} sm punto={false}>
+                        {p.publicadoEnLanding ? "Publicado" : "Oculto"}
                       </Pildora>
                     </td>
                   </tr>
@@ -107,7 +111,7 @@ export function ProgramaEventos({ integrado = false }: { integrado?: boolean }) 
         )}
         {programas && programas.length > 0 ? (
           <p className="ui-faint px-4 py-3 text-[12px]">
-            {programas.length} programas · {programas.filter((p) => p.publicado).length} visibles en la landing
+            {programas.length} programas · {programas.filter((p) => p.publicadoEnLanding).length} visibles en la landing
           </p>
         ) : null}
       </Tarjeta>
@@ -132,20 +136,20 @@ function Formulario({
   onListo,
   onCerrar,
 }: {
-  programa?: Doc<"programs">;
+  programa?: EventoPrograma;
   onListo: () => void;
   onCerrar: () => void;
 }) {
-  const crear = useMutation(api.programas.crear);
-  const actualizar = useMutation(api.programas.actualizar);
-  const eliminar = useMutation(api.programas.eliminar);
+  const crear = useMutation(api.eventos.crearDesdePrograma);
+  const actualizar = useMutation(api.eventos.actualizarPrograma);
+  const eliminar = useMutation(api.eventos.quitarDelPrograma);
   const [titulo, setTitulo] = useState(programa?.titulo ?? "");
-  const [periodo, setPeriodo] = useState(programa?.periodo ?? "");
+  const [periodo, setPeriodo] = useState(programa?.periodoPrograma ?? "");
   const [pilar, setPilar] = useState<Pilar>(programa?.pilar ?? "desarrollo");
-  const [estado, setEstado] = useState<EstadoPrograma>(programa?.estado ?? "propuesto");
-  const [responsable, setResponsable] = useState(programa?.responsable ?? "");
-  const [notas, setNotas] = useState(programa?.notas ?? "");
-  const [publicado, setPublicado] = useState(programa?.publicado ?? false);
+  const [estado, setEstado] = useState<EstadoPrograma>(programa?.estadoPrograma ?? "propuesto");
+  const [responsable, setResponsable] = useState(programa?.responsablePrograma ?? "");
+  const [notas, setNotas] = useState(programa?.notasPrograma ?? "");
+  const [publicado, setPublicado] = useState(programa?.publicadoEnLanding ?? false);
   const [error, setError] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
 
@@ -183,7 +187,7 @@ function Formulario({
       await eliminar({ id: programa._id });
       onListo();
     } catch {
-      setError("No se pudo eliminar. Hace falta rol de administrador.");
+      setError("No se pudo retirar del programa. Hace falta rol de administrador.");
       setOcupado(false);
     }
   };
@@ -249,7 +253,7 @@ function Formulario({
           </Boton>
           {programa ? (
             <Boton variante="peligro" className="ml-auto" onClick={() => void borrar()} disabled={ocupado}>
-              Eliminar
+              Retirar del programa
             </Boton>
           ) : null}
           {error ? <Aviso tono="error">{error}</Aviso> : null}

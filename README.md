@@ -89,10 +89,10 @@ Desde ahi puedes invitar al resto del equipo en **Dashboard -> Usuarios**.
 Si Resend esta configurado, la invitacion se manda desde `auto@alphaccm.org`. El panel conserva el
 enlace de un solo uso como respaldo durante la creacion.
 
-Para cargar el plan de trabajo 2026 — 2027 en la base:
+Para convertir el plan 2026 — 2027 en eventos del dashboard y conectarlo con la landing:
 
 ```bash
-npx convex run admin:sembrarProgramas
+npx convex run admin:migrarProgramaAEventos
 ```
 
 ---

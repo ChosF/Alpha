@@ -29,7 +29,6 @@ import type * as lib_texto from "../lib/texto.js";
 import type * as lib_validadores from "../lib/validadores.js";
 import type * as metricas from "../metricas.js";
 import type * as preferencias from "../preferencias.js";
-import type * as programas from "../programas.js";
 import type * as registros from "../registros.js";
 import type * as usuarios from "../usuarios.js";
 
@@ -61,7 +60,6 @@ declare const fullApi: ApiFromModules<{
   "lib/validadores": typeof lib_validadores;
   metricas: typeof metricas;
   preferencias: typeof preferencias;
-  programas: typeof programas;
   registros: typeof registros;
   usuarios: typeof usuarios;
 }>;

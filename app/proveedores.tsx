@@ -7,8 +7,8 @@ import { MarcaAlpha } from "@/components/marca-alpha";
 
 const url = process.env.NEXT_PUBLIC_CONVEX_URL;
 
-/* La landing publica no depende de Convex. Si falta la configuracion local,
-   evitamos montar las vistas internas porque sus hooks requieren el cliente. */
+/* La landing consulta su programa por una ruta publica. El cliente reactivo
+   sigue montandose solo en el dashboard, donde tambien vive la autenticacion. */
 const cliente = url ? new ConvexReactClient(url) : null;
 
 function ConfiguracionConvexFaltante() {
