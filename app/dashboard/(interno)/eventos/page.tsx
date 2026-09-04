@@ -19,6 +19,7 @@ import { construirXlsx } from "@/lib/xlsx";
 import { Icono } from "@/components/panel/ui/iconos";
 import {
   AreaTexto,
+  Avatar,
   Aviso,
   Boton,
   Campo,
@@ -32,6 +33,7 @@ import {
   Tarjeta,
   Vacio,
   fecha,
+  iniciales,
   relativo,
 } from "@/components/panel/ui/primitivas";
 import { SelectorPersonalizado } from "@/components/panel/selector-personalizado";
@@ -45,6 +47,11 @@ export default function Eventos() {
   const eventos = useQuery(api.eventos.listar, {});
   const [seleccion, setSeleccion] = useState<Id<"events"> | null>(null);
   const [creando, setCreando] = useState(false);
+
+  useEffect(() => {
+    const eventoId = new URLSearchParams(window.location.search).get("evento");
+    if (eventoId) setSeleccion(eventoId as Id<"events">);
+  }, []);
 
   const evento = eventos?.find((e) => e._id === seleccion) ?? null;
   const puedeEditar = yo?.rol === "admin" || yo?.rol === "editor";
@@ -86,9 +93,7 @@ export default function Eventos() {
               onClick={() => setSeleccion(item._id)}
             >
               <span className="ui-proj-head">
-                <span className="ui-proj-mark">
-                  <Icono nombre="eventos" tamano={15} />
-                </span>
+                <Avatar texto={iniciales(item.titulo)} />
                 <span className="ui-proj-text">
                   <strong>{item.titulo}</strong>
                   <span>alphaccm.org/eventos/{item.slug}</span>

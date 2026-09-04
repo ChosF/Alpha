@@ -8,6 +8,7 @@ import { ETIQUETAS } from "@/convex/lib/validadores";
 import { useCascaron } from "@/components/panel/ui/cascaron";
 import { Icono } from "@/components/panel/ui/iconos";
 import {
+  Avatar,
   Cargando,
   Encabezado,
   Pildora,
@@ -15,6 +16,7 @@ import {
   Tarjeta,
   TarjetaCabecera,
   Vacio,
+  iniciales,
   relativo,
 } from "@/components/panel/ui/primitivas";
 
@@ -65,72 +67,19 @@ export default function Inicio() {
           <span className="ui-stat-delta">Suma de todos los eventos</span>
         </Tarjeta>
         <Tarjeta className="ui-stat lg-4" indice={3}>
-          <span className="ui-stat-label">Programa publicado</span>
-          <span className="ui-stat-value">
-            {resumen.programasPublicados}
-            <span className="ui-faint text-[16px] font-medium"> / {resumen.programasTotal}</span>
+          <span className="ui-stat-label">Correos sin leer</span>
+          <span className="ui-stat-value">{datos.correo?.noLeidos ?? "—"}</span>
+          <span className="ui-stat-delta">
+            {datos.correo
+              ? `${datos.correo.abiertos} ${datos.correo.abiertos === 1 ? "hilo abierto" : "hilos abiertos"}`
+              : "Disponible para editores"}
           </span>
-          <span className="ui-stat-delta">Visible en la landing</span>
         </Tarjeta>
       </div>
 
       <div className="ui-grid mt-6">
-        <section className="lg-8">
-          <div className="ui-sec-h">
-            <h2>Eventos</h2>
-            <Link href="/dashboard/eventos">
-              Ver todos <Icono nombre="chevronDerecha" tamano={13} />
-            </Link>
-          </div>
-
-          {datos.eventos.length === 0 ? (
-            <Tarjeta indice={4}>
-              <Vacio
-                titulo="Todavía no hay eventos"
-                ayuda="Crea el primero desde Eventos. Aquí aparecerán los que tengan registro abierto y los borradores."
-              />
-            </Tarjeta>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {datos.eventos.slice(0, 6).map((e, i) => (
-                <Tarjeta key={e._id} className="ui-proj" indice={Math.min(4 + i, 8)}>
-                  <Link href="/dashboard/eventos" className="ui-proj-head" aria-label={`Abrir ${e.titulo}`}>
-                    <span className="ui-proj-mark">
-                      <Icono nombre="eventos" tamano={15} />
-                    </span>
-                    <span className="ui-proj-text">
-                      <strong>{e.titulo}</strong>
-                      <span>alphaccm.org/eventos/{e.slug}</span>
-                    </span>
-                    <span className="ui-proj-side">
-                      {e.confirmados}/{e.totalRegistros}
-                    </span>
-                  </Link>
-                  <p className="ui-proj-note">
-                    <Icono nombre="commit" tamano={14} />
-                    <span>{e.resumen || ETIQUETAS[e.pilar] || "Sin resumen"}</span>
-                  </p>
-                  <div className="ui-proj-foot">
-                    <span className="ui-proj-who">
-                      <Icono nombre="reloj" tamano={13} />
-                      <span>{relativo(e.actualizadoEn)}</span>
-                    </span>
-                    <span className="ui-proj-meta">
-                      <Pildora tono={TONO_ESTADO[e.estado] ?? "neutro"} sm>
-                        {e.registroAbierto && e.estado === "publicado"
-                          ? "Registro abierto"
-                          : ETIQUETAS[e.estado] ?? e.estado}
-                      </Pildora>
-                    </span>
-                  </div>
-                </Tarjeta>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <aside className="lg-4 grid gap-4 content-start">
-          <Tarjeta indice={5}>
+        <aside className="lg-4 grid content-start lg:pt-9">
+          <Tarjeta className="min-h-[154px]" indice={4}>
             <TarjetaCabecera titulo="Pendientes" descripcion="Requieren una decisión o acción." />
             {pendientes.length === 0 ? (
               <p className="ui-faint px-5 py-6 text-[12.5px]">Nada urgente. Todo al día.</p>
@@ -149,8 +98,62 @@ export default function Inicio() {
               </div>
             )}
           </Tarjeta>
-
         </aside>
+
+        <section className="lg-8">
+          <div className="ui-sec-h">
+            <h2>Eventos</h2>
+          </div>
+
+          {datos.eventos.length === 0 ? (
+            <Tarjeta indice={4}>
+              <Vacio
+                titulo="Todavía no hay eventos"
+                ayuda="Crea el primero desde Eventos. Aquí aparecerán los que tengan registro abierto y los borradores."
+              />
+            </Tarjeta>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {datos.eventos.slice(0, 6).map((e, i) => (
+                <Link
+                  key={e._id}
+                  href={{ pathname: "/dashboard/eventos", query: { evento: e._id } }}
+                  className="ui-card ui-card-link ui-proj ui-in"
+                  data-i={Math.min(5 + i, 8)}
+                  aria-label={`Abrir ${e.titulo}`}
+                >
+                  <span className="ui-proj-head">
+                    <Avatar texto={iniciales(e.titulo)} />
+                    <span className="ui-proj-text">
+                      <strong>{e.titulo}</strong>
+                      <span>alphaccm.org/eventos/{e.slug}</span>
+                    </span>
+                    <span className="ui-proj-side">
+                      {e.confirmados}/{e.totalRegistros}
+                    </span>
+                  </span>
+                  <p className="ui-proj-note">
+                    <Icono nombre="commit" tamano={14} />
+                    <span>{e.resumen || ETIQUETAS[e.pilar] || "Sin resumen"}</span>
+                  </p>
+                  <div className="ui-proj-foot">
+                    <span className="ui-proj-who">
+                      <Icono nombre="reloj" tamano={13} />
+                      <span>{relativo(e.actualizadoEn)}</span>
+                    </span>
+                    <span className="ui-proj-meta">
+                      <Pildora tono={TONO_ESTADO[e.estado] ?? "neutro"} sm>
+                        {e.registroAbierto && e.estado === "publicado"
+                          ? "Registro abierto"
+                          : ETIQUETAS[e.estado] ?? e.estado}
+                      </Pildora>
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
 
       <Analitica analitica={datos.analitica} visibles={graficasInicio} />
