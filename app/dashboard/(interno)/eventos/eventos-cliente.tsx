@@ -167,6 +167,7 @@ function DetalleEvento({
   puedeEditar: boolean;
   esAdmin: boolean;
 }) {
+  const router = useRouter();
   const [busqueda, setBusqueda] = useState("");
   const [estado, setEstado] = useState<EstadoAsistente | "">("");
   const [abierto, setAbierto] = useState<Id<"eventRegistrations"> | null>(null);
@@ -442,7 +443,17 @@ function DetalleEvento({
         ) : null}
       </div>
 
-      {editando ? <FormularioEvento evento={evento} alListo={() => setEditando(false)} alCerrar={() => setEditando(false)} /> : null}
+      {editando ? (
+        <FormularioEvento
+          evento={evento}
+          alListo={() => setEditando(false)}
+          alCerrar={() => setEditando(false)}
+          alEliminar={() => {
+            setEditando(false);
+            router.push("/dashboard/eventos");
+          }}
+        />
+      ) : null}
       {correoTipo ? <CorreoEvento evento={evento} tipo={correoTipo} cerrar={() => setCorreoTipo(null)} /> : null}
       {registrandoEnPuerta ? (
         <FormularioAsistenteEnPuerta
@@ -714,13 +725,16 @@ function FormularioEvento({
   evento,
   alListo,
   alCerrar,
+  alEliminar,
 }: {
   evento?: EventoLista;
   alListo: (id: Id<"events">) => void;
   alCerrar: () => void;
+  alEliminar?: () => void;
 }) {
   const crear = useMutation(api.eventos.crear);
   const actualizar = useMutation(api.eventos.actualizar);
+  const eliminar = useMutation(api.eventos.eliminar);
   const [titulo, setTitulo] = useState(evento?.titulo ?? "");
   const [resumen, setResumen] = useState(evento?.resumen ?? "");
   const [pilar, setPilar] = useState<Pilar>(evento?.pilar ?? "desarrollo");
@@ -731,6 +745,45 @@ function FormularioEvento({
   const [sede, setSede] = useState(evento?.sede ?? "");
   const [error, setError] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
+  const temporizadorConfirmacion = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (temporizadorConfirmacion.current) {
+        clearTimeout(temporizadorConfirmacion.current);
+      }
+    };
+  }, []);
+
+  const manejarEliminar = async () => {
+    if (!evento || ocupado || eliminando) return;
+    if (!confirmandoEliminar) {
+      setConfirmandoEliminar(true);
+      if (temporizadorConfirmacion.current) {
+        clearTimeout(temporizadorConfirmacion.current);
+      }
+      temporizadorConfirmacion.current = setTimeout(() => {
+        setConfirmandoEliminar(false);
+      }, 5000);
+      return;
+    }
+
+    if (temporizadorConfirmacion.current) {
+      clearTimeout(temporizadorConfirmacion.current);
+    }
+    setEliminando(true);
+    setError(null);
+    try {
+      await eliminar({ id: evento._id });
+      alEliminar?.();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo eliminar el evento.");
+      setEliminando(false);
+      setConfirmandoEliminar(false);
+    }
+  };
 
   const guardar = async () => {
     setOcupado(true);
@@ -815,13 +868,35 @@ function FormularioEvento({
             <Aviso tono="error">{error}</Aviso>
           </div>
         ) : null}
-        <div className="mt-5 flex justify-end gap-2">
-          <Boton onClick={alCerrar} disabled={ocupado}>
-            Cancelar
-          </Boton>
-          <Boton variante="primario" onClick={() => void guardar()} disabled={ocupado || titulo.trim().length < 3}>
-            {ocupado ? "Guardando…" : evento ? "Guardar" : "Crear evento"}
-          </Boton>
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
+          {evento ? (
+            <Boton
+              variante="peligro"
+              icono={confirmandoEliminar ? "alerta" : "papelera"}
+              disabled={ocupado || eliminando}
+              onClick={() => void manejarEliminar()}
+            >
+              {eliminando
+                ? "Eliminando…"
+                : confirmandoEliminar
+                  ? "¿Confirmar eliminación?"
+                  : "Eliminar evento"}
+            </Boton>
+          ) : (
+            <span />
+          )}
+          <div className="flex items-center gap-2">
+            <Boton onClick={alCerrar} disabled={ocupado || eliminando}>
+              Cancelar
+            </Boton>
+            <Boton
+              variante="primario"
+              onClick={() => void guardar()}
+              disabled={ocupado || eliminando || titulo.trim().length < 3}
+            >
+              {ocupado ? "Guardando…" : evento ? "Guardar" : "Crear evento"}
+            </Boton>
+          </div>
         </div>
       </div>
     </div>

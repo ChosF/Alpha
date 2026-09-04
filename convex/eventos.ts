@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v, type GenericId } from "convex/values";
 import { mutation, query, type QueryCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { registrarEnBitacora } from "./lib/auditoria";
@@ -263,6 +263,53 @@ export const actualizar = mutation({
       entidadId: args.id,
       detalle: titulo,
     });
+    return null;
+  },
+});
+
+export const eliminar = mutation({
+  args: { id: v.id("events") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "editor");
+    const evento = await ctx.db.get(args.id);
+    if (evento === null) throw new ConvexError("Ese evento ya no existe.");
+
+    const registros = await ctx.db
+      .query("eventRegistrations")
+      .withIndex("by_event_and_creado", (q) => q.eq("eventId", args.id))
+      .take(5000);
+    for (const reg of registros) {
+      await ctx.db.delete(reg._id);
+    }
+
+    const trabajosCorreo = await ctx.db
+      .query("eventMailJobs")
+      .withIndex("by_event_and_time", (q) => q.eq("eventId", args.id))
+      .take(5000);
+    for (const trabajo of trabajosCorreo) {
+      if (trabajo.estado === "programado" && trabajo.programacionId) {
+        try {
+          await ctx.scheduler.cancel(
+            trabajo.programacionId as GenericId<"_scheduled_functions">,
+          );
+        } catch {
+          // Ignorar si el trabajo programado ya finalizó o fue cancelado
+        }
+      }
+      await ctx.db.delete(trabajo._id);
+    }
+
+    await ctx.db.delete(args.id);
+
+    await registrarEnBitacora(ctx, {
+      actor,
+      accion: "evento.eliminado",
+      entidad: "events",
+      entidadId: args.id,
+      detalle: evento.titulo,
+    });
+
     return null;
   },
 });

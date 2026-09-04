@@ -287,6 +287,45 @@ describe("registro de Calling LAF", () => {
     expect(filas).toHaveLength(1);
     expect(filas[0]).toMatchObject({ nombre: "Aaron Martinez", estado: "asistio" });
   });
+
+  it("permite a un editor eliminar un evento y limpia sus registros asociados", async () => {
+    const t = convexTest(schema, modulos);
+    const eventId = await t.action(api.ingestaEventos.asegurarCallingLaf, { secreto: SECRETO });
+    await t.action(api.ingestaEventos.registrar, {
+      secreto: SECRETO,
+      slug: "calling-laf",
+      datos: datosEvento,
+    });
+    const lector = await comoUsuario(t, "lector");
+    const editor = await comoUsuario(t, "editor");
+
+    await expect(lector.sesion.mutation(api.eventos.eliminar, { id: eventId })).rejects.toThrow(
+      /no permite/,
+    );
+
+    await expect(editor.sesion.mutation(api.eventos.eliminar, { id: eventId })).resolves.toBeNull();
+
+    const evento = await t.run(async (ctx) => ctx.db.get(eventId));
+    expect(evento).toBeNull();
+
+    const registros = await t.run(async (ctx) =>
+      ctx.db
+        .query("eventRegistrations")
+        .withIndex("by_event_and_creado", (q) => q.eq("eventId", eventId))
+        .collect(),
+    );
+    expect(registros).toHaveLength(0);
+
+    const bitacora = await t.run(async (ctx) =>
+      ctx.db
+        .query("auditLog")
+        .withIndex("by_creado")
+        .filter((q) => q.eq(q.field("accion"), "evento.eliminado"))
+        .first(),
+    );
+    expect(bitacora).not.toBeNull();
+    expect(bitacora?.entidadId).toBe(eventId);
+  });
 });
 
 describe("registro de Mario Kart Challenge", () => {
