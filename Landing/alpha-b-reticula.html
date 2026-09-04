@@ -777,7 +777,7 @@ img,svg{display:block;max-width:100%}
   <div class="mg-body">
     <p class="mg-kicker tnum">2026 — 2027</p>
     <h1 class="mg-title">Empieza<br>aquí.</h1>
-    <a class="mg-event" id="event-gateway-banner" href="/events/mario-kart" aria-label="Mario Kart Challenge ya está aquí, abrir registro" hidden>
+    <a class="mg-event" id="event-gateway-banner" href="/events/mario-kart" aria-label="Mario Kart Challenge ya está aquí, abrir registro">
       <span class="mg-event-bar" aria-hidden="true"></span>
       <span class="mg-event-copy">
         <strong data-event-title>Mario Kart Challenge ya está aquí.</strong>
@@ -831,7 +831,7 @@ img,svg{display:block;max-width:100%}
   </div>
 </header>
 
-<aside class="calling-banner" id="event-banner" aria-label="Evento destacado" hidden>
+<aside class="calling-banner on" id="event-banner" aria-label="Evento destacado">
   <a href="/events/mario-kart">
     <span class="calling-banner-k">Evento</span>
     <span class="calling-banner-copy">
@@ -2013,7 +2013,6 @@ img,svg{display:block;max-width:100%}
   contenidoLandingPromise.then(contenido => {
     if (!contenido) {
       document.getElementById("program-status").textContent = "El programa no pudo cargarse. Intenta de nuevo en unos minutos.";
-      ocultarPromocionEvento();
       return;
     }
     actualizarPrograma(contenido.programas);
