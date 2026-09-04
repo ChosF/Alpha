@@ -621,7 +621,6 @@ export function cuerpoConfirmacionMarioKart(
                       <img src="cid:${QR_ASISTENCIA_CONTENT_ID}" width="220" alt="Código QR de acceso para Mario Kart Challenge" style="display:block;width:220px;max-width:100%;height:auto;">
                     </a>
                     <div style="margin-top:16px;color:#41516A;font-size:12px;line-height:1.65;">Preséntalo al equipo de Alpha cuando llegues. Este acceso está ligado a tu registro.</div>
-                    <div style="margin-top:10px;color:#6B7A90;font-size:9px;line-height:1.55;word-break:break-all;">Si no puedes escanearlo, abre <a href="${escaparHtml(acceso)}" style="color:#075DA8;text-decoration:underline;">tu acceso personal</a>.</div>
                   </td>
                 </tr>
               </table>

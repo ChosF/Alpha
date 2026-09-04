@@ -52,6 +52,7 @@ describe("datos de Mario Kart Challenge", () => {
 
     expect(html).toContain(`src="cid:${QR_ASISTENCIA_CONTENT_ID}"`);
     expect(html).toContain(`href="${acceso}"`);
+    expect(html).not.toContain("Si no puedes escanearlo");
     expect(texto).toContain(acceso);
   });
 });
