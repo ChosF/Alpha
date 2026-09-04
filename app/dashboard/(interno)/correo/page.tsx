@@ -29,7 +29,6 @@ import {
   Encabezado,
   Entrada,
   Pildora,
-  Seleccion,
   TONO_ESTADO,
   Vacio,
   fechaHora,
@@ -959,17 +958,12 @@ function Responder({
     <div>
       <p className="ui-faint mb-3 text-[12px]">Para {para}</p>
       <Campo etiqueta="Desde" htmlFor={`respuesta-remitente-${threadId}`}>
-        <Seleccion
+        <SelectorPersonalizado
           id={`respuesta-remitente-${threadId}`}
-          value={remitente}
-          onChange={(event) => setRemitente(event.target.value)}
-        >
-          {remitentes.map((correo) => (
-            <option key={correo} value={correo}>
-              {correo}
-            </option>
-          ))}
-        </Seleccion>
+          valor={remitente}
+          opciones={remitentes.map((correo) => ({ valor: correo, etiqueta: correo }))}
+          alCambiar={setRemitente}
+        />
       </Campo>
       <div className="mt-3">
         <EditorCorreo id={`respuesta-${threadId}`} onChange={setContenido} autoFocus />
@@ -1069,13 +1063,12 @@ function CompositorNuevo({
         </div>
         <div className="grid gap-4">
           <Campo etiqueta="Desde" htmlFor="nuevo-remitente">
-            <Seleccion id="nuevo-remitente" value={remitente} onChange={(event) => setRemitente(event.target.value)}>
-              {remitentes.map((correo) => (
-                <option key={correo} value={correo}>
-                  {correo}
-                </option>
-              ))}
-            </Seleccion>
+            <SelectorPersonalizado
+              id="nuevo-remitente"
+              valor={remitente}
+              opciones={remitentes.map((correo) => ({ valor: correo, etiqueta: correo }))}
+              alCambiar={setRemitente}
+            />
           </Campo>
           <Campo etiqueta="Para" htmlFor="nuevo-para">
             <Entrada
