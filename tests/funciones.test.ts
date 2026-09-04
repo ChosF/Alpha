@@ -224,6 +224,69 @@ describe("registro de Calling LAF", () => {
       }),
     ).resolves.toBeNull();
   });
+
+  it("registra asistentes en puerta con campos opcionales y asistencia automatica", async () => {
+    const t = convexTest(schema, modulos);
+    const eventId = await t.action(api.ingestaEventos.asegurarCallingLaf, { secreto: SECRETO });
+    const lector = await comoUsuario(t, "lector");
+    const editor = await comoUsuario(t, "editor");
+    const datosVacios = {
+      eventId,
+      nombre: "",
+      matricula: "",
+      correo: "",
+      semestre: "",
+      carrera: "",
+    };
+
+    await expect(
+      lector.sesion.mutation(api.eventos.registrarAsistenteEnPuerta, datosVacios),
+    ).rejects.toThrow(/no permite/);
+    const resultado = await editor.sesion.mutation(
+      api.eventos.registrarAsistenteEnPuerta,
+      datosVacios,
+    );
+
+    const guardado = await t.run(async (ctx) => ({
+      registro: await ctx.db.get(resultado.id),
+      evento: await ctx.db.get(eventId),
+    }));
+    expect(resultado.creado).toBe(true);
+    expect(guardado.registro).toMatchObject({
+      estado: "asistio",
+      origen: "panel:asistencia",
+      nombre: "",
+      correo: "",
+      carrera: "",
+      semestre: "",
+    });
+    expect(guardado.evento?.totalRegistros).toBe(1);
+  });
+
+  it("reutiliza el registro existente por correo al registrar en puerta", async () => {
+    const t = convexTest(schema, modulos);
+    const eventId = await t.action(api.ingestaEventos.asegurarCallingLaf, { secreto: SECRETO });
+    await t.action(api.ingestaEventos.registrar, {
+      secreto: SECRETO,
+      slug: "calling-laf",
+      datos: datosEvento,
+    });
+    const editor = await comoUsuario(t, "editor");
+
+    const resultado = await editor.sesion.mutation(api.eventos.registrarAsistenteEnPuerta, {
+      eventId,
+      nombre: "Otro nombre",
+      matricula: "",
+      correo: " A07654321@TEC.MX ",
+      semestre: "",
+      carrera: "",
+    });
+    const filas = await t.run(async (ctx) => ctx.db.query("eventRegistrations").collect());
+
+    expect(resultado.creado).toBe(false);
+    expect(filas).toHaveLength(1);
+    expect(filas[0]).toMatchObject({ nombre: "Aaron Martinez", estado: "asistio" });
+  });
 });
 
 describe("registro de Mario Kart Challenge", () => {

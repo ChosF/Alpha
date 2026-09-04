@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { api } from "@/convex/_generated/api";
@@ -27,6 +27,7 @@ import {
   Campo,
   Cargando,
   Entrada,
+  Kbd,
   Menu,
   MenuItem,
   Pildora,
@@ -170,13 +171,67 @@ function DetalleEvento({
   const [abierto, setAbierto] = useState<Id<"eventRegistrations"> | null>(null);
   const [editando, setEditando] = useState(false);
   const [correoTipo, setCorreoTipo] = useState<"recordatorio" | "normal" | null>(null);
+  const [modoAsistencia, setModoAsistencia] = useState(false);
+  const [confirmandoAsistencia, setConfirmandoAsistencia] = useState<Id<"eventRegistrations"> | null>(null);
+  const [procesandoAsistencia, setProcesandoAsistencia] = useState<Id<"eventRegistrations"> | null>(null);
+  const [registrandoEnPuerta, setRegistrandoEnPuerta] = useState(false);
+  const [avisoAsistencia, setAvisoAsistencia] = useState<{ tono: "error" | "exito"; texto: string } | null>(null);
   const cambiarRegistro = useMutation(api.eventos.cambiarRegistroAbierto);
+  const cambiarEstadoRegistro = useMutation(api.eventos.cambiarEstadoRegistro);
   const registros = useQuery(api.eventos.listarRegistros, {
     eventId: evento._id,
     ...(busqueda ? { busqueda } : {}),
     ...(estado ? { estado } : {}),
   });
-  const seleccionado = registros?.find((r) => r._id === abierto) ?? null;
+  const registrosOrdenados = useMemo(() => {
+    if (registros === undefined || !modoAsistencia) return registros;
+    return [...registros].sort((a, b) =>
+      a.nombre.localeCompare(b.nombre, "es-MX", { sensitivity: "base" }),
+    );
+  }, [modoAsistencia, registros]);
+  const seleccionado = modoAsistencia ? null : registros?.find((r) => r._id === abierto) ?? null;
+
+  const alternarModoAsistencia = () => {
+    setModoAsistencia((activo) => {
+      const siguiente = !activo;
+      if (siguiente) setEstado("");
+      return siguiente;
+    });
+    setAbierto(null);
+    setConfirmandoAsistencia(null);
+    setAvisoAsistencia(null);
+  };
+
+  const prepararORegistrarAsistencia = async (registro: Doc<"eventRegistrations">) => {
+    if (!modoAsistencia || procesandoAsistencia !== null) return;
+    setAvisoAsistencia(null);
+    if (registro.estado === "asistio") {
+      setConfirmandoAsistencia(null);
+      setAvisoAsistencia({ tono: "exito", texto: `${registro.nombre || "Esta persona"} ya tiene asistencia.` });
+      return;
+    }
+    if (confirmandoAsistencia !== registro._id) {
+      setConfirmandoAsistencia(registro._id);
+      return;
+    }
+
+    setProcesandoAsistencia(registro._id);
+    try {
+      await cambiarEstadoRegistro({ id: registro._id, estado: "asistio" });
+      setAvisoAsistencia({
+        tono: "exito",
+        texto: `Asistencia registrada${registro.nombre ? `: ${registro.nombre}` : "."}`,
+      });
+    } catch (error) {
+      setAvisoAsistencia({
+        tono: "error",
+        texto: error instanceof Error ? error.message : "No se pudo registrar la asistencia.",
+      });
+    } finally {
+      setConfirmandoAsistencia(null);
+      setProcesandoAsistencia(null);
+    }
+  };
 
   return (
     <>
@@ -220,6 +275,21 @@ function DetalleEvento({
             </>
           ) : null}
           {esAdmin ? <BotonExportar eventId={evento._id} slug={evento.slug} estado={estado} /> : null}
+          {puedeEditar && modoAsistencia ? (
+            <Boton variante="acento" icono="mas" onClick={() => setRegistrandoEnPuerta(true)}>
+              Registrar
+            </Boton>
+          ) : null}
+          {puedeEditar ? (
+            <Boton
+              icono="check"
+              className="evento-asistencia-toggle"
+              aria-pressed={modoAsistencia}
+              onClick={alternarModoAsistencia}
+            >
+              Asistencia
+            </Boton>
+          ) : null}
         </div>
       </div>
 
@@ -240,14 +310,48 @@ function DetalleEvento({
 
       <div className="ui-split evento-asistentes-split" data-detail={seleccionado ? "open" : "closed"}>
         <Tarjeta>
+          {modoAsistencia ? (
+            <div className="evento-asistencia-guia" role="status">
+              <span>
+                Busca a una persona y selecciónala dos veces. Con un solo resultado también puedes presionar <Kbd>Enter</Kbd> dos veces.
+              </span>
+              <strong>Orden A–Z</strong>
+            </div>
+          ) : null}
           <div className="ui-filterbar p-4 pb-0">
             <Entrada
               icono="buscar"
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={(e) => {
+                setBusqueda(e.target.value);
+                setConfirmandoAsistencia(null);
+                setAvisoAsistencia(null);
+              }}
+              onKeyDown={(e) => {
+                if (
+                  e.key !== "Enter" ||
+                  !modoAsistencia ||
+                  !busqueda.trim() ||
+                  registrosOrdenados?.length !== 1
+                ) {
+                  return;
+                }
+                const unico = registrosOrdenados[0];
+                if (!unico) return;
+                e.preventDefault();
+                void prepararORegistrarAsistencia(unico);
+              }}
               placeholder="Nombre, correo, carrera o matrícula"
             />
-            <Seleccion value={estado} onChange={(e) => setEstado(e.target.value as EstadoAsistente | "")} className="max-w-[180px]">
+            <Seleccion
+              value={estado}
+              onChange={(e) => {
+                setEstado(e.target.value as EstadoAsistente | "");
+                setConfirmandoAsistencia(null);
+                setAvisoAsistencia(null);
+              }}
+              className="max-w-[180px]"
+            >
               <option value="">Todos los estados</option>
               {ESTADOS_ASISTENTE.map((valor) => (
                 <option key={valor} value={valor}>
@@ -256,6 +360,11 @@ function DetalleEvento({
               ))}
             </Seleccion>
           </div>
+          {avisoAsistencia ? (
+            <div className="px-4 pb-3">
+              <Aviso tono={avisoAsistencia.tono}>{avisoAsistencia.texto}</Aviso>
+            </div>
+          ) : null}
           {registros === undefined ? (
             <Cargando que="los asistentes" />
           ) : registros.length === 0 ? (
@@ -265,7 +374,7 @@ function DetalleEvento({
             />
           ) : (
             <div className="ui-table-wrap">
-              <table className="ui-table">
+              <table className={`ui-table ${modoAsistencia ? "evento-asistencia-tabla" : ""}`}>
                 <thead>
                   <tr>
                     <th>Nombre</th>
@@ -275,15 +384,31 @@ function DetalleEvento({
                   </tr>
                 </thead>
                 <tbody>
-                  {registros.map((registro) => (
+                  {registrosOrdenados?.map((registro) => (
                     <tr
                       key={registro._id}
                       data-selected={abierto === registro._id ? "true" : undefined}
-                      onClick={() => setAbierto(abierto === registro._id ? null : registro._id)}
+                      data-confirming={confirmandoAsistencia === registro._id ? "true" : undefined}
+                      data-attended={registro.estado === "asistio" ? "true" : undefined}
+                      aria-busy={procesandoAsistencia === registro._id || undefined}
+                      onClick={() => {
+                        if (modoAsistencia) {
+                          void prepararORegistrarAsistencia(registro);
+                        } else {
+                          setAbierto(abierto === registro._id ? null : registro._id);
+                        }
+                      }}
                     >
-                      <td className="font-medium">{registro.nombre}</td>
-                      <td className="ui-faint">{registro.correo}</td>
-                      <td>{registro.carrera}</td>
+                      <td className="font-medium">
+                        {registro.nombre || "Sin nombre"}
+                        {modoAsistencia && confirmandoAsistencia === registro._id ? (
+                          <span className="evento-asistencia-confirmacion">
+                            Haz clic de nuevo para confirmar asistencia
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="ui-faint">{registro.correo || "—"}</td>
+                      <td>{registro.carrera || "—"}</td>
                       <td>
                         <Pildora tono={TONO_ESTADO[registro.estado] ?? "neutro"} sm>
                           {ETIQUETAS[registro.estado]}
@@ -303,6 +428,16 @@ function DetalleEvento({
 
       {editando ? <FormularioEvento evento={evento} alListo={() => setEditando(false)} alCerrar={() => setEditando(false)} /> : null}
       {correoTipo ? <CorreoEvento evento={evento} tipo={correoTipo} cerrar={() => setCorreoTipo(null)} /> : null}
+      {registrandoEnPuerta ? (
+        <FormularioAsistenteEnPuerta
+          eventId={evento._id}
+          alCerrar={() => setRegistrandoEnPuerta(false)}
+          alListo={(texto) => {
+            setRegistrandoEnPuerta(false);
+            setAvisoAsistencia({ tono: "exito", texto });
+          }}
+        />
+      ) : null}
     </>
   );
 }
@@ -384,6 +519,137 @@ function FichaAsistente({
         </div>
       ) : null}
     </aside>
+  );
+}
+
+function FormularioAsistenteEnPuerta({
+  eventId,
+  alListo,
+  alCerrar,
+}: {
+  eventId: Id<"events">;
+  alListo: (mensaje: string) => void;
+  alCerrar: () => void;
+}) {
+  const registrar = useMutation(api.eventos.registrarAsistenteEnPuerta);
+  const [datos, setDatos] = useState({
+    nombre: "",
+    matricula: "",
+    correo: "",
+    semestre: "",
+    carrera: "",
+  });
+  const [ocupado, setOcupado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const actualizar = (campo: keyof typeof datos, valor: string) => {
+    setDatos((actuales) => ({ ...actuales, [campo]: valor }));
+  };
+
+  const guardar = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setOcupado(true);
+    setError(null);
+    try {
+      const resultado = await registrar({ eventId, ...datos });
+      alListo(
+        resultado.creado
+          ? "Persona registrada y marcada como asistió."
+          : "La persona ya estaba registrada; se marcó como asistió.",
+      );
+    } catch (excepcion) {
+      setError(excepcion instanceof Error ? excepcion.message : "No se pudo registrar a la persona.");
+      setOcupado(false);
+    }
+  };
+
+  return (
+    <div className="ui-modal-bg evento-asistencia-modal" role="presentation">
+      <form
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="asistente-puerta-titulo"
+        className="ui-dialog evento-asistencia-dialog"
+        onSubmit={(e) => void guardar(e)}
+      >
+        <div className="ui-card-h evento-asistencia-dialog-head">
+          <div>
+            <h2 id="asistente-puerta-titulo" className="ui-h2">Registrar asistencia</h2>
+            <p className="ui-faint mt-1 text-[12.5px]">Todos los campos son opcionales.</p>
+          </div>
+          <Boton
+            tamano="sm"
+            variante="fantasma"
+            soloIcono
+            icono="cerrar"
+            etiqueta="Cerrar registro rápido"
+            onClick={alCerrar}
+            disabled={ocupado}
+          />
+        </div>
+        <div className="grid gap-4 pt-5 sm:grid-cols-2">
+          <Campo etiqueta="Nombre" htmlFor="puerta-nombre">
+            <Entrada
+              id="puerta-nombre"
+              value={datos.nombre}
+              maxLength={80}
+              autoComplete="name"
+              autoFocus
+              onChange={(e) => actualizar("nombre", e.target.value)}
+            />
+          </Campo>
+          <Campo etiqueta="Matrícula" htmlFor="puerta-matricula">
+            <Entrada
+              id="puerta-matricula"
+              value={datos.matricula}
+              maxLength={12}
+              autoCapitalize="characters"
+              onChange={(e) => actualizar("matricula", e.target.value)}
+            />
+          </Campo>
+          <Campo etiqueta="Correo" htmlFor="puerta-correo">
+            <Entrada
+              id="puerta-correo"
+              type="email"
+              value={datos.correo}
+              maxLength={254}
+              autoComplete="email"
+              inputMode="email"
+              onChange={(e) => actualizar("correo", e.target.value)}
+            />
+          </Campo>
+          <Campo etiqueta="Semestre" htmlFor="puerta-semestre">
+            <Entrada
+              id="puerta-semestre"
+              value={datos.semestre}
+              maxLength={30}
+              onChange={(e) => actualizar("semestre", e.target.value)}
+            />
+          </Campo>
+          <Campo etiqueta="Carrera" htmlFor="puerta-carrera">
+            <Entrada
+              id="puerta-carrera"
+              value={datos.carrera}
+              maxLength={80}
+              onChange={(e) => actualizar("carrera", e.target.value)}
+            />
+          </Campo>
+        </div>
+        {error ? (
+          <div className="mt-4">
+            <Aviso tono="error">{error}</Aviso>
+          </div>
+        ) : null}
+        <div className="mt-5 flex justify-end gap-2">
+          <Boton onClick={alCerrar} disabled={ocupado}>
+            Cancelar
+          </Boton>
+          <Boton type="submit" variante="acento" icono="check" disabled={ocupado}>
+            {ocupado ? "Registrando…" : "Registrar asistencia"}
+          </Boton>
+        </div>
+      </form>
+    </div>
   );
 }
 

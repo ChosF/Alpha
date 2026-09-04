@@ -3,7 +3,7 @@ import { mutation, query, type QueryCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { registrarEnBitacora } from "./lib/auditoria";
 import { requiereRol } from "./lib/rbac";
-import { limpiarMultilinea, limpiarTexto } from "./lib/texto";
+import { limpiarMultilinea, limpiarTexto, normalizarCorreo } from "./lib/texto";
 import {
   estadoAsistenteValidador,
   estadoEventoValidador,
@@ -261,6 +261,83 @@ export const cambiarEstadoRegistro = mutation({
       detalle: `${registro.estado} -> ${args.estado}`,
     });
     return null;
+  },
+});
+
+export const registrarAsistenteEnPuerta = mutation({
+  args: {
+    eventId: v.id("events"),
+    nombre: v.string(),
+    matricula: v.string(),
+    correo: v.string(),
+    semestre: v.string(),
+    carrera: v.string(),
+  },
+  returns: v.object({
+    id: v.id("eventRegistrations"),
+    creado: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "editor");
+    const evento = await ctx.db.get(args.eventId);
+    if (evento === null) throw new Error("Ese evento ya no existe.");
+
+    const nombre = limpiarTexto(args.nombre, 80);
+    const matricula = limpiarTexto(args.matricula, 12).toUpperCase();
+    const correo = normalizarCorreo(args.correo).slice(0, 254);
+    const semestre = limpiarTexto(args.semestre, 30);
+    const carrera = limpiarTexto(args.carrera, 80);
+    const ahora = Date.now();
+
+    if (correo) {
+      const existente = await ctx.db
+        .query("eventRegistrations")
+        .withIndex("by_event_and_correo", (q) =>
+          q.eq("eventId", args.eventId).eq("correo", correo),
+        )
+        .unique();
+      if (existente !== null) {
+        if (existente.estado !== "asistio") {
+          await ctx.db.patch(existente._id, { estado: "asistio", actualizadoEn: ahora });
+          await registrarEnBitacora(ctx, {
+            actor,
+            accion: "evento.registro.asistencia_puerta",
+            entidad: "eventRegistrations",
+            entidadId: existente._id,
+            detalle: "Registro existente",
+          });
+        }
+        return { id: existente._id, creado: false };
+      }
+    }
+
+    const id = await ctx.db.insert("eventRegistrations", {
+      eventId: args.eventId,
+      nombre,
+      correo,
+      carrera,
+      semestre,
+      ...(matricula ? { matricula } : {}),
+      canales: { correo: false, whatsapp: false },
+      estado: "asistio",
+      origen: "panel:asistencia",
+      ipHash: "no-aplica",
+      userAgent: "panel-interno",
+      creadoEn: ahora,
+      actualizadoEn: ahora,
+    });
+    await ctx.db.patch(args.eventId, {
+      totalRegistros: evento.totalRegistros + 1,
+      actualizadoEn: ahora,
+    });
+    await registrarEnBitacora(ctx, {
+      actor,
+      accion: "evento.registro.creado_en_puerta",
+      entidad: "eventRegistrations",
+      entidadId: id,
+      detalle: nombre || correo || matricula || "Sin datos",
+    });
+    return { id, creado: true };
   },
 });
 
