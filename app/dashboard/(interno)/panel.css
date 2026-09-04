@@ -436,7 +436,7 @@
   .ui-search {
     display: flex;
   }
-  .ui-search-icon-only {
+  .ui-top .ui-search-icon-only {
     display: none;
   }
 }
