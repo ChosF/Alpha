@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { useCascaron } from "./cascaron";
 import { Icono, type NombreIcono } from "./iconos";
 import { Kbd } from "./primitivas";
@@ -9,16 +11,22 @@ import { BASE, PRINCIPAL, SECUNDARIA, visibles } from "./rutas";
 
 type Comando = {
   id: string;
-  grupo: "Ir a" | "Acciones";
+  grupo: "Ir a" | "Eventos" | "Acciones";
   texto: string;
+  buscar?: string;
   icono: NombreIcono;
   atajo?: string;
   ejecutar: () => void;
 };
 
+function normalizarBusqueda(valor: string) {
+  return valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
 /** Paleta de comandos (⌘K): navegacion y acciones rapidas segun el rol. */
 export function Paleta() {
   const router = useRouter();
+  const eventos = useQuery(api.eventos.listar, {});
   const { yo, cerrarPaleta, alternarTema, alternarColapso, cerrarSesion } = useCascaron();
   const [consulta, setConsulta] = useState("");
   const [indice, setIndice] = useState(0);
@@ -40,6 +48,14 @@ export function Paleta() {
       texto: a.texto,
       icono: a.icono,
       ejecutar: a.externo ? abrir(a.href) : ir(a.href),
+    }));
+    const eventosDisponibles = (eventos ?? []).map<Comando>((evento) => ({
+      id: `evento-${evento._id}`,
+      grupo: "Eventos",
+      texto: evento.titulo,
+      buscar: [evento.titulo, evento.slug, evento.resumen, evento.sede].filter(Boolean).join(" "),
+      icono: "eventos",
+      ejecutar: ir(`${BASE}/eventos/${evento._id}`),
     }));
     const acciones: Comando[] = [];
     if (rol === "editor" || rol === "admin") {
@@ -93,13 +109,13 @@ export function Paleta() {
         },
       },
     );
-    return [...secciones, ...acciones];
-  }, [rol, router, cerrarPaleta, alternarTema, alternarColapso, cerrarSesion]);
+    return [...secciones, ...eventosDisponibles, ...acciones];
+  }, [eventos, rol, router, cerrarPaleta, alternarTema, alternarColapso, cerrarSesion]);
 
   const filtrados = useMemo(() => {
-    const q = consulta.trim().toLowerCase();
-    if (!q) return comandos;
-    return comandos.filter((c) => c.texto.toLowerCase().includes(q));
+    const q = normalizarBusqueda(consulta.trim());
+    if (!q) return comandos.filter((c) => c.grupo !== "Eventos");
+    return comandos.filter((c) => normalizarBusqueda(c.buscar ?? c.texto).includes(q));
   }, [comandos, consulta]);
 
   useEffect(() => {
@@ -121,7 +137,7 @@ export function Paleta() {
     }
   };
 
-  const grupos = ["Ir a", "Acciones"] as const;
+  const grupos = ["Ir a", "Eventos", "Acciones"] as const;
 
   return (
     <div className="ui-modal-bg" onClick={cerrarPaleta} role="presentation">
@@ -142,7 +158,7 @@ export function Paleta() {
               setConsulta(e.target.value);
               setIndice(0);
             }}
-            placeholder="Buscar secciones, acciones…"
+            placeholder="Buscar secciones, eventos, acciones…"
             aria-label="Buscar"
           />
           <Kbd>Esc</Kbd>
