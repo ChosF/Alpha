@@ -703,7 +703,6 @@ function InformacionFechaEvento({ evento }: { evento: EventoLista }) {
     <div className="evento-fecha-info">
       <Icono nombre="eventos" tamano={17} />
       <span className="evento-fecha-copy">
-        <span>Fecha y hora</span>
         <strong>{fechaLegible}</strong>
         <small>{horarioLegible}</small>
       </span>
