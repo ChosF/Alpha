@@ -78,7 +78,7 @@ export default function Inicio() {
       </div>
 
       <div className="ui-grid mt-6">
-        <aside className="lg-4 grid content-start lg:pt-9">
+        <aside className="lg-4 grid content-start">
           <Tarjeta className="min-h-[154px]" indice={4}>
             <TarjetaCabecera titulo="Pendientes" descripcion="Requieren una decisión o acción." />
             {pendientes.length === 0 ? (
@@ -101,10 +101,6 @@ export default function Inicio() {
         </aside>
 
         <section className="lg-8">
-          <div className="ui-sec-h">
-            <h2>Eventos</h2>
-          </div>
-
           {datos.eventos.length === 0 ? (
             <Tarjeta indice={4}>
               <Vacio
