@@ -36,6 +36,7 @@ import {
 } from "@/components/panel/ui/primitivas";
 import { SelectorPersonalizado } from "@/components/panel/selector-personalizado";
 import { useCascaron } from "@/components/panel/ui/cascaron";
+import { CorreoEvento } from "./correo-evento";
 
 type EventoLista = FunctionReturnType<typeof api.eventos.listar>[number];
 
@@ -144,6 +145,7 @@ function DetalleEvento({
   const [estado, setEstado] = useState<EstadoAsistente | "">("");
   const [abierto, setAbierto] = useState<Id<"eventRegistrations"> | null>(null);
   const [editando, setEditando] = useState(false);
+  const [correoTipo, setCorreoTipo] = useState<"recordatorio" | "normal" | null>(null);
   const cambiarRegistro = useMutation(api.eventos.cambiarRegistroAbierto);
   const registros = useQuery(api.eventos.listarRegistros, {
     eventId: evento._id,
@@ -168,6 +170,23 @@ function DetalleEvento({
           <Pildora tono={TONO_ESTADO[evento.estado] ?? "neutro"}>{ETIQUETAS[evento.estado]}</Pildora>
           {puedeEditar ? (
             <>
+              <Menu
+                disparador={(abierto) => (
+                  <Boton icono="correo" iconoFinal="chevronAbajo" aria-expanded={abierto}>
+                    Mandar correos
+                  </Boton>
+                )}
+              >
+                <MenuItem icono="campana" onClick={() => setCorreoTipo("recordatorio")}>
+                  Recordatorio para hoy
+                </MenuItem>
+                <MenuItem icono="estrella" disabled>
+                  Encuesta de satisfacción · Próximamente
+                </MenuItem>
+                <MenuItem icono="correo" onClick={() => setCorreoTipo("normal")}>
+                  Correo normal
+                </MenuItem>
+              </Menu>
               <Boton onClick={() => void cambiarRegistro({ eventId: evento._id, abierto: !evento.registroAbierto })}>
                 {evento.registroAbierto ? "Cerrar registro" : "Abrir registro"}
               </Boton>
@@ -259,6 +278,7 @@ function DetalleEvento({
       </div>
 
       {editando ? <FormularioEvento evento={evento} alListo={() => setEditando(false)} alCerrar={() => setEditando(false)} /> : null}
+      {correoTipo ? <CorreoEvento evento={evento} tipo={correoTipo} cerrar={() => setCorreoTipo(null)} /> : null}
     </>
   );
 }
@@ -358,6 +378,10 @@ function FormularioEvento({
   const [resumen, setResumen] = useState(evento?.resumen ?? "");
   const [pilar, setPilar] = useState<Pilar>(evento?.pilar ?? "desarrollo");
   const [estado, setEstado] = useState<EstadoEvento>(evento?.estado ?? "borrador");
+  const [fechaEvento, setFechaEvento] = useState(evento?.fechaEvento ?? "");
+  const [horaInicio, setHoraInicio] = useState(evento?.horaInicio ?? "");
+  const [horaFin, setHoraFin] = useState(evento?.horaFin ?? "");
+  const [sede, setSede] = useState(evento?.sede ?? "");
   const [error, setError] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
 
@@ -365,11 +389,17 @@ function FormularioEvento({
     setOcupado(true);
     setError(null);
     try {
+      const detalles = {
+        ...(fechaEvento ? { fechaEvento } : {}),
+        ...(horaInicio ? { horaInicio } : {}),
+        ...(horaFin ? { horaFin } : {}),
+        ...(sede ? { sede } : {}),
+      };
       if (evento) {
-        await actualizar({ id: evento._id, titulo, resumen, pilar, estado });
+        await actualizar({ id: evento._id, titulo, resumen, pilar, estado, ...detalles });
         alListo(evento._id);
       } else {
-        const id = await crear({ titulo, resumen, pilar });
+        const id = await crear({ titulo, resumen, pilar, ...detalles });
         alListo(id);
       }
     } catch (e) {
@@ -391,6 +421,24 @@ function FormularioEvento({
           </Campo>
           <Campo etiqueta="Resumen" htmlFor="ev-resumen">
             <AreaTexto id="ev-resumen" value={resumen} maxLength={400} onChange={(e) => setResumen(e.target.value)} />
+          </Campo>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Campo etiqueta="Fecha" htmlFor="ev-fecha">
+              <Entrada id="ev-fecha" type="date" value={fechaEvento} onChange={(e) => setFechaEvento(e.target.value)} />
+            </Campo>
+            <Campo etiqueta="Inicio" htmlFor="ev-inicio">
+              <Entrada id="ev-inicio" type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} />
+            </Campo>
+            <Campo etiqueta="Fin" htmlFor="ev-fin">
+              <Entrada id="ev-fin" type="time" value={horaFin} onChange={(e) => setHoraFin(e.target.value)} />
+            </Campo>
+          </div>
+          <Campo
+            etiqueta="Sede"
+            htmlFor="ev-sede"
+            ayuda="La fecha, la hora y la sede alimentan el recordatorio automático."
+          >
+            <Entrada id="ev-sede" value={sede} maxLength={160} onChange={(e) => setSede(e.target.value)} placeholder="Ej. SUM 1102, Tec CCM" />
           </Campo>
           <Campo etiqueta="Pilar" htmlFor="ev-pilar">
             <Seleccion id="ev-pilar" value={pilar} onChange={(e) => setPilar(e.target.value as Pilar)}>

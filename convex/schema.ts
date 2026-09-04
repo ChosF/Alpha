@@ -114,6 +114,10 @@ export default defineSchema({
     slug: v.string(),
     titulo: v.string(),
     resumen: v.string(),
+    fechaEvento: v.optional(v.string()),
+    horaInicio: v.optional(v.string()),
+    horaFin: v.optional(v.string()),
+    sede: v.optional(v.string()),
     pilar: pilarValidador,
     estado: estadoEventoValidador,
     registroAbierto: v.boolean(),
@@ -143,6 +147,34 @@ export default defineSchema({
     .index("by_event_and_correo", ["eventId", "correo"])
     .index("by_event_and_creado", ["eventId", "creadoEn"])
     .index("by_event_and_estado", ["eventId", "estado", "creadoEn"]),
+
+  /** Campañas de correo de un evento, inmediatas o programadas. */
+  eventMailJobs: defineTable({
+    eventId: v.id("events"),
+    tipo: v.union(v.literal("recordatorio"), v.literal("normal")),
+    asunto: v.string(),
+    texto: v.string(),
+    estado: v.union(
+      v.literal("programado"),
+      v.literal("procesando"),
+      v.literal("encolado"),
+      v.literal("cancelado"),
+      v.literal("fallido"),
+    ),
+    destinatariosEstimados: v.number(),
+    encolados: v.number(),
+    fallidos: v.number(),
+    programadoPara: v.number(),
+    programacionId: v.optional(v.string()),
+    clientRequestId: v.string(),
+    creadoPor: v.id("users"),
+    autorCorreo: v.string(),
+    error: v.optional(v.string()),
+    creadoEn: v.number(),
+    actualizadoEn: v.number(),
+  })
+    .index("by_event_and_time", ["eventId", "programadoPara"])
+    .index("by_client_request", ["clientRequestId"]),
 
   /** Invitaciones al panel. El token en claro jamas se guarda. */
   invites: defineTable({

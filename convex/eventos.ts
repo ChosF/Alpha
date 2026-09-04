@@ -9,6 +9,7 @@ import {
   estadoEventoValidador,
   pilarValidador,
 } from "./lib/validadores";
+import { esFechaEventoValida, esHoraEventoValida } from "../lib/correo-evento";
 
 const eventoValidador = v.object({
   _id: v.id("events"),
@@ -16,6 +17,10 @@ const eventoValidador = v.object({
   slug: v.string(),
   titulo: v.string(),
   resumen: v.string(),
+  fechaEvento: v.optional(v.string()),
+  horaInicio: v.optional(v.string()),
+  horaFin: v.optional(v.string()),
+  sede: v.optional(v.string()),
   pilar: v.union(v.literal("desarrollo"), v.literal("industria"), v.literal("comunidad")),
   estado: v.union(v.literal("borrador"), v.literal("publicado"), v.literal("cerrado")),
   registroAbierto: v.boolean(),
@@ -88,6 +93,10 @@ export const crear = mutation({
     resumen: v.string(),
     pilar: pilarValidador,
     slug: v.optional(v.string()),
+    fechaEvento: v.optional(v.string()),
+    horaInicio: v.optional(v.string()),
+    horaFin: v.optional(v.string()),
+    sede: v.optional(v.string()),
   },
   returns: v.id("events"),
   handler: async (ctx, args) => {
@@ -95,6 +104,7 @@ export const crear = mutation({
     const titulo = limpiarTexto(args.titulo, 120);
     if (titulo.length < 3) throw new Error("El titulo necesita al menos 3 caracteres.");
     const resumen = limpiarMultilinea(args.resumen, 400);
+    const detalles = limpiarDetallesEvento(args);
     let slug = slugDe(limpiarTexto(args.slug ?? titulo, 60));
     const choque = await ctx.db
       .query("events")
@@ -106,6 +116,7 @@ export const crear = mutation({
       slug,
       titulo,
       resumen,
+      ...detalles,
       pilar: args.pilar,
       estado: "borrador",
       registroAbierto: false,
@@ -131,6 +142,10 @@ export const actualizar = mutation({
     resumen: v.string(),
     pilar: pilarValidador,
     estado: estadoEventoValidador,
+    fechaEvento: v.optional(v.string()),
+    horaInicio: v.optional(v.string()),
+    horaFin: v.optional(v.string()),
+    sede: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -139,9 +154,14 @@ export const actualizar = mutation({
     if (previo === null) throw new Error("Ese evento ya no existe.");
     const titulo = limpiarTexto(args.titulo, 120);
     if (titulo.length < 3) throw new Error("El titulo necesita al menos 3 caracteres.");
+    const detalles = limpiarDetallesEvento(args);
     await ctx.db.patch(args.id, {
       titulo,
       resumen: limpiarMultilinea(args.resumen, 400),
+      fechaEvento: detalles.fechaEvento,
+      horaInicio: detalles.horaInicio,
+      horaFin: detalles.horaFin,
+      sede: detalles.sede,
       pilar: args.pilar,
       estado: args.estado,
       actualizadoEn: Date.now(),
@@ -156,6 +176,37 @@ export const actualizar = mutation({
     return null;
   },
 });
+
+function limpiarDetallesEvento(args: {
+  fechaEvento?: string;
+  horaInicio?: string;
+  horaFin?: string;
+  sede?: string;
+}) {
+  const fechaEvento = limpiarTexto(args.fechaEvento ?? "", 10);
+  const horaInicio = limpiarTexto(args.horaInicio ?? "", 5);
+  const horaFin = limpiarTexto(args.horaFin ?? "", 5);
+  const sede = limpiarTexto(args.sede ?? "", 160);
+  const hayDetalle = Boolean(fechaEvento || horaInicio || horaFin || sede);
+  if (!hayDetalle) {
+    return {
+      fechaEvento: undefined,
+      horaInicio: undefined,
+      horaFin: undefined,
+      sede: undefined,
+    };
+  }
+  if (!esFechaEventoValida(fechaEvento)) throw new Error("Escribe una fecha válida para el evento.");
+  if (!esHoraEventoValida(horaInicio)) throw new Error("Escribe una hora de inicio válida.");
+  if (horaFin && !esHoraEventoValida(horaFin)) throw new Error("Escribe una hora de cierre válida.");
+  if (!sede) throw new Error("Escribe la sede del evento.");
+  return {
+    fechaEvento,
+    horaInicio,
+    ...(horaFin ? { horaFin } : { horaFin: undefined }),
+    sede,
+  };
+}
 
 export const listarRegistros = query({
   args: {

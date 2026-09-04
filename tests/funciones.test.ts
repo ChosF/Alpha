@@ -158,6 +158,12 @@ describe("registro de Calling LAF", () => {
     expect(guardado.asistentes).toHaveLength(1);
     expect(guardado.miembros).toHaveLength(0);
     expect(guardado.evento?.totalRegistros).toBe(1);
+    expect(guardado.evento).toMatchObject({
+      fechaEvento: "2026-09-04",
+      horaInicio: "15:00",
+      horaFin: "17:00",
+      sede: "SUM 1102, Tec CCM",
+    });
   });
 
   it("un correo repetido no duplica ni sobrescribe el registro", async () => {

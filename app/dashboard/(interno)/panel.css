@@ -1131,6 +1131,13 @@ button.ui-card:hover {
 .ui-menu-item:hover {
   background: var(--bg-hover);
 }
+.ui-menu-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+.ui-menu-item:disabled:hover {
+  background: transparent;
+}
 .ui-menu-item .ui-icon {
   color: var(--fg-3);
 }
@@ -2152,6 +2159,13 @@ button.ui-card:hover {
   width: min(720px, 100%);
   max-height: min(92dvh, 860px);
   overflow-y: auto;
+}
+.evento-correo-modal {
+  align-items: center;
+  padding: 16px;
+}
+.evento-correo-dialog {
+  max-height: calc(100dvh - 32px);
 }
 .ui-filterbar {
   display: flex;

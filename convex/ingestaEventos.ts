@@ -52,7 +52,16 @@ export const asegurarEventoCallingLaf = internalMutation({
       .query("events")
       .withIndex("by_slug", (q) => q.eq("slug", SLUG_CALLING_LAF))
       .unique();
-    if (existente !== null) return existente._id;
+    if (existente !== null) {
+      await ctx.db.patch(existente._id, {
+        fechaEvento: CALLING_LAF.fechaIso,
+        horaInicio: "15:00",
+        horaFin: "17:00",
+        sede: `${CALLING_LAF.sede}, ${CALLING_LAF.campus}`,
+        actualizadoEn: Date.now(),
+      });
+      return existente._id;
+    }
 
     const ahora = Date.now();
     return await ctx.db.insert("events", {
@@ -61,6 +70,10 @@ export const asegurarEventoCallingLaf = internalMutation({
       resumen:
         "Un encuentro para entender concentraciones, certificaciones y rutas profesionales antes de elegir el siguiente paso de la carrera.",
       pilar: "desarrollo",
+      fechaEvento: CALLING_LAF.fechaIso,
+      horaInicio: "15:00",
+      horaFin: "17:00",
+      sede: `${CALLING_LAF.sede}, ${CALLING_LAF.campus}`,
       estado: "publicado",
       registroAbierto: true,
       totalRegistros: 0,
@@ -96,6 +109,10 @@ export const asegurarEventoMarioKart = internalMutation({
           titulo: MARIO_KART_CHALLENGE.titulo,
           resumen: MARIO_KART_CHALLENGE.resumen,
           pilar: "comunidad",
+          fechaEvento: MARIO_KART_CHALLENGE.fechaIso,
+          horaInicio: "13:00",
+          horaFin: "17:00",
+          sede: `${MARIO_KART_CHALLENGE.sede}, ${MARIO_KART_CHALLENGE.campus}`,
           estado: "publicado",
           registroAbierto: true,
           actualizadoEn: Date.now(),
@@ -110,6 +127,10 @@ export const asegurarEventoMarioKart = internalMutation({
       titulo: MARIO_KART_CHALLENGE.titulo,
       resumen: MARIO_KART_CHALLENGE.resumen,
       pilar: "comunidad",
+      fechaEvento: MARIO_KART_CHALLENGE.fechaIso,
+      horaInicio: "13:00",
+      horaFin: "17:00",
+      sede: `${MARIO_KART_CHALLENGE.sede}, ${MARIO_KART_CHALLENGE.campus}`,
       estado: "publicado",
       registroAbierto: true,
       totalRegistros: 0,

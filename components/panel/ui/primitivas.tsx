@@ -338,12 +338,14 @@ export function MenuItem({
   children,
   atajo,
   peligro = false,
+  disabled = false,
   onClick,
 }: {
   icono?: NombreIcono;
   children: ReactNode;
   atajo?: string;
   peligro?: boolean;
+  disabled?: boolean;
   onClick?: () => void;
 }) {
   return (
@@ -352,6 +354,7 @@ export function MenuItem({
       role="menuitem"
       className="ui-menu-item"
       data-tone={peligro ? "bad" : undefined}
+      disabled={disabled}
       onClick={onClick}
     >
       {icono ? <Icono nombre={icono} tamano={15} /> : null}
