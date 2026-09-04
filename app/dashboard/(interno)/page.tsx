@@ -126,7 +126,7 @@ export default function Inicio() {
                       <span>alphaccm.org/eventos/{e.slug}</span>
                     </span>
                     <span className="ui-proj-side">
-                      {e.confirmados}/{e.totalRegistros}
+                      {e.asistentes}/{e.totalRegistros}
                     </span>
                   </span>
                   <p className="ui-proj-note">

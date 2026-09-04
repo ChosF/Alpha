@@ -84,7 +84,7 @@ export function ListaEventos() {
                   <span>alphaccm.org/eventos/{item.slug}</span>
                 </span>
                 <span className="ui-proj-side">
-                  {item.confirmados}/{item.totalRegistros}
+                  {item.asistentes}/{item.totalRegistros}
                 </span>
               </span>
               <p className="ui-proj-note">
@@ -316,8 +316,8 @@ function DetalleEvento({
           <span className="ui-stat-value">{evento.totalRegistros}</span>
         </Tarjeta>
         <Tarjeta className="ui-stat lg-4">
-          <span className="ui-stat-label">Confirmados</span>
-          <span className="ui-stat-value">{evento.confirmados}</span>
+          <span className="ui-stat-label">Asistentes</span>
+          <span className="ui-stat-value">{evento.asistentes}</span>
         </Tarjeta>
         <Tarjeta className="ui-stat lg-4">
           <span className="ui-stat-label">Registro</span>

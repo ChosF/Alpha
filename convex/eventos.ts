@@ -1,6 +1,5 @@
 import { ConvexError, v, type GenericId } from "convex/values";
-import { mutation, query, type QueryCtx } from "./_generated/server";
-import type { Doc } from "./_generated/dataModel";
+import { mutation, query } from "./_generated/server";
 import { registrarEnBitacora } from "./lib/auditoria";
 import { requiereRol } from "./lib/rbac";
 import { limpiarMultilinea, limpiarTexto, normalizarCorreo } from "./lib/texto";
@@ -10,6 +9,7 @@ import {
   estadoProgramaValidador,
   pilarValidador,
 } from "./lib/validadores";
+import { conAsistentes } from "./lib/conteosEvento";
 import { esFechaEventoValida, esHoraEventoValida } from "../lib/correo-evento";
 
 const eventoValidador = v.object({
@@ -33,7 +33,7 @@ const eventoValidador = v.object({
   responsablePrograma: v.optional(v.string()),
   notasPrograma: v.optional(v.string()),
   rutaPublica: v.optional(v.string()),
-  confirmados: v.number(),
+  asistentes: v.number(),
   creadoEn: v.number(),
   actualizadoEn: v.number(),
 });
@@ -89,22 +89,6 @@ function slugDe(titulo: string): string {
   return base || "evento";
 }
 
-async function conConfirmados(ctx: QueryCtx, eventos: Doc<"events">[]) {
-  const pares = await Promise.all(
-    eventos.map(async (evento) => {
-      const filas = await ctx.db
-        .query("eventRegistrations")
-        .withIndex("by_event_and_estado", (q) =>
-          q.eq("eventId", evento._id).eq("estado", "confirmado"),
-        )
-        .take(5000);
-      return [evento._id, filas.length] as const;
-    }),
-  );
-  const mapa = new Map(pares);
-  return eventos.map((evento) => ({ ...evento, confirmados: mapa.get(evento._id) ?? 0 }));
-}
-
 export const listar = query({
   args: {},
   returns: v.array(eventoValidador),
@@ -116,7 +100,7 @@ export const listar = query({
       const ordenB = b.ordenPrograma ?? Number.MAX_SAFE_INTEGER;
       return ordenA - ordenB || b.actualizadoEn - a.actualizadoEn;
     });
-    return await conConfirmados(ctx, ordenados);
+    return await conAsistentes(ctx, ordenados);
   },
 });
 

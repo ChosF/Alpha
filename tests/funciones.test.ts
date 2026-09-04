@@ -225,6 +225,43 @@ describe("registro de Calling LAF", () => {
     ).resolves.toBeNull();
   });
 
+  it("cuenta asistentes con estado asistio, no confirmados", async () => {
+    const t = convexTest(schema, modulos);
+    const eventId = await t.action(api.ingestaEventos.asegurarCallingLaf, { secreto: SECRETO });
+    await t.action(api.ingestaEventos.registrar, {
+      secreto: SECRETO,
+      slug: "calling-laf",
+      datos: datosEvento,
+    });
+    await t.action(api.ingestaEventos.registrar, {
+      secreto: SECRETO,
+      slug: "calling-laf",
+      datos: { ...datosEvento, nombre: "Mariela Reyes", correo: "a01234567@tec.mx", matricula: "A01234567" },
+    });
+    const ids = await t.run(async (ctx) =>
+      (await ctx.db.query("eventRegistrations").collect()).map((fila) => fila._id),
+    );
+    const editor = await comoUsuario(t, "editor");
+    await editor.sesion.mutation(api.eventos.cambiarEstadoRegistro, {
+      id: ids[0]!,
+      estado: "confirmado",
+    });
+    await editor.sesion.mutation(api.eventos.cambiarEstadoRegistro, {
+      id: ids[1]!,
+      estado: "asistio",
+    });
+
+    const eventos = await editor.sesion.query(api.eventos.listar, {});
+    const calling = eventos.find((evento) => evento._id === eventId);
+    expect(calling).toMatchObject({ totalRegistros: 2, asistentes: 1 });
+    expect(calling).not.toHaveProperty("confirmados");
+
+    const inicio = await editor.sesion.query(api.metricas.inicio, {});
+    const callingInicio = inicio.eventos.find((evento) => evento._id === eventId);
+    expect(callingInicio).toMatchObject({ totalRegistros: 2, asistentes: 1 });
+    expect(callingInicio).not.toHaveProperty("confirmados");
+  });
+
   it("registra asistentes en puerta con campos opcionales y asistencia automatica", async () => {
     const t = convexTest(schema, modulos);
     const eventId = await t.action(api.ingestaEventos.asegurarCallingLaf, { secreto: SECRETO });

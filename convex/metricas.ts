@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
+import { contarAsistentes } from "./lib/conteosEvento";
 import { puede, requiereRol } from "./lib/rbac";
 import {
   AREAS,
@@ -34,7 +35,7 @@ const inicioValidador = v.object({
     estado: estadoEventoValidador,
     registroAbierto: v.boolean(),
     totalRegistros: v.number(),
-    confirmados: v.number(),
+    asistentes: v.number(),
     actualizadoEn: v.number(),
   })),
   resumen: v.object({
@@ -186,17 +187,11 @@ export const inicio = query({
         .take(5000),
     ]);
 
-    // Confirmados por evento: una lectura indexada por evento, acotada.
-    const confirmadosPorEvento = await Promise.all(
-      eventos.map(async (e) => {
-        const filas = await ctx.db
-          .query("eventRegistrations")
-          .withIndex("by_event_and_estado", (q) => q.eq("eventId", e._id).eq("estado", "confirmado"))
-          .take(5000);
-        return [e._id, filas.length] as const;
-      }),
+    // Asistentes por evento: quienes ya marcaron asistencia, lectura indexada.
+    const asistentesPorEvento = await Promise.all(
+      eventos.map(async (e) => [e._id, await contarAsistentes(ctx, e._id)] as const),
     );
-    const confirmados = new Map(confirmadosPorEvento);
+    const asistentesPorId = new Map(asistentesPorEvento);
 
     let correo: { abiertos: number; noLeidos: number } | null = null;
     if (esEditor) {
@@ -268,7 +263,7 @@ export const inicio = query({
         estado: e.estado,
         registroAbierto: e.registroAbierto,
         totalRegistros: e.totalRegistros,
-        confirmados: confirmados.get(e._id) ?? 0,
+        asistentes: asistentesPorId.get(e._id) ?? 0,
         actualizadoEn: e.actualizadoEn,
       })),
       resumen: {
