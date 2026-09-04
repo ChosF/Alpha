@@ -2321,54 +2321,19 @@ button.ui-card:hover {
   align-items: center;
   gap: 8px;
 }
-.evento-fecha-editor {
-  position: relative;
-  width: min(276px, 100%);
-  min-width: 0;
-  justify-self: end;
-}
-.evento-fecha-trigger {
+.evento-fecha-info {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) 16px;
+  grid-template-columns: 18px minmax(0, 1fr);
   align-items: center;
   gap: 10px;
-  width: 100%;
-  min-height: 58px;
-  padding: 7px 10px 7px 8px;
-  --r: 10px;
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--accent-soft) 32%, var(--bg-2));
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--bg-2) 80%, transparent), var(--shadow-card);
+  width: min(240px, 100%);
+  min-width: 0;
+  margin-top: 28px;
   color: var(--fg);
-  font: inherit;
-  text-align: left;
+  justify-self: end;
 }
-button.evento-fecha-trigger {
-  cursor: pointer;
-  transition:
-    background var(--dur-fast) var(--ease),
-    border-color var(--dur-fast) var(--ease),
-    transform var(--dur-fast) var(--ease);
-}
-button.evento-fecha-trigger:hover,
-button.evento-fecha-trigger[aria-expanded="true"] {
-  border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
-  background: color-mix(in srgb, var(--accent-soft) 62%, var(--bg-2));
-}
-button.evento-fecha-trigger:active {
-  transform: scale(0.99);
-}
-.evento-fecha-trigger-estatico {
-  grid-template-columns: 36px minmax(0, 1fr);
-}
-.evento-fecha-icono {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  --r: 8px;
-  background: var(--accent-soft);
-  color: var(--accent);
+.evento-fecha-info > .ui-icon {
+  color: var(--fg-3);
 }
 .evento-fecha-copy {
   display: block;
@@ -2404,85 +2369,18 @@ button.evento-fecha-trigger:active {
   font-variant-numeric: tabular-nums;
   line-height: 1.25;
 }
-.evento-fecha-chevron {
-  color: var(--fg-3);
-  transition: transform var(--dur-fast) var(--ease);
-}
-.evento-fecha-trigger[aria-expanded="true"] .evento-fecha-chevron {
-  transform: rotate(180deg);
-}
-.evento-fecha-popover {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 50;
-  width: 320px;
-  max-width: calc(100vw - 32px);
-  padding: 14px;
-  --r: 12px;
-  border: 1px solid var(--line-2);
-  background: var(--bg-2);
-  box-shadow: var(--shadow-pop);
-}
-.evento-fecha-popover-cabecera {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-.evento-fecha-popover-cabecera span,
-.evento-fecha-popover-cabecera strong {
-  display: block;
-}
-.evento-fecha-popover-cabecera span {
-  margin-bottom: 2px;
-  color: var(--fg-3);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.evento-fecha-popover-cabecera strong {
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-.evento-fecha-campos {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px 10px;
-}
-.evento-fecha-campos > :first-child {
-  grid-column: 1 / -1;
-}
-.evento-fecha-popover .ui-aviso {
-  margin-top: 12px;
-}
-.evento-fecha-popover-acciones {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-}
 @media (max-width: 640px) {
   .evento-detalle-cabecera {
     grid-template-columns: minmax(0, 1fr);
     gap: 14px;
   }
-  .evento-fecha-editor {
+  .evento-fecha-info {
     width: 100%;
-    justify-self: stretch;
+    margin-top: 0;
+    justify-self: start;
   }
   .evento-detalle-acciones {
     grid-column: 1;
-  }
-  .evento-fecha-popover {
-    width: 100%;
-    max-width: none;
   }
 }
 .evento-asistencia-toggle[aria-pressed="true"] {
