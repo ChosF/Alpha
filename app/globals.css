@@ -94,7 +94,8 @@ textarea {
   outline-offset: 2px;
 }
 
-.ui-input > input:focus-visible {
+.ui-input > input:focus-visible,
+.ui-palette-input > input:focus-visible {
   outline: 0;
 }
 
