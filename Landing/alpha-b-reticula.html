@@ -205,7 +205,7 @@ img,svg{display:block;max-width:100%}
 .top>*{pointer-events:auto}
 .top-lk{height:19px;color:var(--ink)}
 
-/* aviso del evento destacado; cambia de Calling LAF a Mario Kart el 4 de septiembre */
+/* aviso del evento destacado: Mario Kart Challenge */
 .calling-banner{
   position:fixed;z-index:58;top:22px;left:50%;width:min(600px,calc(100vw - 210px));
   color:#fff;background:#0d2140;box-shadow:0 26px 72px -34px rgba(13,33,64,.72),inset 0 0 0 1px rgba(175,207,255,.18);
@@ -777,11 +777,11 @@ img,svg{display:block;max-width:100%}
   <div class="mg-body">
     <p class="mg-kicker tnum">2026 — 2027</p>
     <h1 class="mg-title">Empieza<br>aquí.</h1>
-    <a class="mg-event" id="event-gateway-banner" href="/eventos/calling-laf" aria-label="Calling LAF ya está aquí, abrir registro" hidden>
+    <a class="mg-event" id="event-gateway-banner" href="/events/mario-kart" aria-label="Mario Kart Challenge ya está aquí, abrir registro" hidden>
       <span class="mg-event-bar" aria-hidden="true"></span>
       <span class="mg-event-copy">
-        <strong data-event-title>Calling LAF ya está aquí.</strong>
-        <span data-event-details>04 SEP · SUM 1102 · 3:00–5:00 PM</span>
+        <strong data-event-title>Mario Kart Challenge ya está aquí.</strong>
+        <span data-event-details>21 SEP · SUM 2103 · 13:00–17:00</span>
       </span>
       <span class="mg-event-arrow" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
     </a>
@@ -832,11 +832,11 @@ img,svg{display:block;max-width:100%}
 </header>
 
 <aside class="calling-banner" id="event-banner" aria-label="Evento destacado" hidden>
-  <a href="/eventos/calling-laf">
+  <a href="/events/mario-kart">
     <span class="calling-banner-k">Evento</span>
     <span class="calling-banner-copy">
-      <strong data-event-title>Calling LAF ya está aquí.</strong>
-      <span data-event-details>04 SEP · SUM 1102 · 3:00–5:00 PM</span>
+      <strong data-event-title>Mario Kart Challenge ya está aquí.</strong>
+      <span data-event-details>21 SEP · SUM 2103 · 13:00–17:00</span>
     </span>
     <span class="calling-banner-go" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
   </a>
@@ -1417,6 +1417,7 @@ img,svg{display:block;max-width:100%}
   const elegirPromocionEvento = destacados => {
     const ahora = Date.now();
     return destacados.find(evento => {
+      if (evento.slug === "calling-laf") return false;
       const cierre = evento.horaFin || evento.horaInicio || "23:59";
       return Date.parse(`${evento.fechaEvento}T${cierre}:00-06:00`) >= ahora;
     }) || null;
