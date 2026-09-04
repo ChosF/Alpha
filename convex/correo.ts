@@ -32,6 +32,10 @@ import {
 } from "./lib/validadores";
 import { CALLING_LAF } from "../lib/calling-laf";
 import { MARIO_KART_CHALLENGE } from "../lib/mario-kart";
+import {
+  enlaceAsistenciaRegistro,
+  QR_ASISTENCIA_CONTENT_ID,
+} from "../lib/registro-asistencia";
 
 const MAX_HILOS = 160;
 const MAX_MENSAJES = 300;
@@ -484,13 +488,18 @@ export async function enviarConfirmacionCallingLaf(
   return true;
 }
 
-type ConfirmacionMarioKart = {
+export type ConfirmacionMarioKart = {
   nombre: string;
   correo: string;
+  registroId: string;
 };
 
-function textoConfirmacionMarioKart(args: ConfirmacionMarioKart): string {
+export function textoConfirmacionMarioKart(
+  args: ConfirmacionMarioKart,
+  sitio: string,
+): string {
   const nombre = primerNombre(args.nombre);
+  const acceso = enlaceAsistenciaRegistro(sitio, args.registroId);
   return [
     `Hola${nombre ? ` ${nombre}` : ""},`,
     "",
@@ -499,6 +508,10 @@ function textoConfirmacionMarioKart(args: ConfirmacionMarioKart): string {
     `Fecha: ${MARIO_KART_CHALLENGE.fechaTexto}`,
     `Hora: ${MARIO_KART_CHALLENGE.horaTexto}`,
     `Lugar: ${MARIO_KART_CHALLENGE.sede}, ${MARIO_KART_CHALLENGE.campus}`,
+    "",
+    "Tu acceso personal:",
+    acceso,
+    "Presenta el código QR de este correo al equipo de Alpha cuando llegues.",
     "",
     "La pista es de toda la comunidad LAF.",
     "",
@@ -512,11 +525,15 @@ function textoConfirmacionMarioKart(args: ConfirmacionMarioKart): string {
   ].join("\n");
 }
 
-function cuerpoConfirmacionMarioKart(args: ConfirmacionMarioKart, sitio: string): string {
+export function cuerpoConfirmacionMarioKart(
+  args: ConfirmacionMarioKart,
+  sitio: string,
+): string {
   const nombre = escaparHtml(primerNombre(args.nombre));
   const saludo = nombre ? `Hola, ${nombre}.` : "Hola.";
   const logo = `${sitio}/alpha-mark-white.png`;
   const calendario = MARIO_KART_CHALLENGE.calendarioUrl;
+  const acceso = enlaceAsistenciaRegistro(sitio, args.registroId);
 
   return `<!doctype html>
 <html lang="es">
@@ -595,6 +612,20 @@ function cuerpoConfirmacionMarioKart(args: ConfirmacionMarioKart, sitio: string)
               <h2 style="margin:10px 0 0;color:#FFFFFF;font-family:'Trebuchet MS',Verdana,sans-serif;font-size:30px;font-style:italic;font-weight:700;letter-spacing:-1px;line-height:1.08;text-transform:uppercase;">Ya estás en la parrilla.</h2>
               <p class="lead" style="margin:17px 0 0;color:#B8C9E3;font-size:15px;line-height:1.72;">Recibimos tu registro. Guarda estos datos para el día del evento.</p>
 
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:28px;background-color:#FFFFFF;border-top:5px solid #FFB72B;">
+                <tr>
+                  <td align="center" style="padding:24px 20px 22px;color:#071326;">
+                    <div style="color:#E32119;font-size:9px;font-weight:700;letter-spacing:2px;line-height:1.4;">PASE DE ENTRADA</div>
+                    <div style="margin-top:8px;color:#071326;font-size:20px;font-weight:700;line-height:1.25;">Tu QR personal</div>
+                    <a href="${escaparHtml(acceso)}" target="_blank" style="display:inline-block;margin-top:18px;text-decoration:none;">
+                      <img src="cid:${QR_ASISTENCIA_CONTENT_ID}" width="220" alt="Código QR de acceso para Mario Kart Challenge" style="display:block;width:220px;max-width:100%;height:auto;">
+                    </a>
+                    <div style="margin-top:16px;color:#41516A;font-size:12px;line-height:1.65;">Preséntalo al equipo de Alpha cuando llegues. Este acceso está ligado a tu registro.</div>
+                    <div style="margin-top:10px;color:#6B7A90;font-size:9px;line-height:1.55;word-break:break-all;">Si no puedes escanearlo, abre <a href="${escaparHtml(acceso)}" style="color:#075DA8;text-decoration:underline;">tu acceso personal</a>.</div>
+                  </td>
+                </tr>
+              </table>
+
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:28px;background-color:#0C1D37;border-top:4px solid #21B8FF;">
                 <tr>
                   <td style="padding:16px 20px;border-bottom:1px solid #19365D;">
@@ -640,27 +671,6 @@ function cuerpoConfirmacionMarioKart(args: ConfirmacionMarioKart, sitio: string)
   </table>
 </body>
 </html>`;
-}
-
-export async function enviarConfirmacionMarioKart(
-  ctx: ActionCtx,
-  args: ConfirmacionMarioKart,
-): Promise<boolean> {
-  const sitio = process.env.SITE_URL?.replace(/\/$/, "");
-  if (!sitio || !process.env.RESEND_API_KEY || process.env.RESEND_TEST_MODE !== "false") {
-    return false;
-  }
-
-  const auto = normalizarCorreo(process.env.ALPHA_AUTO_EMAIL ?? "auto@alphaccm.org");
-  await resend.sendEmail(ctx, {
-    from: nombreDireccion(auto, "Alpha CCM"),
-    to: normalizarCorreo(args.correo),
-    subject: "Tu registro para Mario Kart Challenge está confirmado",
-    text: textoConfirmacionMarioKart(args),
-    html: cuerpoConfirmacionMarioKart(args, sitio),
-    replyTo: [correoContacto()],
-  });
-  return true;
 }
 
 const hiloValidador = v.object({

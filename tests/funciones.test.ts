@@ -337,6 +337,44 @@ describe("registro de Mario Kart Challenge", () => {
       }),
     ).resolves.toEqual({ ok: false, motivo: "cerrado" });
   });
+
+  it("exige correo y no guarda WhatsApp ni teléfono", async () => {
+    const t = convexTest(schema, modulos);
+
+    await expect(
+      t.action(api.ingestaEventos.registrar, {
+        secreto: SECRETO,
+        slug: "mario-kart",
+        datos: {
+          ...datosEvento,
+          canales: { correo: false, whatsapp: true },
+          telefono: "5512345678",
+        },
+      }),
+    ).rejects.toThrow(/necesita correo electrónico/);
+
+    await expect(
+      t.action(api.ingestaEventos.registrar, {
+        secreto: SECRETO,
+        slug: "mario-kart",
+        datos: {
+          ...datosEvento,
+          correo: "correo-obligatorio@tec.mx",
+          canales: { correo: true, whatsapp: true },
+          telefono: "5512345678",
+          ipHash: "hash-evento-correo",
+        },
+      }),
+    ).resolves.toEqual({ ok: true });
+
+    const registro = await t.run(async (ctx) =>
+      (await ctx.db.query("eventRegistrations").collect()).find(
+        (fila) => fila.correo === "correo-obligatorio@tec.mx",
+      ),
+    );
+    expect(registro?.canales).toEqual({ correo: true, whatsapp: false });
+    expect(registro?.telefono).toBeUndefined();
+  });
 });
 
 describe("control de acceso", () => {

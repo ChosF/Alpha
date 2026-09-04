@@ -6,7 +6,7 @@ import { comparaSegura, limpiarTexto, normalizarCorreo, normalizarTelefono, sha2
 import { CUOTAS, consumirLimite } from "./lib/limites";
 import { CALLING_LAF, registroCallingLafDisponible } from "../lib/calling-laf";
 import { MARIO_KART_CHALLENGE } from "../lib/mario-kart";
-import { enviarConfirmacionCallingLaf, enviarConfirmacionMarioKart } from "./correo";
+import { enviarConfirmacionCallingLaf } from "./correo";
 
 const SLUG_CALLING_LAF = CALLING_LAF.slug;
 const SLUG_MARIO_KART = MARIO_KART_CHALLENGE.slug;
@@ -162,7 +162,12 @@ export const registrar = action({
         const datosCorreo = { nombre: args.datos.nombre, correo: args.datos.correo };
         const encolado =
           slug === SLUG_MARIO_KART
-            ? await enviarConfirmacionMarioKart(ctx, datosCorreo)
+            ? resultado.registroId
+              ? await ctx.runAction(internal.correoActions.enviarConfirmacionMarioKart, {
+                  ...datosCorreo,
+                  registroId: resultado.registroId,
+                })
+              : false
             : slug === SLUG_CALLING_LAF
               ? await enviarConfirmacionCallingLaf(ctx, datosCorreo)
               : false;
@@ -184,7 +189,12 @@ export const registrar = action({
 
 export const guardar = internalMutation({
   args: { slug: v.string(), datos: datosRegistroEvento },
-  returns: v.object({ ok: v.boolean(), creado: v.boolean(), motivo: v.optional(v.string()) }),
+  returns: v.object({
+    ok: v.boolean(),
+    creado: v.boolean(),
+    motivo: v.optional(v.string()),
+    registroId: v.optional(v.id("eventRegistrations")),
+  }),
   handler: async (ctx, args) => {
     const slug = limpiarTexto(args.slug, 80).toLowerCase();
     if (slug === SLUG_CALLING_LAF && !registroCallingLafDisponible()) {
@@ -200,11 +210,19 @@ export const guardar = internalMutation({
 
     const datos = args.datos;
     const correo = normalizarCorreo(datos.correo);
-    const telefono = datos.telefono ? normalizarTelefono(datos.telefono) : undefined;
-    if (!datos.canales.correo && !datos.canales.whatsapp) {
+    const soloCorreo = slug === SLUG_MARIO_KART;
+    const canales = soloCorreo
+      ? { correo: true, whatsapp: false }
+      : datos.canales;
+    const telefono =
+      !soloCorreo && datos.telefono ? normalizarTelefono(datos.telefono) : undefined;
+    if (soloCorreo && !datos.canales.correo) {
+      throw new Error("El registro de Mario Kart necesita correo electrónico.");
+    }
+    if (!canales.correo && !canales.whatsapp) {
       throw new Error("El registro necesita un canal de contacto.");
     }
-    if (datos.canales.whatsapp && !telefono) {
+    if (canales.whatsapp && !telefono) {
       throw new Error("El registro de WhatsApp necesita telefono.");
     }
     if (telefono && !/^\d{10}$/.test(telefono)) {
@@ -234,10 +252,12 @@ export const guardar = internalMutation({
         q.eq("eventId", evento._id).eq("correo", correo),
       )
       .unique();
-    if (existente !== null) return { ok: true, creado: false };
+    if (existente !== null) {
+      return { ok: true, creado: false, registroId: existente._id };
+    }
 
     const ahora = Date.now();
-    await ctx.db.insert("eventRegistrations", {
+    const registroId = await ctx.db.insert("eventRegistrations", {
       eventId: evento._id,
       nombre: limpiarTexto(datos.nombre, 80),
       correo,
@@ -246,7 +266,7 @@ export const guardar = internalMutation({
       ...(datos.matricula
         ? { matricula: limpiarTexto(datos.matricula, 12).toUpperCase() }
         : {}),
-      canales: datos.canales,
+      canales,
       ...(telefono ? { telefono } : {}),
       estado: "registrado",
       origen: `evento:${slug}`,
@@ -259,6 +279,6 @@ export const guardar = internalMutation({
       totalRegistros: evento.totalRegistros + 1,
       actualizadoEn: ahora,
     });
-    return { ok: true, creado: true };
+    return { ok: true, creado: true, registroId };
   },
 });

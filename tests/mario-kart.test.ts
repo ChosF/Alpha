@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
+import {
+  cuerpoConfirmacionMarioKart,
+  textoConfirmacionMarioKart,
+} from "@/convex/correo";
 import { MARIO_KART_CHALLENGE } from "@/lib/mario-kart";
+import {
+  enlaceAsistenciaRegistro,
+  QR_ASISTENCIA_CONTENT_ID,
+} from "@/lib/registro-asistencia";
 
 describe("datos de Mario Kart Challenge", () => {
   it("centraliza la fecha, la hora y la sede confirmadas", () => {
@@ -24,5 +32,26 @@ describe("datos de Mario Kart Challenge", () => {
     );
     expect(calendario.searchParams.get("location")).toContain("SUM 2103");
     expect(calendario.searchParams.get("ctz")).toBe("America/Mexico_City");
+  });
+
+  it("crea una URL de asistencia estable con el ID opaco del registro", () => {
+    expect(
+      enlaceAsistenciaRegistro("https://alphaccm.org", "registro-convex-123"),
+    ).toBe("https://alphaccm.org/registro/id?=registro-convex-123");
+  });
+
+  it("incluye el QR adjunto y el mismo acceso como respaldo en el correo", () => {
+    const datos = {
+      nombre: "Aaron Martinez",
+      correo: "aaron@example.com",
+      registroId: "registro-convex-123",
+    };
+    const acceso = "https://alphaccm.org/registro/id?=registro-convex-123";
+    const html = cuerpoConfirmacionMarioKart(datos, "https://alphaccm.org");
+    const texto = textoConfirmacionMarioKart(datos, "https://alphaccm.org");
+
+    expect(html).toContain(`src="cid:${QR_ASISTENCIA_CONTENT_ID}"`);
+    expect(html).toContain(`href="${acceso}"`);
+    expect(texto).toContain(acceso);
   });
 });

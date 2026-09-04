@@ -52,7 +52,6 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
   const [visible, setVisible] = useState(false);
   const [cerrando, setCerrando] = useState(false);
   const [token, setToken] = useState("");
-  const [whatsapp, setWhatsapp] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [mensaje, setMensaje] = useState<Mensaje | null>(null);
   const [completo, setCompleto] = useState(false);
@@ -136,9 +135,7 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
       carrera: String(datos.get("carrera") ?? ""),
       semestre: String(datos.get("semestre") ?? ""),
       matricula: String(datos.get("matricula") ?? ""),
-      avisosCorreo: datos.get("avisosCorreo") !== null,
-      whatsapp: datos.get("whatsapp") !== null,
-      telefono: String(datos.get("telefono") ?? ""),
+      avisosCorreo: true,
       sitio_web: String(datos.get("sitio_web") ?? ""),
       token: token || (await tomarToken()),
     };
@@ -163,7 +160,6 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
       }
 
       formulario.reset();
-      setWhatsapp(false);
       setCompleto(true);
       setMensaje(null);
       const siguienteToken = await renovarToken();
@@ -357,40 +353,6 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
                     />
                   </div>
 
-                  <fieldset className={estilos.canales}>
-                    <legend>¿Por dónde podemos contactarte?</legend>
-                    <div className={estilos.canalesOpciones}>
-                      <label className={estilos.opcion}>
-                        <input name="avisosCorreo" type="checkbox" defaultChecked />
-                        Correo electrónico
-                      </label>
-                      <label className={estilos.opcion}>
-                        <input
-                          name="whatsapp"
-                          type="checkbox"
-                          checked={whatsapp}
-                          onChange={(e) => setWhatsapp(e.currentTarget.checked)}
-                        />
-                        WhatsApp
-                      </label>
-                    </div>
-                  </fieldset>
-
-                  <div className={estilos.campo}>
-                    <label htmlFor="mk-telefono">Teléfono {whatsapp ? "" : "opcional"}</label>
-                    <input
-                      id="mk-telefono"
-                      name="telefono"
-                      type="tel"
-                      inputMode="numeric"
-                      autoComplete="tel"
-                      pattern="[0-9]{10}"
-                      maxLength={10}
-                      placeholder="5512345678"
-                      required={whatsapp}
-                    />
-                  </div>
-
                   <div className={estilos.trampa} aria-hidden="true">
                     <label htmlFor="mk-sitio">Sitio web</label>
                     <input id="mk-sitio" name="sitio_web" tabIndex={-1} autoComplete="off" />
@@ -398,7 +360,7 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
 
                   <p className={estilos.consentimiento}>
                     Al enviar aceptas que Alpha use estos datos para administrar el evento y
-                    contactarte por los canales seleccionados. Consulta nuestros <a href="/terminos">Términos y aviso de privacidad</a>.
+                    enviarte por correo tu confirmación y acceso. Consulta nuestros <a href="/terminos">Términos y aviso de privacidad</a>.
                   </p>
 
                   <button type="submit" className={estilos.enviar} disabled={ocupado}>

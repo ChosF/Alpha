@@ -1,17 +1,35 @@
 "use node";
 
+import QRCode from "qrcode";
+import { Resend as ResendComponent } from "@convex-dev/resend";
 import { Resend } from "resend";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
-import { internal } from "./_generated/api";
+import { components, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
+import {
+  cuerpoConfirmacionMarioKart,
+  textoConfirmacionMarioKart,
+} from "./correo";
+import { correoContacto } from "./lib/direccionesCorreo";
 import { renderizarCorreoDashboard, textoConFirma } from "./lib/plantillaCorreo";
+import { normalizarCorreo } from "./lib/texto";
+import {
+  enlaceAsistenciaRegistro,
+  QR_ASISTENCIA_CONTENT_ID,
+} from "../lib/registro-asistencia";
 
 const MAX_INTENTOS = 5;
 const MAX_ADJUNTO_BYTES = 10 * 1024 * 1024;
 const MAX_TOTAL_ADJUNTOS_BYTES = 18 * 1024 * 1024;
 const MAX_HTML_ENTRANTE_BYTES = 500_000;
+const ASUNTO_MARIO_KART = "Tu registro para Mario Kart Challenge está confirmado";
+
+const resendManual = new ResendComponent(components.resend, {
+  testMode: process.env.RESEND_TEST_MODE !== "false",
+  onEmailEvent: internal.correo.actualizarEstadoEnvio,
+});
 
 const segmentoCorreoValidador = v.object({
   texto: v.string(),
@@ -91,6 +109,70 @@ function textoDesdeHtml(html: string): string {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
+
+export const enviarConfirmacionMarioKart = internalAction({
+  args: {
+    nombre: v.string(),
+    correo: v.string(),
+    registroId: v.id("eventRegistrations"),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args): Promise<boolean> => {
+    const sitio = process.env.SITE_URL?.replace(/\/$/, "");
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!sitio || !apiKey || process.env.RESEND_TEST_MODE !== "false") return false;
+
+    const destinatario = normalizarCorreo(args.correo);
+    const remitente = normalizarCorreo(process.env.ALPHA_AUTO_EMAIL ?? "auto@alphaccm.org");
+    const respuestaA = correoContacto();
+    const datos = { ...args, registroId: String(args.registroId) };
+    const acceso = enlaceAsistenciaRegistro(sitio, datos.registroId);
+    const qr = await QRCode.toBuffer(acceso, {
+      type: "png",
+      width: 640,
+      margin: 4,
+      errorCorrectionLevel: "M",
+      color: { dark: "#020612", light: "#FFFFFFFF" },
+    });
+    const cliente = new Resend(apiKey);
+
+    await resendManual.sendEmailManually(
+      ctx,
+      {
+        from: `Alpha CCM <${remitente}>`,
+        to: destinatario,
+        subject: ASUNTO_MARIO_KART,
+        replyTo: [respuestaA],
+      },
+      async (emailId) => {
+        const respuesta = await cliente.emails.send(
+          {
+            from: `Alpha CCM <${remitente}>`,
+            to: destinatario,
+            subject: ASUNTO_MARIO_KART,
+            text: textoConfirmacionMarioKart(datos, sitio),
+            html: cuerpoConfirmacionMarioKart(datos, sitio),
+            replyTo: respuestaA,
+            attachments: [
+              {
+                filename: "acceso-mario-kart.png",
+                content: qr,
+                contentType: "image/png",
+                contentId: QR_ASISTENCIA_CONTENT_ID,
+              },
+            ],
+          },
+          { idempotencyKey: `alpha-${emailId}` },
+        );
+        if (respuesta.error || !respuesta.data) {
+          throw new Error(respuesta.error?.message ?? "Resend no aceptó la confirmación.");
+        }
+        return respuesta.data.id;
+      },
+    );
+    return true;
+  },
+});
 
 export const enviarConAdjuntos = action({
   args: {
