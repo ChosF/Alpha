@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { ETIQUETAS } from "@/convex/lib/validadores";
 import { MarcaAlpha } from "@/components/marca-alpha";
 import { useCascaron } from "./cascaron";
@@ -16,6 +18,16 @@ export function BarraSuperior() {
     useCascaron();
   const actual = apartadoActual(ruta);
   const nombre = yo ? yo.nombre || yo.correo : "";
+  const segmentos = ruta.split("/").filter(Boolean);
+  const eventoId =
+    segmentos.length === 3 &&
+    segmentos[0] === "dashboard" &&
+    segmentos[1] === "eventos" &&
+    segmentos[2] !== "programa"
+      ? segmentos[2]
+      : null;
+  const eventos = useQuery(api.eventos.listar, eventoId ? {} : "skip");
+  const eventoActual = eventoId ? eventos?.find((evento) => evento._id === eventoId) : undefined;
 
   return (
     <header className="ui-top">
@@ -38,7 +50,15 @@ export function BarraSuperior() {
           Alpha
         </Link>
         <span className="ui-slash hidden lg:block" aria-hidden="true" />
-        <span className="ui-crumb-actual">{actual?.texto ?? "Inicio"}</span>
+        {eventoId ? (
+          <>
+            <Link href={`${BASE}/eventos`}>Eventos</Link>
+            <span className="ui-slash" aria-hidden="true" />
+            <span className="ui-crumb-actual">{eventoActual?.titulo ?? "Evento"}</span>
+          </>
+        ) : (
+          <span className="ui-crumb-actual">{actual?.texto ?? "Inicio"}</span>
+        )}
       </nav>
 
       <div className="ml-auto flex items-center gap-1.5 sm:gap-2">

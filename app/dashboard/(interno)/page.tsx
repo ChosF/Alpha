@@ -113,7 +113,7 @@ export default function Inicio() {
               {datos.eventos.slice(0, 6).map((e, i) => (
                 <Link
                   key={e._id}
-                  href={{ pathname: "/dashboard/eventos", query: { evento: e._id } }}
+                  href={`/dashboard/eventos/${e._id}`}
                   className="ui-card ui-card-link ui-proj ui-in"
                   data-i={Math.min(5 + i, 8)}
                   aria-label={`Abrir ${e.titulo}`}
