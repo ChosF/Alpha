@@ -837,6 +837,9 @@ button.ui-card:hover {
   color: inherit;
   font: inherit;
 }
+[data-panel] .ui-input input:focus-visible {
+  outline: 0;
+}
 .ui-input input::placeholder {
   color: var(--fg-3);
 }
