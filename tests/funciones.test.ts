@@ -616,6 +616,7 @@ describe("personalizacion e Inicio del dashboard", () => {
   it("Inicio entrega analitica de registros y ya no consulta actividad", async () => {
     const t = convexTest(schema, modulos);
     const { sesion } = await comoUsuario(t, "lector");
+    await t.action(api.ingestaEventos.asegurarCallingLaf, { secreto: SECRETO });
     await t.action(api.ingesta.registrar, { secreto: SECRETO, datos: datosBase });
     await t.action(api.ingesta.registrar, {
       secreto: SECRETO,
@@ -631,6 +632,9 @@ describe("personalizacion e Inicio del dashboard", () => {
 
     const inicio = await sesion.query(api.metricas.inicio, {});
     expect(inicio).not.toHaveProperty("actividad");
+    expect(inicio.eventos).toContainEqual(
+      expect.objectContaining({ slug: "calling-laf", fechaEvento: "2026-09-04" }),
+    );
     expect(inicio.analitica.total).toBe(2);
     expect(inicio.analitica.porTipo).toEqual([
       { tipo: "miembro", total: 1 },

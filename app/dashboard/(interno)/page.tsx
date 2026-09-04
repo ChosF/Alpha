@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { api } from "@/convex/_generated/api";
 import { ETIQUETAS } from "@/convex/lib/validadores";
+import { fechaEventoEnEspanol } from "@/lib/correo-evento";
 import { useCascaron } from "@/components/panel/ui/cascaron";
 import { Icono } from "@/components/panel/ui/iconos";
 import {
@@ -129,8 +130,8 @@ export default function Inicio() {
                     </span>
                   </span>
                   <p className="ui-proj-note">
-                    <Icono nombre="commit" tamano={14} />
-                    <span>{e.resumen || ETIQUETAS[e.pilar] || "Sin resumen"}</span>
+                    <Icono nombre="eventos" tamano={14} />
+                    <span>{e.fechaEvento ? fechaEventoEnEspanol(e.fechaEvento) : "Fecha por definir"}</span>
                   </p>
                   <div className="ui-proj-foot">
                     <span className="ui-proj-who">

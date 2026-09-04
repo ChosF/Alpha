@@ -17,6 +17,7 @@ import {
   type Pilar,
 } from "@/convex/lib/validadores";
 import { construirCsv } from "@/lib/csv";
+import { fechaEventoEnEspanol } from "@/lib/correo-evento";
 import { construirXlsx } from "@/lib/xlsx";
 import { Icono } from "@/components/panel/ui/iconos";
 import {
@@ -87,8 +88,8 @@ export function ListaEventos() {
                 </span>
               </span>
               <p className="ui-proj-note">
-                <Icono nombre="commit" tamano={14} />
-                <span>{item.resumen || ETIQUETAS[item.pilar]}</span>
+                <Icono nombre="eventos" tamano={14} />
+                <span>{item.fechaEvento ? fechaEventoEnEspanol(item.fechaEvento) : "Fecha por definir"}</span>
               </p>
               <div className="ui-proj-foot">
                 <span className="ui-proj-who">
