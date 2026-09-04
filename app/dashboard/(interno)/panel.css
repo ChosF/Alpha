@@ -327,31 +327,6 @@
   [data-panel][data-sidebar="collapsed"] .ui-side .ui-nav-meta {
     display: none;
   }
-  [data-panel][data-sidebar="collapsed"] .ui-side .ui-nav-item::after {
-    content: attr(data-tip);
-    position: absolute;
-    left: calc(100% + 12px);
-    top: 50%;
-    z-index: 60;
-    padding: 5px 9px;
-    --r: 6px;
-    background: var(--fg);
-    color: var(--bg);
-    font-size: 12px;
-    font-weight: 500;
-    white-space: nowrap;
-    pointer-events: none;
-    opacity: 0;
-    transform: translateY(-50%) translateX(-6px);
-    transition:
-      opacity var(--dur-fast) var(--ease),
-      transform var(--dur-fast) var(--ease);
-  }
-  [data-panel][data-sidebar="collapsed"] .ui-side .ui-nav-item:hover::after,
-  [data-panel][data-sidebar="collapsed"] .ui-side .ui-nav-item:focus-visible::after {
-    opacity: 1;
-    transform: translateY(-50%) translateX(0);
-  }
 }
 
 /* Barra superior */
