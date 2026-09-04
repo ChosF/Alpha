@@ -205,7 +205,7 @@ img,svg{display:block;max-width:100%}
 .top>*{pointer-events:auto}
 .top-lk{height:19px;color:var(--ink)}
 
-/* aviso temporal de Calling LAF; desaparece al terminar el 5 de septiembre */
+/* aviso del evento destacado; cambia de Calling LAF a Mario Kart el 4 de septiembre */
 .calling-banner{
   position:fixed;z-index:58;top:22px;left:50%;width:min(600px,calc(100vw - 210px));
   color:#fff;background:#0d2140;box-shadow:0 26px 72px -34px rgba(13,33,64,.72),inset 0 0 0 1px rgba(175,207,255,.18);
@@ -777,11 +777,11 @@ img,svg{display:block;max-width:100%}
   <div class="mg-body">
     <p class="mg-kicker tnum">2026 — 2027</p>
     <h1 class="mg-title">Empieza<br>aquí.</h1>
-    <a class="mg-event" id="calling-laf-gateway-banner" href="/eventos/calling-laf" aria-label="Calling LAF ya está aquí, abrir registro" hidden>
+    <a class="mg-event" id="event-gateway-banner" href="/eventos/calling-laf" aria-label="Calling LAF ya está aquí, abrir registro" hidden>
       <span class="mg-event-bar" aria-hidden="true"></span>
       <span class="mg-event-copy">
-        <strong>Calling LAF ya está aquí.</strong>
-        <span>04 SEP · SUM 1102 · 3:00–5:00 PM</span>
+        <strong data-event-title>Calling LAF ya está aquí.</strong>
+        <span data-event-details>04 SEP · SUM 1102 · 3:00–5:00 PM</span>
       </span>
       <span class="mg-event-arrow" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
     </a>
@@ -831,12 +831,12 @@ img,svg{display:block;max-width:100%}
   </div>
 </header>
 
-<aside class="calling-banner" id="calling-laf-banner" aria-label="Evento destacado" hidden>
+<aside class="calling-banner" id="event-banner" aria-label="Evento destacado" hidden>
   <a href="/eventos/calling-laf">
     <span class="calling-banner-k">Evento</span>
     <span class="calling-banner-copy">
-      <strong>Calling LAF ya está aquí.</strong>
-      <span>4 SEP · SUM 1102 · 3:00–5:00 PM</span>
+      <strong data-event-title>Calling LAF ya está aquí.</strong>
+      <span data-event-details>04 SEP · SUM 1102 · 3:00–5:00 PM</span>
     </span>
     <span class="calling-banner-go" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"><path d="M7 17 17 7M8 7h9v9"/></svg></span>
   </a>
@@ -1393,22 +1393,41 @@ img,svg{display:block;max-width:100%}
   const hasMobileGateway = () => matchMedia("(max-width: 767px)").matches;
   let running = true;
 
-  const callingBanner = document.getElementById("calling-laf-banner");
-  const callingGatewayBanner = document.getElementById("calling-laf-gateway-banner");
-  const callingBanners = [callingBanner,callingGatewayBanner];
-  const callingCierre = Date.parse("2026-09-06T06:00:00.000Z");
-  const sincronizarCallingBanner = () => {
-    const restante = callingCierre-Date.now();
-    if (restante <= 0) {
-      callingBanners.forEach(banner => banner.classList.remove("on"));
-      setTimeout(() => callingBanners.forEach(banner => { banner.hidden = true; }),RM ? 0 : 620);
-      return;
+  const eventBanner = document.getElementById("event-banner");
+  const eventGatewayBanner = document.getElementById("event-gateway-banner");
+  const eventBanners = [eventBanner,eventGatewayBanner];
+  const callingCierre = Date.parse("2026-09-04T22:00:00.000Z"); // 16:00 en Ciudad de México
+  const promocionesEvento = {
+    callingLaf: {
+      href:"/eventos/calling-laf",
+      etiqueta:"Calling LAF ya está aquí, abrir registro",
+      titulo:"Calling LAF ya está aquí.",
+      detalles:"04 SEP · SUM 1102 · 3:00–5:00 PM"
+    },
+    marioKart: {
+      href:"/events/mario-kart",
+      etiqueta:"Mario Kart Challenge ya está aquí, abrir evento",
+      titulo:"Mario Kart Challenge ya está aquí.",
+      detalles:"21 SEP · SUM 2103 · 13:00–17:00"
     }
-    callingBanners.forEach(banner => { banner.hidden = false; });
-    requestAnimationFrame(() => callingBanners.forEach(banner => banner.classList.add("on")));
-    setTimeout(sincronizarCallingBanner,Math.min(restante,2147483647));
   };
-  sincronizarCallingBanner();
+  const aplicarPromocionEvento = promocion => {
+    eventBanners.forEach(banner => {
+      const enlace = banner.matches("a") ? banner : banner.querySelector("a");
+      enlace.href = promocion.href;
+      enlace.setAttribute("aria-label",promocion.etiqueta);
+      banner.querySelector("[data-event-title]").textContent = promocion.titulo;
+      banner.querySelector("[data-event-details]").textContent = promocion.detalles;
+      banner.hidden = false;
+    });
+    requestAnimationFrame(() => eventBanners.forEach(banner => banner.classList.add("on")));
+  };
+  const sincronizarPromocionEvento = () => {
+    const restante = callingCierre-Date.now();
+    aplicarPromocionEvento(restante > 0 ? promocionesEvento.callingLaf : promocionesEvento.marioKart);
+    if (restante > 0) setTimeout(sincronizarPromocionEvento,Math.min(restante,2147483647));
+  };
+  sincronizarPromocionEvento();
 
   /* ─── Estrellas fugaces sobre el campo navy ─────────────────────── */
   if (!RM && cv) {
