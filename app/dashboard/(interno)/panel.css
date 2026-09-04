@@ -36,6 +36,14 @@
    utilidades (hidden, lg:inline-flex, w-full…) puedan ganarle. */
 @layer components {
 
+:root {
+  --dropdown-open-dur: 250ms;
+  --dropdown-close-dur: 150ms;
+  --dropdown-pre-scale: 0.97;
+  --dropdown-closing-scale: 0.99;
+  --dropdown-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 /* ---------------------------------------------------------------- Tokens */
 
 [data-panel] {
@@ -1418,6 +1426,40 @@ button.ui-card:hover {
 .ui-stat-delta[data-tone="warn"] b {
   color: var(--warn);
 }
+
+.t-dropdown {
+  transform-origin: top left;
+  transform: scale(var(--dropdown-pre-scale));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--dropdown-open-dur) var(--dropdown-ease),
+    opacity   var(--dropdown-open-dur) var(--dropdown-ease);
+  will-change: transform, opacity;
+}
+.t-dropdown[data-origin="top-right"]     { transform-origin: top right; }
+.t-dropdown[data-origin="top-center"]    { transform-origin: top center; }
+.t-dropdown[data-origin="bottom-left"]   { transform-origin: bottom left; }
+.t-dropdown[data-origin="bottom-center"] { transform-origin: bottom center; }
+.t-dropdown[data-origin="bottom-right"]  { transform-origin: bottom right; }
+
+.t-dropdown.is-open {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+.t-dropdown.is-closing {
+  transform: scale(var(--dropdown-closing-scale));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--dropdown-close-dur) var(--dropdown-ease),
+    opacity   var(--dropdown-close-dur) var(--dropdown-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-dropdown { transition: none !important; }
+}
 [data-panel][data-density="compact"] .ui-stat,
 [data-panel][data-density="compact"] .ui-proj {
   padding: 14px 16px;
@@ -2265,6 +2307,183 @@ button.ui-card:hover {
 .ui-filterbar .ui-input {
   flex: 1;
   min-width: 180px;
+}
+.evento-detalle-cabecera {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 18px 28px;
+}
+.evento-detalle-acciones {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.evento-fecha-editor {
+  position: relative;
+  width: min(276px, 100%);
+  min-width: 0;
+  justify-self: end;
+}
+.evento-fecha-trigger {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 58px;
+  padding: 7px 10px 7px 8px;
+  --r: 10px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--accent-soft) 32%, var(--bg-2));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--bg-2) 80%, transparent), var(--shadow-card);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+}
+button.evento-fecha-trigger {
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+button.evento-fecha-trigger:hover,
+button.evento-fecha-trigger[aria-expanded="true"] {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
+  background: color-mix(in srgb, var(--accent-soft) 62%, var(--bg-2));
+}
+button.evento-fecha-trigger:active {
+  transform: scale(0.99);
+}
+.evento-fecha-trigger-estatico {
+  grid-template-columns: 36px minmax(0, 1fr);
+}
+.evento-fecha-icono {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  --r: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.evento-fecha-copy {
+  display: block;
+  min-width: 0;
+}
+.evento-fecha-copy > span,
+.evento-fecha-copy > strong,
+.evento-fecha-copy > small {
+  display: block;
+}
+.evento-fecha-copy > span {
+  margin-bottom: 1px;
+  color: var(--fg-3);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+.evento-fecha-copy > strong {
+  overflow: hidden;
+  color: var(--fg);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.evento-fecha-copy > small {
+  margin-top: 1px;
+  color: var(--fg-2);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+}
+.evento-fecha-chevron {
+  color: var(--fg-3);
+  transition: transform var(--dur-fast) var(--ease);
+}
+.evento-fecha-trigger[aria-expanded="true"] .evento-fecha-chevron {
+  transform: rotate(180deg);
+}
+.evento-fecha-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  padding: 14px;
+  --r: 12px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-2);
+  box-shadow: var(--shadow-pop);
+}
+.evento-fecha-popover-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.evento-fecha-popover-cabecera span,
+.evento-fecha-popover-cabecera strong {
+  display: block;
+}
+.evento-fecha-popover-cabecera span {
+  margin-bottom: 2px;
+  color: var(--fg-3);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.evento-fecha-popover-cabecera strong {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.evento-fecha-campos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 10px;
+}
+.evento-fecha-campos > :first-child {
+  grid-column: 1 / -1;
+}
+.evento-fecha-popover .ui-aviso {
+  margin-top: 12px;
+}
+.evento-fecha-popover-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+@media (max-width: 640px) {
+  .evento-detalle-cabecera {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .evento-fecha-editor {
+    width: 100%;
+    justify-self: stretch;
+  }
+  .evento-detalle-acciones {
+    grid-column: 1;
+  }
+  .evento-fecha-popover {
+    width: 100%;
+    max-width: none;
+  }
 }
 .evento-asistencia-toggle[aria-pressed="true"] {
   border-color: var(--accent);

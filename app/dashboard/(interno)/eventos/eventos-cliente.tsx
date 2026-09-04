@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { api } from "@/convex/_generated/api";
@@ -17,7 +17,7 @@ import {
   type Pilar,
 } from "@/convex/lib/validadores";
 import { construirCsv } from "@/lib/csv";
-import { fechaEventoEnEspanol } from "@/lib/correo-evento";
+import { fechaEventoEnEspanol, horarioEvento } from "@/lib/correo-evento";
 import { construirXlsx } from "@/lib/xlsx";
 import { Icono } from "@/components/panel/ui/iconos";
 import {
@@ -250,7 +250,7 @@ function DetalleEvento({
 
   return (
     <>
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+      <div className="evento-detalle-cabecera mb-5">
         <div className="min-w-0">
           <Link href="/dashboard/eventos" className="ui-faint mb-2 inline-flex items-center gap-1 text-[12.5px]">
             <Icono nombre="chevronIzquierda" tamano={13} />
@@ -260,7 +260,8 @@ function DetalleEvento({
           <p className="ui-desc mt-1 max-w-2xl">{evento.resumen || "Sin resumen."}</p>
           <p className="ui-faint mt-2 text-[12px]">alphaccm.org/eventos/{evento.slug}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <EditorFechaEvento evento={evento} puedeEditar={puedeEditar} />
+        <div className="evento-detalle-acciones">
           <Pildora tono={TONO_ESTADO[evento.estado] ?? "neutro"}>{ETIQUETAS[evento.estado]}</Pildora>
           {puedeEditar ? (
             <>
@@ -686,6 +687,206 @@ function FormularioAsistenteEnPuerta({
           </Boton>
         </div>
       </form>
+    </div>
+  );
+}
+
+function EditorFechaEvento({
+  evento,
+  puedeEditar,
+}: {
+  evento: EventoLista;
+  puedeEditar: boolean;
+}) {
+  const actualizar = useMutation(api.eventos.actualizar);
+  const [estadoPopover, setEstadoPopover] = useState<"cerrado" | "abierto" | "cerrando">("cerrado");
+  const [fechaEvento, setFechaEvento] = useState(evento.fechaEvento ?? "");
+  const [horaInicio, setHoraInicio] = useState(evento.horaInicio ?? "");
+  const [horaFin, setHoraFin] = useState(evento.horaFin ?? "");
+  const [ocupado, setOcupado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const contenedorRef = useRef<HTMLDivElement>(null);
+  const cierreRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abierto = estadoPopover === "abierto";
+  const fechaLegible = evento.fechaEvento
+    ? fechaEventoEnEspanol(evento.fechaEvento)
+    : "Fecha por definir";
+  const horarioLegible = evento.horaInicio
+    ? horarioEvento(evento.horaInicio, evento.horaFin)
+    : "Hora por definir";
+
+  const cerrar = useCallback(() => {
+    if (cierreRef.current) clearTimeout(cierreRef.current);
+    setEstadoPopover("cerrando");
+    const duracion =
+      typeof window === "undefined"
+        ? 150
+        : parseFloat(
+            getComputedStyle(document.documentElement).getPropertyValue("--dropdown-close-dur"),
+          ) || 150;
+    cierreRef.current = setTimeout(() => setEstadoPopover("cerrado"), duracion);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (cierreRef.current) clearTimeout(cierreRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!abierto) return;
+    const cerrarFuera = (e: PointerEvent) => {
+      if (contenedorRef.current && !contenedorRef.current.contains(e.target as Node)) cerrar();
+    };
+    const cerrarConEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") cerrar();
+    };
+    document.addEventListener("pointerdown", cerrarFuera);
+    document.addEventListener("keydown", cerrarConEscape);
+    return () => {
+      document.removeEventListener("pointerdown", cerrarFuera);
+      document.removeEventListener("keydown", cerrarConEscape);
+    };
+  }, [abierto, cerrar]);
+
+  const abrir = () => {
+    if (cierreRef.current) clearTimeout(cierreRef.current);
+    setFechaEvento(evento.fechaEvento ?? "");
+    setHoraInicio(evento.horaInicio ?? "");
+    setHoraFin(evento.horaFin ?? "");
+    setError(null);
+    setEstadoPopover("abierto");
+    requestAnimationFrame(() =>
+      contenedorRef.current?.querySelector<HTMLInputElement>('input[type="date"]')?.focus(),
+    );
+  };
+
+  const guardar = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!fechaEvento || !horaInicio) {
+      setError("Elige la fecha y la hora de inicio.");
+      return;
+    }
+    setOcupado(true);
+    setError(null);
+    try {
+      await actualizar({
+        id: evento._id,
+        titulo: evento.titulo,
+        resumen: evento.resumen,
+        pilar: evento.pilar,
+        estado: evento.estado,
+        fechaEvento,
+        horaInicio,
+        ...(horaFin ? { horaFin } : {}),
+        ...(evento.sede ? { sede: evento.sede } : {}),
+      });
+      cerrar();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo guardar la fecha.");
+    } finally {
+      setOcupado(false);
+    }
+  };
+
+  return (
+    <div ref={contenedorRef} className="evento-fecha-editor">
+      {puedeEditar ? (
+        <button
+          type="button"
+          className="evento-fecha-trigger"
+          aria-haspopup="dialog"
+          aria-expanded={abierto}
+          aria-controls={`evento-fecha-${evento._id}`}
+          onClick={() => (abierto ? cerrar() : abrir())}
+        >
+          <span className="evento-fecha-icono">
+            <Icono nombre="eventos" tamano={17} />
+          </span>
+          <span className="evento-fecha-copy">
+            <span>Fecha y hora</span>
+            <strong>{fechaLegible}</strong>
+            <small>{horarioLegible}</small>
+          </span>
+          <Icono nombre="chevronAbajo" tamano={14} className="evento-fecha-chevron" />
+        </button>
+      ) : (
+        <div className="evento-fecha-trigger evento-fecha-trigger-estatico">
+          <span className="evento-fecha-icono">
+            <Icono nombre="eventos" tamano={17} />
+          </span>
+          <span className="evento-fecha-copy">
+            <span>Fecha y hora</span>
+            <strong>{fechaLegible}</strong>
+            <small>{horarioLegible}</small>
+          </span>
+        </div>
+      )}
+
+      {puedeEditar ? (
+        <form
+          id={`evento-fecha-${evento._id}`}
+          role="dialog"
+          aria-label="Cambiar fecha y hora del evento"
+          aria-hidden={!abierto}
+          inert={!abierto ? true : undefined}
+          className={`evento-fecha-popover t-dropdown ${
+            estadoPopover === "abierto" ? "is-open" : estadoPopover === "cerrando" ? "is-closing" : ""
+          }`}
+          data-origin="top-right"
+          onSubmit={(e) => void guardar(e)}
+        >
+          <div className="evento-fecha-popover-cabecera">
+            <div>
+              <span>Programación</span>
+              <strong>Cambiar fecha y hora</strong>
+            </div>
+            <Boton
+              variante="fantasma"
+              tamano="sm"
+              soloIcono
+              icono="cerrar"
+              etiqueta="Cerrar calendario"
+              onClick={cerrar}
+            />
+          </div>
+          <div className="evento-fecha-campos">
+            <Campo etiqueta="Fecha" htmlFor={`fecha-evento-${evento._id}`}>
+              <Entrada
+                id={`fecha-evento-${evento._id}`}
+                type="date"
+                value={fechaEvento}
+                onChange={(e) => setFechaEvento(e.target.value)}
+              />
+            </Campo>
+            <Campo etiqueta="Inicio" htmlFor={`inicio-evento-${evento._id}`}>
+              <Entrada
+                id={`inicio-evento-${evento._id}`}
+                type="time"
+                value={horaInicio}
+                onChange={(e) => setHoraInicio(e.target.value)}
+              />
+            </Campo>
+            <Campo etiqueta="Fin opcional" htmlFor={`fin-evento-${evento._id}`}>
+              <Entrada
+                id={`fin-evento-${evento._id}`}
+                type="time"
+                value={horaFin}
+                onChange={(e) => setHoraFin(e.target.value)}
+              />
+            </Campo>
+          </div>
+          {error ? <Aviso tono="error">{error}</Aviso> : null}
+          <div className="evento-fecha-popover-acciones">
+            <Boton tamano="sm" onClick={cerrar} disabled={ocupado}>
+              Cancelar
+            </Boton>
+            <Boton tamano="sm" variante="primario" type="submit" disabled={ocupado}>
+              {ocupado ? "Guardando…" : "Guardar fecha"}
+            </Boton>
+          </div>
+        </form>
+      ) : null}
     </div>
   );
 }
