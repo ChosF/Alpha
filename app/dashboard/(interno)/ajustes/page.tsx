@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useMutation } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "@/convex/_generated/api";
 import { ETIQUETAS } from "@/convex/lib/validadores";
@@ -364,6 +364,7 @@ const GRAFICAS_CONFIG: Array<{ id: GraficaInicio; titulo: string; descripcion: s
 function Seguridad() {
   const { yo, cerrarSesion } = useCascaron();
   const { signIn } = useAuthActions();
+  const iniciarRestablecimiento = useAction(api.auth.signIn);
   const [codigoEnviado, setCodigoEnviado] = useState(false);
   const [codigo, setCodigo] = useState("");
   const [contrasena, setContrasena] = useState("");
@@ -379,7 +380,12 @@ function Seguridad() {
     setOcupado(true);
     setAviso(null);
     try {
-      await signIn("password", { email: yo.correo, flow: "reset" });
+      // La primera etapa no debe pasar por useAuthActions: el flujo de correo
+      // no devuelve tokens y el cliente lo interpretaría como cierre de sesión.
+      await iniciarRestablecimiento({
+        provider: "password",
+        params: { email: yo.correo, flow: "reset" },
+      });
       setCodigoEnviado(true);
       setAviso({ tono: "exito", texto: `Enviamos un código de 6 dígitos a ${yo.correo}.` });
     } catch {
