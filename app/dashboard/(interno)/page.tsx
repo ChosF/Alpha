@@ -111,7 +111,7 @@ export default function Inicio() {
             </Tarjeta>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
-              {datos.eventos.slice(0, 6).map((e, i) => (
+              {datos.eventos.slice(0, 2).map((e, i) => (
                 <Link
                   key={e._id}
                   href={`/dashboard/eventos/${e._id}`}
