@@ -27,7 +27,7 @@ export function Encabezado({
   acciones?: ReactNode;
 }) {
   return (
-    <header className="ui-page-h ui-in">
+    <header className="ui-page-h ui-in relative z-10">
       <div className="min-w-0">
         {cejilla ? <p className="ui-eyebrow">{cejilla}</p> : null}
         <h1 className="ui-title">{titulo}</h1>
