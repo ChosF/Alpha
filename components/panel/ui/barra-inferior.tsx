@@ -17,7 +17,7 @@ export function BarraInferior() {
   const ruta = usePathname();
   const { yo, contadores } = useCascaron();
   const [anticipada, setAnticipada] = useState<{ desde: string; hacia: string } | null>(null);
-  const lista = useRef<HTMLUListElement>(null);
+  const lista = useRef<HTMLDivElement>(null);
   const inicializada = useRef(false);
   const rutaAnterior = useRef(ruta);
 
@@ -67,34 +67,36 @@ export function BarraInferior() {
 
   return (
     <nav className="ui-tabbar lg:hidden" aria-label="Secciones del panel">
-      <ul ref={lista} className="ui-tabbar-core" data-items={pestanas.length}>
-        <li className="ui-tabbar-pill" aria-hidden="true" />
-        {pestanas.map((a) => {
-          const activoReal = actualReal?.href === a.href;
-          const activo = actualVisual?.href === a.href;
-          const meta = a.contador ? contadores?.[a.contador] ?? null : null;
-          const anticipar = () => setAnticipada({ desde: ruta, hacia: a.href });
-          return (
-            <li key={a.href} className="min-w-0">
-              <Link
-                href={a.href}
-                prefetch
-                aria-current={activoReal ? "page" : undefined}
-                data-active={activo ? "true" : undefined}
-                onPointerDown={anticipar}
-                onClick={anticipar}
-                className="ui-tabbar-tab"
-              >
-                <span className="ui-tabbar-icon">
-                  <Icono nombre={a.icono} tamano={19} />
-                  {meta !== null && meta > 0 ? <i className="ui-tabbar-dot" /> : null}
-                </span>
-                <span>{a.texto}</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      <div ref={lista} className="ui-tabbar-core" data-items={pestanas.length}>
+        <i className="ui-tabbar-pill" aria-hidden="true" />
+        <ul className="ui-tabbar-list">
+          {pestanas.map((a) => {
+            const activoReal = actualReal?.href === a.href;
+            const activo = actualVisual?.href === a.href;
+            const meta = a.contador ? contadores?.[a.contador] ?? null : null;
+            const anticipar = () => setAnticipada({ desde: ruta, hacia: a.href });
+            return (
+              <li key={a.href} className="min-w-0">
+                <Link
+                  href={a.href}
+                  prefetch
+                  aria-current={activoReal ? "page" : undefined}
+                  data-active={activo ? "true" : undefined}
+                  onPointerDown={anticipar}
+                  onClick={anticipar}
+                  className="ui-tabbar-tab"
+                >
+                  <span className="ui-tabbar-icon">
+                    <Icono nombre={a.icono} tamano={19} />
+                    {meta !== null && meta > 0 ? <i className="ui-tabbar-dot" /> : null}
+                  </span>
+                  <span>{a.texto}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </nav>
   );
 }

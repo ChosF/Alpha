@@ -51,6 +51,20 @@ export default function Registros() {
   const puedeEditar = yo?.rol === "admin" || yo?.rol === "editor";
   const seleccionado = datos?.page.find((r) => r._id === abierto) ?? null;
 
+  useEffect(() => {
+    if (!seleccionado || !window.matchMedia("(max-width: 1023px)").matches) return;
+    const overflowAnterior = document.body.style.overflow;
+    const cerrarConEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAbierto(null);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", cerrarConEscape);
+    return () => {
+      document.body.style.overflow = overflowAnterior;
+      window.removeEventListener("keydown", cerrarConEscape);
+    };
+  }, [seleccionado]);
+
   return (
     <>
       <Encabezado
@@ -254,104 +268,122 @@ function Ficha({
   const whatsapp = `¡Hola, ${registro.nombre}! Te damos la bienvenida a Alpha. Gracias por registrarte. Al equipo de Alpha le gustaría tener una entrevista contigo para conocerte mejor.`;
 
   return (
-    <aside className="ui-sheet">
-      <div className="ui-card-h">
-        <div className="min-w-0">
-          <h3 className="ui-h2 truncate">{registro.nombre}</h3>
-          <p className="ui-faint truncate text-[12px]">{registro.correo}</p>
+    <>
+      <button
+        type="button"
+        className="ui-registration-backdrop"
+        aria-label={`Cerrar ficha de ${registro.nombre}`}
+        onClick={alCerrar}
+      />
+      <aside className="ui-sheet ui-registration-sheet" aria-labelledby={`registro-${registro._id}-titulo`}>
+        <span className="ui-registration-sheet-handle" aria-hidden="true" />
+        <div className="ui-card-h ui-registration-sheet-head">
+          <div className="min-w-0">
+            <h3 id={`registro-${registro._id}-titulo`} className="ui-h2 truncate">
+              {registro.nombre}
+            </h3>
+            <p className="ui-faint truncate text-[12px]">{registro.correo}</p>
+          </div>
+          <Boton
+            tamano="sm"
+            variante="fantasma"
+            soloIcono
+            icono="cerrar"
+            etiqueta="Cerrar ficha"
+            onClick={alCerrar}
+          />
         </div>
-        <Boton tamano="sm" variante="fantasma" soloIcono icono="cerrar" etiqueta="Cerrar ficha" onClick={alCerrar} />
-      </div>
-      <dl className="ui-dl p-5">
-        <dt>Carrera</dt>
-        <dd>{registro.carrera}</dd>
-        <dt>Semestre</dt>
-        <dd>{registro.semestre ?? "—"}</dd>
-        <dt>Matrícula</dt>
-        <dd>{registro.matricula ?? "—"}</dd>
-        <dt>Registrado</dt>
-        <dd>{fecha(registro.creadoEn)}</dd>
-        {registro.tipo === "miembro" ? (
-          <>
-            <dt>Correo</dt>
-            <dd>{registro.canales.correo ? "Sí" : "No"}</dd>
-            <dt>WhatsApp</dt>
-            <dd>{registro.canales.whatsapp ? registro.telefono ?? "Sí" : "No"}</dd>
-          </>
-        ) : (
-          <>
-            <dt>Teléfono</dt>
-            <dd>{registro.telefono ?? "—"}</dd>
-            <dt>Áreas</dt>
-            <dd>{registro.areas.length ? registro.areas.map((a) => ETIQUETAS[a]).join(", ") : "Sin marcar"}</dd>
-            <dt>Aporte</dt>
-            <dd>{registro.aporte ?? "—"}</dd>
-          </>
-        )}
-      </dl>
-      {puedeEditar ? (
-        <div className="grid gap-4 border-t border-[var(--line)] p-5">
-          <div className="flex flex-wrap gap-2">
-            {numero ? (
-              <a
-                className="ui-btn ui-btn-sm"
-                href={`https://wa.me/${numero}?text=${encodeURIComponent(whatsapp)}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                WhatsApp
+        <dl className="ui-dl p-5">
+          <dt>Carrera</dt>
+          <dd>{registro.carrera}</dd>
+          <dt>Semestre</dt>
+          <dd>{registro.semestre ?? "—"}</dd>
+          <dt>Matrícula</dt>
+          <dd>{registro.matricula ?? "—"}</dd>
+          <dt>Registrado</dt>
+          <dd>{fecha(registro.creadoEn)}</dd>
+          {registro.tipo === "miembro" ? (
+            <>
+              <dt>Correo</dt>
+              <dd>{registro.canales.correo ? "Sí" : "No"}</dd>
+              <dt>WhatsApp</dt>
+              <dd>{registro.canales.whatsapp ? registro.telefono ?? "Sí" : "No"}</dd>
+            </>
+          ) : (
+            <>
+              <dt>Teléfono</dt>
+              <dd>{registro.telefono ?? "—"}</dd>
+              <dt>Áreas</dt>
+              <dd>{registro.areas.length ? registro.areas.map((a) => ETIQUETAS[a]).join(", ") : "Sin marcar"}</dd>
+              <dt>Aporte</dt>
+              <dd>{registro.aporte ?? "—"}</dd>
+            </>
+          )}
+        </dl>
+        {puedeEditar ? (
+          <div className="ui-registration-actions grid gap-4 border-t border-[var(--line)] p-5">
+            <div className="ui-registration-quick-actions">
+              {numero ? (
+                <a
+                  className="ui-btn ui-btn-sm"
+                  href={`https://wa.me/${numero}?text=${encodeURIComponent(whatsapp)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  WhatsApp
+                </a>
+              ) : null}
+              <a className="ui-btn ui-btn-sm" href={`/dashboard/correo?para=${encodeURIComponent(registro.correo)}`}>
+                Correo
               </a>
-            ) : null}
-            <a className="ui-btn ui-btn-sm" href={`/dashboard/correo?para=${encodeURIComponent(registro.correo)}`}>
-              Correo
-            </a>
-            <Boton
-              tamano="sm"
-              onClick={() =>
-                void cambiarTipo({ id: registro._id, tipo: registro.tipo === "miembro" ? "aliado" : "miembro" })
-              }
-            >
-              Cambiar a {registro.tipo === "miembro" ? "aliado" : "miembro"}
-            </Boton>
+              <Boton
+                tamano="sm"
+                onClick={() =>
+                  void cambiarTipo({ id: registro._id, tipo: registro.tipo === "miembro" ? "aliado" : "miembro" })
+                }
+              >
+                Cambiar a {registro.tipo === "miembro" ? "aliado" : "miembro"}
+              </Boton>
+            </div>
+            <Campo etiqueta="Estado" htmlFor={`estado-${registro._id}`}>
+              <SelectorPersonalizado
+                id={`estado-${registro._id}`}
+                valor={registro.estado}
+                opciones={ESTADOS_REGISTRO.map((opcion) => ({ valor: opcion, etiqueta: ETIQUETAS[opcion] ?? opcion }))}
+                alCambiar={(opcion) => void cambiarEstado({ id: registro._id, estado: opcion as EstadoRegistro })}
+              />
+            </Campo>
+            <Campo etiqueta="Notas internas" htmlFor={`notas-${registro._id}`}>
+              <AreaTexto
+                id={`notas-${registro._id}`}
+                value={notas}
+                maxLength={2000}
+                onChange={(e) => setNotas(e.target.value)}
+                placeholder="Qué se acordó, quién contactó, qué sigue."
+              />
+            </Campo>
+            <div className="flex flex-wrap items-center gap-3">
+              <Boton
+                variante="primario"
+                disabled={guardando || notas === (registro.notas ?? "")}
+                onClick={() => {
+                  setGuardando(true);
+                  void guardarNotas({ id: registro._id, notas })
+                    .then(() => setMensaje({ tono: "exito", texto: "Notas guardadas." }))
+                    .catch(() => setMensaje({ tono: "error", texto: "No se pudieron guardar las notas." }))
+                    .finally(() => setGuardando(false));
+                }}
+              >
+                {guardando ? "Guardando…" : "Guardar notas"}
+              </Boton>
+              {mensaje ? <Aviso tono={mensaje.tono}>{mensaje.texto}</Aviso> : null}
+            </div>
           </div>
-          <Campo etiqueta="Estado" htmlFor={`estado-${registro._id}`}>
-            <SelectorPersonalizado
-              id={`estado-${registro._id}`}
-              valor={registro.estado}
-              opciones={ESTADOS_REGISTRO.map((opcion) => ({ valor: opcion, etiqueta: ETIQUETAS[opcion] ?? opcion }))}
-              alCambiar={(opcion) => void cambiarEstado({ id: registro._id, estado: opcion as EstadoRegistro })}
-            />
-          </Campo>
-          <Campo etiqueta="Notas internas" htmlFor={`notas-${registro._id}`}>
-            <AreaTexto
-              id={`notas-${registro._id}`}
-              value={notas}
-              maxLength={2000}
-              onChange={(e) => setNotas(e.target.value)}
-              placeholder="Qué se acordó, quién contactó, qué sigue."
-            />
-          </Campo>
-          <div className="flex flex-wrap items-center gap-3">
-            <Boton
-              variante="primario"
-              disabled={guardando || notas === (registro.notas ?? "")}
-              onClick={() => {
-                setGuardando(true);
-                void guardarNotas({ id: registro._id, notas })
-                  .then(() => setMensaje({ tono: "exito", texto: "Notas guardadas." }))
-                  .catch(() => setMensaje({ tono: "error", texto: "No se pudieron guardar las notas." }))
-                  .finally(() => setGuardando(false));
-              }}
-            >
-              {guardando ? "Guardando…" : "Guardar notas"}
-            </Boton>
-            {mensaje ? <Aviso tono={mensaje.tono}>{mensaje.texto}</Aviso> : null}
-          </div>
-        </div>
-      ) : (
-        <p className="ui-faint p-5 text-[12.5px]">{registro.notas || "Sin notas. Tu rol es de lectura."}</p>
-      )}
-    </aside>
+        ) : (
+          <p className="ui-faint p-5 text-[12.5px]">{registro.notas || "Sin notas. Tu rol es de lectura."}</p>
+        )}
+      </aside>
+    </>
   );
 }
 

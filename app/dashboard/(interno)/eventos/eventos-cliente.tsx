@@ -191,6 +191,20 @@ function DetalleEvento({
   }, [modoAsistencia, registros]);
   const seleccionado = modoAsistencia ? null : registros?.find((r) => r._id === abierto) ?? null;
 
+  useEffect(() => {
+    if (!seleccionado || !window.matchMedia("(max-width: 1023px)").matches) return;
+    const overflowAnterior = document.body.style.overflow;
+    const cerrarConEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAbierto(null);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", cerrarConEscape);
+    return () => {
+      document.body.style.overflow = overflowAnterior;
+      window.removeEventListener("keydown", cerrarConEscape);
+    };
+  }, [seleccionado]);
+
   const alternarModoAsistencia = () => {
     setModoAsistencia((activo) => {
       const siguiente = !activo;
@@ -374,7 +388,7 @@ function DetalleEvento({
             />
           ) : (
             <div className="ui-table-wrap">
-              <table className={`ui-table ${modoAsistencia ? "evento-asistencia-tabla" : ""}`}>
+              <table className={`ui-table ui-table-mobile ui-table-asistentes ${modoAsistencia ? "evento-asistencia-tabla" : ""}`}>
                 <thead>
                   <tr>
                     <th>Nombre</th>
@@ -459,66 +473,88 @@ function FichaAsistente({
   const numero = telefono.length === 10 ? `52${telefono}` : telefono;
 
   return (
-    <aside className="ui-sheet evento-asistente-sheet">
-      <div className="ui-card-h">
-        <h3 className="ui-h2">{registro.nombre}</h3>
-        <Boton tamano="sm" variante="fantasma" soloIcono icono="cerrar" etiqueta="Cerrar ficha" onClick={alCerrar} />
-      </div>
-      <dl className="ui-dl p-5">
-        <dt>Correo</dt>
-        <dd>{registro.correo}</dd>
-        <dt>Carrera</dt>
-        <dd>{registro.carrera}</dd>
-        <dt>Semestre</dt>
-        <dd>{registro.semestre}</dd>
-        <dt>Matrícula</dt>
-        <dd>{registro.matricula ?? "—"}</dd>
-        <dt>Registrado</dt>
-        <dd>{fecha(registro.creadoEn)}</dd>
-        <dt>WhatsApp</dt>
-        <dd>{registro.canales.whatsapp ? registro.telefono ?? "Sí" : "No"}</dd>
-      </dl>
-      {puedeEditar ? (
-        <div className="grid gap-4 border-t border-[var(--line)] p-5">
-          <div className="flex flex-wrap gap-3">
-            {numero ? (
-              <a className="ui-btn ui-btn-sm" href={`https://wa.me/${numero}`} target="_blank" rel="noreferrer">
-                WhatsApp
-              </a>
-            ) : null}
-            <a className="ui-btn ui-btn-sm" href={`/dashboard/correo?para=${encodeURIComponent(registro.correo)}`}>
-              Correo
-            </a>
+    <>
+      <button
+        type="button"
+        className="ui-registration-backdrop"
+        aria-label={`Cerrar ficha de ${registro.nombre}`}
+        onClick={alCerrar}
+      />
+      <aside
+        className="ui-sheet ui-registration-sheet evento-asistente-sheet"
+        aria-labelledby={`asistente-${registro._id}-titulo`}
+      >
+        <span className="ui-registration-sheet-handle" aria-hidden="true" />
+        <div className="ui-card-h ui-registration-sheet-head">
+          <div className="min-w-0">
+            <h3 id={`asistente-${registro._id}-titulo`} className="ui-h2 truncate">
+              {registro.nombre}
+            </h3>
+            <p className="ui-faint truncate text-[12px]">{registro.correo}</p>
           </div>
-          <Campo etiqueta="Estado" htmlFor={`asistente-estado-${registro._id}`}>
-            <SelectorPersonalizado
-              id={`asistente-estado-${registro._id}`}
-              valor={registro.estado}
-              opciones={ESTADOS_ASISTENTE.map((valor) => ({ valor, etiqueta: ETIQUETAS[valor] ?? valor }))}
-              alCambiar={(valor) => void cambiarEstado({ id: registro._id, estado: valor as EstadoAsistente })}
-            />
-          </Campo>
-          <Campo etiqueta="Notas internas" htmlFor={`asistente-notas-${registro._id}`}>
-            <AreaTexto
-              id={`asistente-notas-${registro._id}`}
-              value={notas}
-              maxLength={2000}
-              onChange={(e) => setNotas(e.target.value)}
-            />
-          </Campo>
-          <div className="flex flex-wrap items-center gap-3">
-            <Boton
-              variante="primario"
-              disabled={notas === (registro.notas ?? "")}
-              onClick={() => void guardarNotas({ id: registro._id, notas }).then(() => setMensaje("Notas guardadas."))}
-            >
-              Guardar notas
-            </Boton>
-            {mensaje ? <Aviso tono="exito">{mensaje}</Aviso> : null}
-          </div>
+          <Boton
+            tamano="sm"
+            variante="fantasma"
+            soloIcono
+            icono="cerrar"
+            etiqueta="Cerrar ficha"
+            onClick={alCerrar}
+          />
         </div>
-      ) : null}
-    </aside>
+        <dl className="ui-dl p-5">
+          <dt>Carrera</dt>
+          <dd>{registro.carrera}</dd>
+          <dt>Semestre</dt>
+          <dd>{registro.semestre}</dd>
+          <dt>Matrícula</dt>
+          <dd>{registro.matricula ?? "—"}</dd>
+          <dt>Registrado</dt>
+          <dd>{fecha(registro.creadoEn)}</dd>
+          <dt>WhatsApp</dt>
+          <dd>{registro.canales.whatsapp ? registro.telefono ?? "Sí" : "No"}</dd>
+        </dl>
+        {puedeEditar ? (
+          <div className="ui-registration-actions grid gap-4 border-t border-[var(--line)] p-5">
+            <div className="ui-registration-quick-actions">
+              {numero ? (
+                <a className="ui-btn ui-btn-sm" href={`https://wa.me/${numero}`} target="_blank" rel="noreferrer">
+                  WhatsApp
+                </a>
+              ) : null}
+              <a className="ui-btn ui-btn-sm" href={`/dashboard/correo?para=${encodeURIComponent(registro.correo)}`}>
+                Correo
+              </a>
+            </div>
+            <Campo etiqueta="Estado" htmlFor={`asistente-estado-${registro._id}`}>
+              <SelectorPersonalizado
+                id={`asistente-estado-${registro._id}`}
+                valor={registro.estado}
+                opciones={ESTADOS_ASISTENTE.map((valor) => ({ valor, etiqueta: ETIQUETAS[valor] ?? valor }))}
+                alCambiar={(valor) => void cambiarEstado({ id: registro._id, estado: valor as EstadoAsistente })}
+              />
+            </Campo>
+            <Campo etiqueta="Notas internas" htmlFor={`asistente-notas-${registro._id}`}>
+              <AreaTexto
+                id={`asistente-notas-${registro._id}`}
+                value={notas}
+                maxLength={2000}
+                onChange={(e) => setNotas(e.target.value)}
+              />
+            </Campo>
+            <div className="flex flex-wrap items-center gap-3">
+              <Boton
+                variante="primario"
+                disabled={notas === (registro.notas ?? "")}
+                onClick={() => void guardarNotas({ id: registro._id, notas }).then(() => setMensaje("Notas guardadas."))}
+              >
+                Guardar notas
+              </Boton>
+              {mensaje ? <Aviso tono="exito">{mensaje}</Aviso> : null}
+            </div>
+          </div>
+        ) : null}
+      </aside>
+    </>
   );
 }
 
