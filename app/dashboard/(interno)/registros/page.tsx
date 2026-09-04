@@ -124,7 +124,7 @@ export default function Registros() {
           ) : (
             <>
               <div className="ui-table-wrap">
-                <table className="ui-table">
+                <table className="ui-table ui-table-mobile ui-table-registros">
                   <thead>
                     <tr>
                       <th>Nombre</th>

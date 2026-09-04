@@ -24,15 +24,15 @@ export function Usuarios() {
   const pendientes = useQuery(api.usuarios.invitacionesPendientes, {});
 
   return (
-    <div className="grid gap-4 lg:grid-cols-12">
-      <div className="grid gap-4 lg:col-span-7">
+    <div className="grid min-w-0 gap-4 lg:grid-cols-12">
+      <div className="grid min-w-0 gap-4 lg:col-span-7">
         <Tarjeta>
           <TarjetaCabecera titulo="Cuentas" descripcion="Roles y acceso al panel." />
           {usuarios === undefined ? (
             <Cargando que="las cuentas" />
           ) : (
             <div className="ui-table-wrap">
-              <table className="ui-table">
+              <table className="ui-table ui-table-mobile ui-table-usuarios">
                 <thead>
                   <tr>
                     <th>Persona</th>
@@ -65,7 +65,7 @@ export function Usuarios() {
           )}
         </Tarjeta>
       </div>
-      <div className="lg:col-span-5">
+      <div className="min-w-0 lg:col-span-5">
         <Tarjeta>
           <Invitar />
         </Tarjeta>
@@ -100,7 +100,7 @@ function Fila({ usuario }: { usuario: UsuarioFila }) {
   return (
     <tr>
       <td>
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <Avatar texto={iniciales(usuario.nombre || usuario.correo)} tamano="sm" />
           <div className="min-w-0">
             <p className="truncate font-medium">{usuario.nombre || usuario.correo}</p>
