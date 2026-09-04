@@ -94,6 +94,10 @@ textarea {
   outline-offset: 2px;
 }
 
+.ui-input > input:focus-visible {
+  outline: 0;
+}
+
 @layer components {
   /**
    * Bandeja de doble bisel: 7px de superficie alrededor de un nucleo claro.
