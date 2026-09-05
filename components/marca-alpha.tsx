@@ -32,7 +32,10 @@ export function MarcaAlpha({
         y="1.17"
         fontFamily="Kollektif"
         fontSize="1.4104"
+        fontWeight="400"
         fill="currentColor"
+        textLength="2.46"
+        lengthAdjust="spacingAndGlyphs"
       >
         Alph
       </text>

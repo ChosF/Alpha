@@ -182,7 +182,7 @@ export function prepararCorreoEncuesta({
   const asunto = `Cuéntanos qué te pareció ${eventoLimpio}`;
   const saludo = nombreLimpio ? `Hola, ${nombreLimpio}.` : "Hola.";
   const texto = `${saludo}\n\nGracias por acompañarnos en ${eventoLimpio}. Tu opinión nos ayuda a mejorar los próximos eventos de Alpha. La encuesta toma menos de dos minutos.`;
-  const nota = "Este enlace es personal. Abrirlo no lo consume; quedará cerrado cuando envíes tu respuesta.";
+  const nota = "Tus respuestas son anónimas.";
   return {
     asunto,
     texto: `${texto}\n\nResponder encuesta: ${url}\n\n${nota}`,

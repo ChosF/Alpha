@@ -110,18 +110,18 @@ export function EncuestaCliente({ token }: { token: string }) {
 
         <div className={estilos.nucleo}>
           {estado.tipo === "cargando" ? (
-            <EstadoMensaje titulo="Preparando la encuesta" texto="Estamos verificando tu enlace personal." cargando />
+            <EstadoMensaje titulo="Preparando la encuesta" texto="Un momento, por favor." cargando />
           ) : estado.tipo === "invalida" ? (
             <EstadoMensaje
-              titulo="Este enlace no está disponible"
-              texto="Comprueba que el enlace esté completo. Si ya enviaste la encuesta, quedó cerrado para proteger una sola respuesta."
+              titulo="Esta encuesta no está disponible"
+              texto="Si ya enviaste tu respuesta, no necesitas hacer nada más."
             />
           ) : estado.tipo === "error" ? (
             <EstadoMensaje titulo="No pudimos abrir la encuesta" texto={estado.mensaje} />
           ) : estado.tipo === "respondida" ? (
             <EstadoMensaje
               titulo="Gracias por compartirlo"
-              texto={`Tu respuesta${estado.eventoTitulo ? ` sobre ${estado.eventoTitulo}` : ""} quedó registrada. Este enlace ya está cerrado.`}
+              texto={`Tu respuesta${estado.eventoTitulo ? ` sobre ${estado.eventoTitulo}` : ""} quedó registrada. Gracias por ayudarnos a mejorar.`}
               exito
             />
           ) : (
@@ -225,7 +225,7 @@ export function EncuestaCliente({ token }: { token: string }) {
                 <span>{enviando ? "Enviando respuesta" : "Enviar respuesta"}</span>
                 <i aria-hidden="true">→</i>
               </button>
-              <p className={estilos.nota}>El enlace se cierra después de enviar. Abrirlo o recargarlo no lo consume.</p>
+              <p className={estilos.nota}>Tu respuesta es anónima.</p>
             </form>
           )}
         </div>

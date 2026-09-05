@@ -82,7 +82,7 @@ describe("plantilla de correo del dashboard", () => {
     expect(correo.asunto).toBe("Cuéntanos qué te pareció Networking Night");
     expect(correo.texto).toContain("Responder encuesta: https://alphaccm.org/encuesta/token-personal-1234567890");
     expect(correo.html).toContain("Responder encuesta");
-    expect(correo.html).toContain("Abrirlo no lo consume");
+    expect(correo.html).toContain("Tus respuestas son anónimas.");
     expect(correo.html).toContain("https://alphaccm.org/encuesta/token-personal-1234567890");
   });
 });

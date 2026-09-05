@@ -193,12 +193,12 @@ export const responder = mutation({
   returns: v.object({ estado: v.union(v.literal("enviada"), v.literal("respondida")) }),
   handler: async (ctx, args) => {
     const token = tokenLimpio(args.token);
-    if (!token) throw new ConvexError("Este enlace de encuesta no es válido.");
+    if (!token) throw new ConvexError("Esta encuesta no está disponible.");
     const invitacion = await ctx.db
       .query("eventSurveyInvitations")
       .withIndex("by_token", (q) => q.eq("token", token))
       .unique();
-    if (!invitacion) throw new ConvexError("Este enlace de encuesta no es válido.");
+    if (!invitacion) throw new ConvexError("Esta encuesta no está disponible.");
     if (invitacion.estado === "respondida") return { estado: "respondida" as const };
     if (invitacion.estado !== "activa") {
       throw new ConvexError("Esta encuesta todavía no está disponible.");
