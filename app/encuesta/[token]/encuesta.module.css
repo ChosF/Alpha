@@ -46,17 +46,22 @@
 }
 
 .cabecera a {
-  display: grid;
-  place-items: center;
-  min-height: 44px;
-  padding: 9px 18px;
-  border-radius: 999px;
-  background: var(--navy);
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  text-transform: none;
+  transition: opacity 200ms ease;
+}
+
+.cabecera a:hover {
+  opacity: 0.85;
 }
 
 .marca {
   width: 84px;
   height: auto;
+  display: block;
+  text-transform: none;
 }
 
 .marco {

@@ -96,7 +96,7 @@ export function EncuestaCliente({ token }: { token: string }) {
       <div className={estilos.trama} aria-hidden="true" />
       <header className={estilos.cabecera}>
         <Link href="/" aria-label="Ir al sitio de Alpha">
-          <MarcaAlpha className={estilos.marca} tono="blanco" />
+          <MarcaAlpha className={estilos.marca} tono="navy" />
         </Link>
         <span>Sociedad Estudiantil de Finanzas</span>
       </header>
@@ -129,7 +129,6 @@ export function EncuestaCliente({ token }: { token: string }) {
               <div className={estilos.intro}>
                 <span>Evento</span>
                 <h2>{estado.eventoTitulo}</h2>
-                <p>Las respuestas se presentan al equipo de forma agregada.</p>
               </div>
 
               <fieldset className={estilos.pregunta}>

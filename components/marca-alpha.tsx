@@ -25,7 +25,7 @@ export function MarcaAlpha({
       viewBox="0 0 4.65 1.45"
       role="img"
       aria-label="Alpha"
-      style={{ color: marca.color }}
+      style={{ color: marca.color, textTransform: "none" }}
     >
       <text
         x="0"
@@ -36,6 +36,7 @@ export function MarcaAlpha({
         fill="currentColor"
         textLength="2.46"
         lengthAdjust="spacingAndGlyphs"
+        style={{ textTransform: "none" }}
       >
         Alph
       </text>

@@ -21,6 +21,7 @@ import type * as http from "../http.js";
 import type * as ingesta from "../ingesta.js";
 import type * as ingestaEventos from "../ingestaEventos.js";
 import type * as lib_auditoria from "../lib/auditoria.js";
+import type * as lib_conteosEvento from "../lib/conteosEvento.js";
 import type * as lib_contrasena from "../lib/contrasena.js";
 import type * as lib_direccionesCorreo from "../lib/direccionesCorreo.js";
 import type * as lib_limites from "../lib/limites.js";
@@ -53,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   ingesta: typeof ingesta;
   ingestaEventos: typeof ingestaEventos;
   "lib/auditoria": typeof lib_auditoria;
+  "lib/conteosEvento": typeof lib_conteosEvento;
   "lib/contrasena": typeof lib_contrasena;
   "lib/direccionesCorreo": typeof lib_direccionesCorreo;
   "lib/limites": typeof lib_limites;
