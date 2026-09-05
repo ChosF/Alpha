@@ -161,7 +161,7 @@ export default defineSchema({
   /** Campañas de correo de un evento, inmediatas o programadas. */
   eventMailJobs: defineTable({
     eventId: v.id("events"),
-    tipo: v.union(v.literal("recordatorio"), v.literal("normal")),
+    tipo: v.union(v.literal("recordatorio"), v.literal("encuesta"), v.literal("normal")),
     asunto: v.string(),
     texto: v.string(),
     estado: v.union(
@@ -185,6 +185,48 @@ export default defineSchema({
   })
     .index("by_event_and_time", ["eventId", "programadoPara"])
     .index("by_client_request", ["clientRequestId"]),
+
+  /**
+   * Un enlace personal por destinatario de una encuesta. Abrirlo no lo consume:
+   * la mutacion de respuesta cambia `activa` a `respondida` en una sola
+   * transaccion. Las pruebas sin evento no entran en Analytics.
+   */
+  eventSurveyInvitations: defineTable({
+    eventId: v.optional(v.id("events")),
+    mailJobId: v.optional(v.id("eventMailJobs")),
+    token: v.string(),
+    eventoTitulo: v.string(),
+    destinatarioCorreo: v.string(),
+    destinatarioNombre: v.string(),
+    estado: v.union(
+      v.literal("preparando"),
+      v.literal("activa"),
+      v.literal("respondida"),
+      v.literal("fallida"),
+    ),
+    esPrueba: v.boolean(),
+    emailId: v.optional(v.string()),
+    calificacionEvento: v.optional(v.number()),
+    opinionContenido: v.optional(
+      v.union(
+        v.literal("excelente"),
+        v.literal("bueno"),
+        v.literal("regular"),
+        v.literal("malo"),
+      ),
+    ),
+    origen: v.optional(
+      v.union(v.literal("instagram"), v.literal("whatsapp"), v.literal("correo")),
+    ),
+    comentarios: v.optional(v.string()),
+    creadoEn: v.number(),
+    enviadoEn: v.optional(v.number()),
+    respondidoEn: v.optional(v.number()),
+    actualizadoEn: v.number(),
+  })
+    .index("by_token", ["token"])
+    .index("by_event_and_created", ["eventId", "creadoEn"])
+    .index("by_job_and_correo", ["mailJobId", "destinatarioCorreo"]),
 
   /** Invitaciones al panel. El token en claro jamas se guarda. */
   invites: defineTable({

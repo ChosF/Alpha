@@ -267,6 +267,14 @@ export const eliminar = mutation({
       await ctx.db.delete(reg._id);
     }
 
+    const encuestas = await ctx.db
+      .query("eventSurveyInvitations")
+      .withIndex("by_event_and_created", (q) => q.eq("eventId", args.id))
+      .take(5000);
+    for (const encuesta of encuestas) {
+      await ctx.db.delete(encuesta._id);
+    }
+
     const trabajosCorreo = await ctx.db
       .query("eventMailJobs")
       .withIndex("by_event_and_time", (q) => q.eq("eventId", args.id))

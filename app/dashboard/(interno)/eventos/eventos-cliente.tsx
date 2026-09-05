@@ -172,7 +172,7 @@ function DetalleEvento({
   const [estado, setEstado] = useState<EstadoAsistente | "">("");
   const [abierto, setAbierto] = useState<Id<"eventRegistrations"> | null>(null);
   const [editando, setEditando] = useState(false);
-  const [correoTipo, setCorreoTipo] = useState<"recordatorio" | "normal" | null>(null);
+  const [correoTipo, setCorreoTipo] = useState<"recordatorio" | "encuesta" | "normal" | null>(null);
   const [modoAsistencia, setModoAsistencia] = useState(false);
   const [confirmandoAsistencia, setConfirmandoAsistencia] = useState<Id<"eventRegistrations"> | null>(null);
   const [procesandoAsistencia, setProcesandoAsistencia] = useState<Id<"eventRegistrations"> | null>(null);
@@ -276,8 +276,8 @@ function DetalleEvento({
                 <MenuItem icono="campana" onClick={() => setCorreoTipo("recordatorio")}>
                   Recordatorio para hoy
                 </MenuItem>
-                <MenuItem icono="estrella" disabled>
-                  Encuesta de satisfacción · Próximamente
+                <MenuItem icono="estrella" onClick={() => setCorreoTipo("encuesta")}>
+                  Encuesta de satisfacción
                 </MenuItem>
                 <MenuItem icono="correo" onClick={() => setCorreoTipo("normal")}>
                   Correo normal

@@ -3125,6 +3125,133 @@ a.ui-todo:hover {
   background: var(--accent-soft);
   color: var(--fg);
 }
+
+/* Analytics de encuestas */
+.analytics-eventos {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 8px;
+  scrollbar-width: thin;
+}
+.analytics-evento {
+  flex: 0 0 auto;
+  min-width: 168px;
+  max-width: 260px;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg-2);
+  color: var(--fg-2);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+.analytics-evento:hover {
+  border-color: var(--line-2);
+  color: var(--fg);
+}
+.analytics-evento:active {
+  transform: scale(0.985);
+}
+.analytics-evento[data-active="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--fg);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.analytics-evento span,
+.analytics-evento small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.analytics-evento span {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.analytics-evento small {
+  margin-top: 3px;
+  color: var(--fg-3);
+  font-size: 10.5px;
+}
+.analytics-desglose {
+  display: grid;
+  gap: 17px;
+  padding: 19px 20px 22px;
+}
+.analytics-fila > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 7px;
+  color: var(--fg-2);
+  font-size: 11.5px;
+}
+.analytics-fila strong {
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+.analytics-comentarios article {
+  padding: 18px 20px;
+  border-top: 1px solid var(--line);
+}
+.analytics-comentarios article:first-child {
+  border-top: 0;
+}
+.analytics-comentarios article > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.analytics-comentarios article span {
+  color: #e4a900;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+.analytics-comentarios article span i {
+  color: var(--line-2);
+  font-style: normal;
+}
+.analytics-comentarios time {
+  color: var(--fg-3);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+}
+.analytics-comentarios p {
+  margin: 10px 0 0;
+  color: var(--fg-2);
+  font-size: 12.5px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.analytics-proximamente {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 16px 2px 0;
+  color: var(--fg-3);
+  font-size: 10.5px;
+}
+@media (max-width: 639px) {
+  .analytics-evento {
+    min-width: 150px;
+  }
+  .analytics-comentarios article > div {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+}
 [data-panel] .selector-personalizado-opcion[data-selected] .selector-personalizado-marca {
   border-color: var(--accent);
   background: var(--accent);

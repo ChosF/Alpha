@@ -12,7 +12,11 @@ import {
 import { resend } from "./correo";
 import { registrarEnBitacora } from "./lib/auditoria";
 import { correoContacto } from "./lib/direccionesCorreo";
-import { renderizarCorreoDashboard, textoConFirma } from "./lib/plantillaCorreo";
+import {
+  prepararCorreoEncuesta,
+  renderizarCorreoDashboard,
+  textoConFirma,
+} from "./lib/plantillaCorreo";
 import { requiereRol } from "./lib/rbac";
 import { limpiarMultilinea, limpiarTexto, normalizarCorreo } from "./lib/texto";
 import {
@@ -25,7 +29,11 @@ const MAX_DESTINATARIOS = 500;
 const MAX_TEXTO = 20_000;
 const UN_ANO_MS = 366 * 24 * 60 * 60 * 1000;
 
-const tipoCorreoEventoValidador = v.union(v.literal("recordatorio"), v.literal("normal"));
+const tipoCorreoEventoValidador = v.union(
+  v.literal("recordatorio"),
+  v.literal("encuesta"),
+  v.literal("normal"),
+);
 const estadoCorreoEventoValidador = v.union(
   v.literal("programado"),
   v.literal("procesando"),
@@ -68,7 +76,11 @@ async function destinatariosDeEvento(ctx: ContextoLectura, eventId: Id<"events">
   const unicos = new Map<string, { nombre: string; correo: string }>();
   for (const registro of registros) {
     if (!registro.canales.correo) continue;
-    if (registro.estado !== "registrado" && registro.estado !== "confirmado") continue;
+    if (
+      registro.estado !== "registrado" &&
+      registro.estado !== "confirmado" &&
+      registro.estado !== "asistio"
+    ) continue;
     const correo = normalizarCorreo(registro.correo);
     if (!correo) continue;
     unicos.set(correo, { nombre: registro.nombre, correo });
@@ -184,6 +196,9 @@ export const programar = mutation({
       }
       asunto = asuntoRecordatorioEvento(evento.titulo);
       texto = textoRecordatorioEvento(detalles);
+    } else if (args.tipo === "encuesta") {
+      asunto = `Cuéntanos qué te pareció ${evento.titulo}`;
+      texto = `Gracias por acompañarnos en ${evento.titulo}. Tu opinión nos ayuda a mejorar los próximos eventos de Alpha.`;
     } else {
       asunto = limpiarTexto(args.asunto ?? "", 180);
       texto = limpiarMultilinea(args.texto ?? "", MAX_TEXTO);
@@ -265,12 +280,23 @@ export const prepararEjecucion = internalMutation({
       asunto: v.string(),
       texto: v.string(),
       remitente: v.string(),
+      eventId: v.id("events"),
+      eventoTitulo: v.string(),
       destinatarios: v.array(destinatarioValidador),
     }),
   ),
   handler: async (ctx, args) => {
     const trabajo = await ctx.db.get(args.id);
     if (!trabajo || trabajo.estado !== "programado") return null;
+    const evento = await ctx.db.get(trabajo.eventId);
+    if (!evento) {
+      await ctx.db.patch(args.id, {
+        estado: "fallido",
+        error: "El evento ya no existe.",
+        actualizadoEn: Date.now(),
+      });
+      return null;
+    }
     const resultado = await destinatariosDeEvento(ctx, trabajo.eventId);
     if (resultado.destinatarios.length === 0) {
       await ctx.db.patch(args.id, {
@@ -299,6 +325,8 @@ export const prepararEjecucion = internalMutation({
       asunto: trabajo.asunto,
       texto: trabajo.texto,
       remitente: normalizarCorreo(process.env.ALPHA_AUTO_EMAIL ?? "auto@alphaccm.org"),
+      eventId: trabajo.eventId,
+      eventoTitulo: evento.titulo,
       destinatarios: resultado.destinatarios,
     };
   },
@@ -346,7 +374,47 @@ export const ejecutar = internalAction({
     for (let inicio = 0; inicio < trabajo.destinatarios.length; inicio += 25) {
       const lote = trabajo.destinatarios.slice(inicio, inicio + 25);
       const resultados = await Promise.allSettled(
-        lote.map((destinatario) => {
+        lote.map(async (destinatario) => {
+          if (trabajo.tipo === "encuesta") {
+            const token = crypto.randomUUID().replaceAll("-", "");
+            const invitacion = await ctx.runMutation(internal.encuestas.crearInvitacion, {
+              eventId: trabajo.eventId,
+              mailJobId: trabajo.id,
+              token,
+              eventoTitulo: trabajo.eventoTitulo,
+              destinatarioCorreo: destinatario.correo,
+              destinatarioNombre: destinatario.nombre,
+            });
+            if (invitacion.estado === "activa" || invitacion.estado === "respondida") return;
+            if (invitacion.estado === "fallida") {
+              throw new Error(`La invitación de ${destinatario.correo} ya había fallado.`);
+            }
+            const url = `https://alphaccm.org/encuesta/${encodeURIComponent(invitacion.token)}`;
+            const correo = prepararCorreoEncuesta({
+              eventoTitulo: trabajo.eventoTitulo,
+              nombre: destinatario.nombre,
+              url,
+              remitente: trabajo.remitente,
+            });
+            try {
+              const emailId = await resend.sendEmail(ctx, {
+                from: `Alpha CCM <${trabajo.remitente}>`,
+                to: destinatario.correo,
+                subject: correo.asunto,
+                text: textoConFirma(correo.texto, trabajo.remitente),
+                html: correo.html,
+                replyTo: [correoContacto()],
+              });
+              await ctx.runMutation(internal.encuestas.marcarActiva, {
+                id: invitacion.id,
+                emailId,
+              });
+              return;
+            } catch (error) {
+              await ctx.runMutation(internal.encuestas.marcarFallida, { id: invitacion.id });
+              throw error;
+            }
+          }
           const texto =
             trabajo.tipo === "recordatorio"
               ? personalizarSaludo(trabajo.texto, destinatario.nombre)

@@ -22,6 +22,7 @@ const NIVEL: Record<Rol, number> = { lector: 1, editor: 2, admin: 3 };
 export const PRINCIPAL: Apartado[] = [
   { href: BASE, texto: "Inicio", icono: "inicio", minimo: "lector", movil: true },
   { href: `${BASE}/eventos`, texto: "Eventos", icono: "eventos", minimo: "lector", contador: "eventos", movil: true },
+  { href: `${BASE}/analytics`, texto: "Analytics", icono: "grafica", minimo: "lector", movil: true },
   { href: `${BASE}/registros`, texto: "Registros", icono: "registros", minimo: "lector", contador: "registrosNuevos", movil: true },
   { href: `${BASE}/correo`, texto: "Correo", icono: "correo", minimo: "editor", contador: "correoNoLeido", movil: true },
 ];

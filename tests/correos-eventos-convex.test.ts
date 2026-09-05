@@ -35,7 +35,7 @@ async function escenario() {
       pilar: "desarrollo",
       estado: "publicado",
       registroAbierto: true,
-      totalRegistros: 3,
+      totalRegistros: 4,
       creadoEn: ahora,
       actualizadoEn: ahora,
     }),
@@ -81,6 +81,13 @@ async function escenario() {
       canales: { correo: false, whatsapp: true },
       estado: "confirmado",
     });
+    await ctx.db.insert("eventRegistrations", {
+      ...base,
+      nombre: "Dany",
+      correo: "dany@tec.mx",
+      canales: { correo: true, whatsapp: false },
+      estado: "asistio",
+    });
   });
   return {
     t,
@@ -94,7 +101,7 @@ describe("correos programados de eventos", () => {
   it("cuenta solo asistentes activos que autorizaron correo", async () => {
     const { sesion, eventId } = await escenario();
     await expect(sesion.query(api.correosEventos.resumen, { eventId })).resolves.toMatchObject({
-      cantidad: 1,
+      cantidad: 2,
       limiteExcedido: false,
       correoListo: true,
       modoPrueba: false,
@@ -111,12 +118,29 @@ describe("correos programados de eventos", () => {
       programadoPara: manana,
       clientRequestId: "prueba-programacion-001",
     });
-    expect(resultado.destinatarios).toBe(1);
+    expect(resultado.destinatarios).toBe(2);
     const trabajo = await t.run(async (ctx) => ctx.db.get(resultado.id));
     expect(trabajo).toMatchObject({
       estado: "programado",
-      destinatariosEstimados: 1,
+      destinatariosEstimados: 2,
       encolados: 0,
+    });
+  });
+
+  it("prepara una campaña de encuesta reutilizable para el evento", async () => {
+    const { t, sesion, eventId, manana } = await escenario();
+    const resultado = await sesion.mutation(api.correosEventos.programar, {
+      eventId,
+      tipo: "encuesta",
+      programadoPara: manana,
+      clientRequestId: "prueba-encuesta-001",
+    });
+    const trabajo = await t.run(async (ctx) => ctx.db.get(resultado.id));
+    expect(trabajo).toMatchObject({
+      tipo: "encuesta",
+      asunto: "Cuéntanos qué te pareció Evento de prueba",
+      destinatariosEstimados: 2,
+      estado: "programado",
     });
   });
 

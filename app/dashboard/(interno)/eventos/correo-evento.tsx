@@ -19,7 +19,7 @@ import {
   Seleccion,
 } from "@/components/panel/ui/primitivas";
 
-type TipoCorreoEvento = "recordatorio" | "normal";
+type TipoCorreoEvento = "recordatorio" | "encuesta" | "normal";
 
 type EventoCorreo = {
   _id: Id<"events">;
@@ -153,7 +153,11 @@ export function CorreoEvento({
     !resumen.modoPrueba &&
     resumen.cantidad > 0 &&
     !resumen.limiteExcedido &&
-    (tipo === "normal" ? Boolean(asunto.trim() && texto.trim()) : recordatorio !== null) &&
+    (tipo === "normal"
+      ? Boolean(asunto.trim() && texto.trim())
+      : tipo === "recordatorio"
+        ? recordatorio !== null
+        : true) &&
     (momento === "ahora" || Boolean(fechaHora));
 
   return (
@@ -163,7 +167,11 @@ export function CorreoEvento({
           <div>
             <p className="ui-eyebrow">{evento.titulo}</p>
             <h2 id="correo-evento-titulo" className="ui-h2 mt-1">
-              {tipo === "recordatorio" ? "Recordatorio del evento" : "Correo para asistentes"}
+              {tipo === "recordatorio"
+                ? "Recordatorio del evento"
+                : tipo === "encuesta"
+                  ? "Encuesta de satisfacción"
+                  : "Correo para asistentes"}
             </h2>
           </div>
           <Boton
@@ -185,7 +193,7 @@ export function CorreoEvento({
                 : `${resumen.cantidad} asistentes recibirán un correo individual`}
             </p>
             <p className="ui-help mt-1">
-              Incluye registros activos y confirmados que autorizaron contacto por correo. Excluye lista de espera y cancelados.
+              Incluye registros activos, confirmados o con asistencia que autorizaron contacto por correo. Excluye lista de espera y cancelados.
             </p>
           </div>
 
@@ -209,6 +217,15 @@ export function CorreoEvento({
                 Completa la fecha, la hora y la sede con la opción Editar antes de preparar este recordatorio.
               </Aviso>
             )
+          ) : tipo === "encuesta" ? (
+            <div className="rounded-[var(--r)] border border-[var(--line)] p-4">
+              <p className="ui-label">Encuesta preestablecida</p>
+              <p className="mt-2 text-[14px] font-semibold">Cuéntanos qué te pareció {evento.titulo}</p>
+              <p className="ui-faint mt-3 text-[13px] leading-6">
+                Cada asistente recibe un enlace personal. Abrirlo o recargarlo no lo consume;
+                queda cerrado después de enviar una respuesta.
+              </p>
+            </div>
           ) : (
             <>
               <Campo etiqueta="Asunto" htmlFor="correo-evento-asunto">

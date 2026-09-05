@@ -3,6 +3,18 @@ type OpcionesCorreoDashboard = {
   texto: string;
   segmentos?: SegmentoCorreo[];
   remitente?: string;
+  accion?: {
+    etiqueta: string;
+    url: string;
+    nota?: string;
+  };
+};
+
+type OpcionesCorreoEncuesta = {
+  eventoTitulo: string;
+  nombre: string;
+  url: string;
+  remitente?: string;
 };
 
 export type SegmentoCorreo = {
@@ -68,12 +80,22 @@ export function renderizarCorreoDashboard({
   texto,
   segmentos,
   remitente,
+  accion,
 }: OpcionesCorreoDashboard): string {
   const asuntoSeguro = escaparHtml(asunto);
   const preencabezado = escaparHtml(resumen(texto, 120));
   const parrafos = cuerpoConFormato(texto, segmentos);
   const firma = firmaPara(remitente).map(escaparHtml).join("<br>");
   const marca = `<td valign="middle" style="width:54px;"><img src="${escaparHtml(LOGO_CORREO)}" width="48" height="33" alt="Alpha" style="width:48px;max-width:48px;height:33px;border:0;display:block;"></td>`;
+  const llamada = accion
+    ? `<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:30px 0 0;">
+                <tr>
+                  <td style="border-radius:999px;background-color:#0066FF;">
+                    <a href="${escaparHtml(accion.url)}" style="display:inline-block;padding:15px 24px;color:#FFFFFF;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:600;line-height:1;text-decoration:none;">${escaparHtml(accion.etiqueta)}&nbsp;&nbsp;→</a>
+                  </td>
+                </tr>
+              </table>${accion.nota ? `<p style="margin:16px 0 0;color:#6B7482;font-size:11px;line-height:1.7;">${escaparHtml(accion.nota)}</p>` : ""}`
+    : "";
 
   return `<!doctype html>
 <html lang="es">
@@ -128,6 +150,7 @@ export function renderizarCorreoDashboard({
             <td class="content-pad" style="padding:44px 42px 34px;background-color:#F4F6F8;">
               <div style="width:42px;height:5px;margin:0 0 28px;background-color:#0066FF;font-size:0;line-height:0;">&nbsp;</div>
               ${parrafos}
+              ${llamada}
               <p style="margin:30px 0 0;padding-top:22px;border-top:1px solid #D4DAE2;color:#6B7482;font-size:11px;line-height:1.7;">Puedes responder directamente a este correo.</p>
             </td>
           </tr>
@@ -146,4 +169,28 @@ export function renderizarCorreoDashboard({
   </table>
 </body>
 </html>`;
+}
+
+export function prepararCorreoEncuesta({
+  eventoTitulo,
+  nombre,
+  url,
+  remitente,
+}: OpcionesCorreoEncuesta) {
+  const nombreLimpio = nombre.trim();
+  const eventoLimpio = eventoTitulo.trim();
+  const asunto = `Cuéntanos qué te pareció ${eventoLimpio}`;
+  const saludo = nombreLimpio ? `Hola, ${nombreLimpio}.` : "Hola.";
+  const texto = `${saludo}\n\nGracias por acompañarnos en ${eventoLimpio}. Tu opinión nos ayuda a mejorar los próximos eventos de Alpha. La encuesta toma menos de dos minutos.`;
+  const nota = "Este enlace es personal. Abrirlo no lo consume; quedará cerrado cuando envíes tu respuesta.";
+  return {
+    asunto,
+    texto: `${texto}\n\nResponder encuesta: ${url}\n\n${nota}`,
+    html: renderizarCorreoDashboard({
+      asunto,
+      texto,
+      remitente,
+      accion: { etiqueta: "Responder encuesta", url, nota },
+    }),
+  };
 }

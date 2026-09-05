@@ -3,7 +3,11 @@ import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 import schema from "@/convex/schema";
 import { internal } from "@/convex/_generated/api";
-import { renderizarCorreoDashboard, textoConFirma } from "@/convex/lib/plantillaCorreo";
+import {
+  prepararCorreoEncuesta,
+  renderizarCorreoDashboard,
+  textoConFirma,
+} from "@/convex/lib/plantillaCorreo";
 import {
   redactarEnlacesInvitacion,
   tokensEnEnlacesInvitacion,
@@ -65,6 +69,21 @@ describe("plantilla de correo del dashboard", () => {
     expect(textoConFirma("Gracias por escribirnos.", "finanzas@alphaccm.org")).toBe(
       "Gracias por escribirnos.\n\nCoordinación de Finanzas,\nSociedad Estudiantil Alpha\nTecnológico de Monterrey, Campus Ciudad de México",
     );
+  });
+
+  it("genera la encuesta con un llamado a la acción personal y de un solo uso", () => {
+    const correo = prepararCorreoEncuesta({
+      eventoTitulo: "Networking Night",
+      nombre: "Ana",
+      url: "https://alphaccm.org/encuesta/token-personal-1234567890",
+      remitente: "auto@alphaccm.org",
+    });
+
+    expect(correo.asunto).toBe("Cuéntanos qué te pareció Networking Night");
+    expect(correo.texto).toContain("Responder encuesta: https://alphaccm.org/encuesta/token-personal-1234567890");
+    expect(correo.html).toContain("Responder encuesta");
+    expect(correo.html).toContain("Abrirlo no lo consume");
+    expect(correo.html).toContain("https://alphaccm.org/encuesta/token-personal-1234567890");
   });
 });
 
