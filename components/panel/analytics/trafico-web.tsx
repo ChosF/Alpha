@@ -96,10 +96,11 @@ function Grafica({ filas }: { filas: FilaWeb[] }) {
   const techo = Math.ceil(maximo / 4) * 4;
   const puntos = filas.map((fila, i) => ({ ...fila, x: 45 + i / Math.max(1, filas.length - 1) * 635, y: 190 - fila.cantidad / techo * 170 }));
   const linea = puntos.map(p => `${p.x},${p.y}`).join(" ");
+  const puntoActivo = activo === null ? undefined : puntos[activo];
   return <><svg className="an-chart-svg" viewBox="0 0 700 230" role="img" aria-label="Vistas de página por día. Consulta la tabla de datos debajo de la gráfica.">
     {[0, 1, 2, 3, 4].map(i => <g key={i}><line x1="45" x2="680" y1={190 - i * 42.5} y2={190 - i * 42.5} className="an-gridline" /><text x="35" y={194 - i * 42.5} textAnchor="end">{NUMERO.format(techo * i / 4)}</text></g>)}
     <polygon points={`45,190 ${linea} 680,190`} className="an-area" /><polyline points={linea} className="an-line" />
     {puntos.map((p, i) => <g key={p.clave}><circle cx={p.x} cy={p.y} r={activo === i ? "5" : "3"} className="an-dot" tabIndex={0} role="button" aria-label={`${FECHA.format(new Date(p.clave))}: ${NUMERO.format(p.cantidad)} visitas`} onMouseEnter={() => setActivo(i)} onMouseLeave={() => setActivo(null)} onFocus={() => setActivo(i)} onBlur={() => setActivo(null)} />{i === 0 || i === puntos.length - 1 || i === Math.floor(puntos.length / 2) ? <text x={p.x} y="218" textAnchor={i === 0 ? "start" : i === puntos.length - 1 ? "end" : "middle"}>{FECHA.format(new Date(p.clave))}</text> : null}</g>)}
-    {activo !== null ? <g className="an-tooltip" pointerEvents="none"><rect x={Math.max(8, Math.min(548, puntos[activo].x - 68))} y={Math.max(8, puntos[activo].y - 47)} width="136" height="31" rx="5" /><text x={Math.max(76, Math.min(616, puntos[activo].x))} y={Math.max(28, puntos[activo].y - 27)} textAnchor="middle">{FECHA.format(new Date(puntos[activo].clave))} · {NUMERO.format(puntos[activo].cantidad)} visitas</text></g> : null}
+    {puntoActivo ? <g className="an-tooltip" pointerEvents="none"><rect x={Math.max(8, Math.min(548, puntoActivo.x - 68))} y={Math.max(8, puntoActivo.y - 47)} width="136" height="31" rx="5" /><text x={Math.max(76, Math.min(616, puntoActivo.x))} y={Math.max(28, puntoActivo.y - 27)} textAnchor="middle">{FECHA.format(new Date(puntoActivo.clave))} · {NUMERO.format(puntoActivo.cantidad)} visitas</text></g> : null}
   </svg></>;
 }
