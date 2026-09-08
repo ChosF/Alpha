@@ -6,6 +6,8 @@ import { ConvexError } from "convex/values";
 import { api } from "@/convex/_generated/api";
 import type { FilaWeb, InformeWeb } from "@/convex/lib/analiticaWeb";
 import { Cargando } from "../ui/primitivas";
+import { SelectorPersonalizado } from "../selector-personalizado";
+import { ExportarAnalytics, type TablaExportacion } from "./exportar";
 
 const NUMERO = new Intl.NumberFormat("es-MX");
 const FECHA = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", timeZone: "UTC" });
@@ -31,9 +33,27 @@ export function TraficoWeb({ detalle }: { detalle: boolean }) {
   }, [dias, intento, obtener, isAuthenticated, isLoading]);
   function recargar() { setEstado({ tipo: "cargando" }); setIntento(i => i + 1); }
   const informe = estado.tipo === "listo" ? estado.informe : null;
+  const tabla: TablaExportacion | null = informe ? {
+    nombre: `alpha-trafico-${informe.desde}-${new Date(Date.parse(informe.hasta) - 86_400_000).toISOString().slice(0, 10)}`,
+    encabezados: ["Desde UTC", "Hasta UTC (exclusivo)", "Sección", "Indicador", "Valor", "Unidad / detalle"],
+    filas: [
+      [informe.desde, informe.hasta, "Resumen", "Actualizado en UTC", new Date(informe.actualizadoEn).toISOString(), "Vercel Analytics · Producción"],
+      [informe.desde, informe.hasta, "Resumen", "Visitantes", informe.visitantes, "Visitantes del periodo"],
+      [informe.desde, informe.hasta, "Resumen", "Vistas de página", informe.vistas, "Vistas"],
+      [informe.desde, informe.hasta, "Resumen", "Páginas por visitante", informe.visitantes ? informe.vistas / informe.visitantes : null, "Vistas / visitantes"],
+      ...([
+        ["Por día", informe.diario], ["Páginas", informe.paginas], ["Fuentes", informe.fuentes],
+        ["Dispositivos", informe.dispositivos], ["Países", informe.paises], ["Navegadores", informe.navegadores],
+      ] as [string, FilaWeb[]][]).flatMap(([seccion, filas]) => filas.map(f => [informe.desde, informe.hasta, seccion, f.clave, f.cantidad, "Vistas de página"])),
+      [informe.desde, informe.hasta, "Metodología", "Desgloses", "Cinco grupos principales y Otros", "Mismos datos del dashboard; días completos UTC"],
+    ],
+  } : null;
   return <section className="an-traffic" aria-labelledby="trafico-titulo">
     <div className="an-section-heading"><div className="an-section-title"><h2 id="trafico-titulo">Tráfico web</h2><span>Vercel Analytics</span></div>
-      <label className="an-period">Periodo de tráfico<select value={dias} onChange={e => { setEstado({ tipo: "cargando" }); setDias(Number(e.target.value) as 7 | 14 | 30); }}><option value={7}>Últimos 7 días</option><option value={14}>Últimos 14 días</option><option value={30}>Últimos 30 días</option></select></label>
+      <div className="an-controls">
+        <div className="an-period"><span>Periodo de tráfico</span><SelectorPersonalizado id="analytics-periodo" ariaLabel="Periodo de tráfico" variante="compacto" valor={String(dias)} alCambiar={valor => { if (Number(valor) === dias) return; setEstado({ tipo: "cargando" }); setDias(Number(valor) as 7 | 14 | 30); }} opciones={[7, 14, 30].map(dias => ({ valor: String(dias), etiqueta: `Últimos ${dias} días` }))} /></div>
+        {detalle ? <ExportarAnalytics tabla={tabla} /> : null}
+      </div>
     </div>
     {estado.tipo === "cargando" ? <div className="an-card an-loading" role="status"><Cargando que="el tráfico web" /></div> : estado.tipo === "sin_configurar" || estado.tipo === "error" ? <div className="an-card an-message" role="status"><h3>{estado.tipo === "sin_configurar" ? "Conecta las estadísticas de tu sitio" : "No se pudo cargar el tráfico"}</h3><p>{estado.tipo === "sin_configurar" ? "La conexión con Vercel está pendiente de configuración. Las encuestas siguen disponibles." : estado.mensaje}</p><button type="button" onClick={recargar}>Volver a intentar</button></div> : null}
     {informe ? <>

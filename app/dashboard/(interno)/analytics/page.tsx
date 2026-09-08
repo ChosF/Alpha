@@ -6,6 +6,8 @@ import { api } from "@/convex/_generated/api";
 import { Cargando, Encabezado, Tarjeta, Vacio } from "@/components/panel/ui/primitivas";
 import { TraficoWeb, Barras, Estadistica } from "@/components/panel/analytics/trafico-web";
 import "./analytics.css";
+import { SelectorPersonalizado } from "@/components/panel/selector-personalizado";
+import { ExportarAnalytics, type TablaExportacion } from "@/components/panel/analytics/exportar";
 
 const CONTENIDO: Record<string, string> = { excelente: "Excelente", bueno: "Bueno", regular: "Regular", malo: "Malo" };
 const ORIGEN: Record<string, string> = { instagram: "Instagram", whatsapp: "WhatsApp", correo: "Correo" };
@@ -19,17 +21,38 @@ export default function Analytics() {
       {["Resumen", "Tráfico web", "Encuestas"].map(tab => <button type="button" key={tab} aria-current={vista === tab ? "page" : undefined} onClick={() => setVista(tab)}>{tab}</button>)}
     </nav>
     <div hidden={vista === "Encuestas"}><TraficoWeb detalle={vista === "Tráfico web"} /></div>
-    <div hidden={vista === "Tráfico web"}><Encuestas /></div>
+    <div hidden={vista === "Tráfico web"}><Encuestas detalle={vista === "Encuestas"} /></div>
   </div>;
 }
 
-function Encuestas() {
+function Encuestas({ detalle }: { detalle: boolean }) {
   const datos = useQuery(api.encuestas.analytics, {});
   const [seleccion, setSeleccion] = useState<string | null>(null);
   const actual = datos?.find(evento => evento.eventId === seleccion) ?? datos?.[0];
+  const tabla: TablaExportacion | null = actual ? {
+    nombre: `alpha-encuestas-${actual.titulo.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").slice(0, 70)}-${new Date().toISOString().slice(0, 10)}`,
+    encabezados: ["Evento", "Sección", "Indicador", "Valor", "Unidad / detalle"],
+    filas: [
+      [actual.titulo, "Resumen", "Exportado en UTC", new Date().toISOString(), "Resultados acumulados del evento"],
+      [actual.titulo, "Resumen", "Invitaciones enviadas", actual.enviadas, "Invitaciones"],
+      [actual.titulo, "Resumen", "Respuestas", actual.respuestas, "Formularios completos"],
+      [actual.titulo, "Resumen", "Calificación promedio", actual.promedio ?? null, "De 5 estrellas"],
+      [actual.titulo, "Resumen", "Tasa de respuesta", actual.tasaRespuesta, "%"],
+      [actual.titulo, "Resumen", "Campañas", actual.campanas, "Campañas"],
+      [actual.titulo, "Resumen", "Último envío UTC", actual.ultimoEnvioEn ? new Date(actual.ultimoEnvioEn).toISOString() : "", ""],
+      ...actual.calificaciones.map(f => [actual.titulo, "Calificación", `${f.clave} estrellas`, f.cantidad, "Respuestas"]),
+      ...actual.contenido.map(f => [actual.titulo, "Contenido", CONTENIDO[f.clave] ?? f.clave, f.cantidad, "Respuestas"]),
+      ...actual.origen.map(f => [actual.titulo, "Cómo llegaron", ORIGEN[f.clave] ?? f.clave, f.cantidad, "Respuestas"]),
+      [actual.titulo, "Comentarios", "Alcance", "Hasta 50 comentarios más recientes", "Sin nombres ni correos"],
+      ...actual.comentarios.map(c => [actual.titulo, "Comentarios", new Date(c.respondidoEn).toISOString(), c.texto, `${c.calificacionEvento} de 5 estrellas`]),
+    ],
+  } : null;
   return <section className="an-surveys" aria-labelledby="encuestas-titulo">
     <div className="an-section-heading"><div><h2 id="encuestas-titulo">Encuestas de eventos</h2><p>Resultados acumulados del evento seleccionado.</p></div>
-      {actual && datos ? <select aria-label="Evento de la encuesta" value={actual.eventId} onChange={e => setSeleccion(e.target.value)}>{datos.map(evento => <option key={evento.eventId} value={evento.eventId}>{evento.titulo}</option>)}</select> : null}
+      <div className="an-controls">
+        {actual && datos ? <SelectorPersonalizado id="analytics-evento" ariaLabel="Evento de la encuesta" variante="compacto" valor={actual.eventId} alCambiar={setSeleccion} opciones={datos.map(evento => ({ valor: evento.eventId, etiqueta: evento.titulo }))} /> : null}
+        {detalle ? <ExportarAnalytics tabla={tabla} /> : null}
+      </div>
     </div>
     {datos === undefined ? <Tarjeta><Cargando que="las encuestas" /></Tarjeta> : !actual ? <Tarjeta><Vacio titulo="Todavía no hay encuestas enviadas" ayuda="Abre un evento y usa Mandar correos → Encuesta de satisfacción. Los resultados aparecerán aquí." /></Tarjeta> : <div className="an-card an-survey-body">
       <p className="an-note">{actual.respuestas} respuestas de {actual.enviadas} invitaciones enviadas{actual.respuestas > 0 && actual.respuestas < 30 ? " · Muestra pequeña" : ""}</p>

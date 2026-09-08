@@ -34,6 +34,9 @@ function columna(indice: number): string {
 
 function celda(valor: unknown, fila: number, col: number, estilo: number): string {
   const referencia = `${columna(col)}${fila}`;
+  if (typeof valor === "number" && Number.isFinite(valor)) {
+    return `<c r="${referencia}" s="${estilo}" t="n"><v>${valor}</v></c>`;
+  }
   return `<c r="${referencia}" s="${estilo}" t="inlineStr"><is><t xml:space="preserve">${escaparXml(valor)}</t></is></c>`;
 }
 
@@ -136,13 +139,14 @@ function propiedadesBase(creadoEn: string): string {
 export function construirXlsx(
   encabezados: readonly string[],
   filas: readonly (readonly unknown[])[],
+  nombreHoja = "Registros",
 ): Blob {
   const archivos = {
     "[Content_Types].xml": strToU8(TIPOS_CONTENIDO),
     "_rels/.rels": strToU8(RELACIONES_RAIZ),
     "docProps/app.xml": strToU8(PROPIEDADES_APP),
     "docProps/core.xml": strToU8(propiedadesBase(new Date().toISOString())),
-    "xl/workbook.xml": strToU8(LIBRO),
+    "xl/workbook.xml": strToU8(LIBRO.replace('name="Registros"', `name="${escaparXml(nombreHoja.replace(/[\\/?*\[\]:]/g, " ").slice(0, 31) || "Registros")}"`)),
     "xl/_rels/workbook.xml.rels": strToU8(RELACIONES_LIBRO),
     "xl/styles.xml": strToU8(ESTILOS),
     "xl/worksheets/sheet1.xml": strToU8(hoja(encabezados, filas)),

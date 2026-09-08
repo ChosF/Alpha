@@ -8,8 +8,12 @@
 [data-panel] .an-section-heading p, [data-panel] .an-note { color: var(--fg-2); font-size: 12px; margin-top: 5px; }
 [data-panel] .an-section-title { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
 [data-panel] .an-section-title > span { font-size: 11px; color: var(--fg-3); }
+[data-panel] .an-controls { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+[data-panel] .an-export { display: flex; align-items: center; gap: 8px; }
+[data-panel] .an-export .ui-menu { min-width: 190px; }
 [data-panel] .an-page select { --r: 8px; padding: 10px 32px 10px 12px; border: 1px solid var(--line-2); background: var(--bg-2); color: var(--fg); max-width: 100%; font-size: 12px; }
 [data-panel] .an-period { display: flex; align-items: center; gap: 10px; color: var(--fg-2); font-size: 11px; }
+[data-panel] .an-period > span { white-space: nowrap; }
 [data-panel] .an-card { --r: 10px; background: var(--bg-2); border: 1px solid var(--line); box-shadow: 0 2px 5px rgb(0 0 0 / .025); min-width: 0; }
 [data-panel] .an-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 20px 0; margin-bottom: 16px; }
 [data-panel] .an-stat { min-width: 0; padding: 0 24px; border-left: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
@@ -69,7 +73,10 @@
   [data-panel] .an-tabs button { font-size: 12px; min-height: 44px; }
   [data-panel] .an-section-heading { align-items: flex-start; flex-direction: column; }
   [data-panel] .an-section-heading select { min-height: 44px; width: 100%; }
-  [data-panel] .an-period { width: 100%; }
+  [data-panel] .an-controls { width: 100%; justify-content: stretch; }
+  [data-panel] .an-period { width: auto; flex: 1; }
+  [data-panel] .an-period .selector-personalizado { flex: 1; }
+  [data-panel] .an-export { flex-shrink: 0; }
   [data-panel] .an-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 22px; }
   [data-panel] .an-stat:nth-child(odd) { border-left: 0; }
   [data-panel] .an-secondary-grid, [data-panel] .an-survey-grid { grid-template-columns: 1fr; }
