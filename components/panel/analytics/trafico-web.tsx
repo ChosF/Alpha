@@ -49,7 +49,7 @@ export function TraficoWeb({ detalle }: { detalle: boolean }) {
     ],
   } : null;
   return <section className="an-traffic" aria-labelledby="trafico-titulo">
-    <div className="an-section-heading"><div className="an-section-title"><h2 id="trafico-titulo">Tráfico web</h2><span>Vercel Analytics</span></div>
+    <div className="an-section-heading"><div className="an-section-title"><h2 id="trafico-titulo">Tráfico web</h2></div>
       <div className="an-controls">
         <div className="an-period"><span>Periodo de tráfico</span><SelectorPersonalizado id="analytics-periodo" ariaLabel="Periodo de tráfico" variante="compacto" valor={String(dias)} alCambiar={valor => { if (Number(valor) === dias) return; setEstado({ tipo: "cargando" }); setDias(Number(valor) as 7 | 14 | 30); }} opciones={[7, 14, 30].map(dias => ({ valor: String(dias), etiqueta: `Últimos ${dias} días` }))} /></div>
         {detalle ? <ExportarAnalytics tabla={tabla} /> : null}
