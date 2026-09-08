@@ -3,190 +3,50 @@
 import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Icono } from "@/components/panel/ui/iconos";
-import {
-  Cargando,
-  Encabezado,
-  Pildora,
-  Tarjeta,
-  TarjetaCabecera,
-  Vacio,
-} from "@/components/panel/ui/primitivas";
+import { Cargando, Encabezado, Tarjeta, Vacio } from "@/components/panel/ui/primitivas";
+import { TraficoWeb, Barras, Estadistica } from "@/components/panel/analytics/trafico-web";
+import "./analytics.css";
 
-const ETIQUETAS_CONTENIDO: Record<string, string> = {
-  excelente: "Excelente",
-  bueno: "Bueno",
-  regular: "Regular",
-  malo: "Malo",
-};
-
-const ETIQUETAS_ORIGEN: Record<string, string> = {
-  instagram: "Instagram",
-  whatsapp: "WhatsApp",
-  correo: "Correo",
-};
-
-const FECHA = new Intl.DateTimeFormat("es-MX", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "America/Mexico_City",
-});
+const CONTENIDO: Record<string, string> = { excelente: "Excelente", bueno: "Bueno", regular: "Regular", malo: "Malo" };
+const ORIGEN: Record<string, string> = { instagram: "Instagram", whatsapp: "WhatsApp", correo: "Correo" };
+const FECHA = new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Mexico_City" });
 
 export default function Analytics() {
-  const datos = useQuery(api.encuestas.analytics, {});
-  const [seleccion, setSeleccion] = useState<string | null>(null);
-
-  if (datos === undefined) {
-    return (
-      <>
-        <Encabezado titulo="Analytics" descripcion="Resultados de las encuestas enviadas después de cada evento." />
-        <Tarjeta><Cargando que="las encuestas" /></Tarjeta>
-      </>
-    );
-  }
-
-  const actual = datos.find((evento) => evento.eventId === seleccion) ?? datos[0];
-  return (
-    <>
-      <Encabezado titulo="Analytics" descripcion="Resultados de las encuestas enviadas después de cada evento." />
-      {datos.length === 0 || !actual ? (
-        <Tarjeta>
-          <Vacio
-            titulo="Todavía no hay encuestas enviadas"
-            ayuda="Abre un evento y usa Mandar correos → Encuesta de satisfacción. Los resultados aparecerán aquí."
-          />
-        </Tarjeta>
-      ) : (
-        <>
-          <div className="analytics-eventos" role="list" aria-label="Eventos con encuesta">
-            {datos.map((evento) => (
-              <button
-                key={evento.eventId}
-                type="button"
-                role="listitem"
-                className="analytics-evento"
-                data-active={evento.eventId === actual.eventId}
-                onClick={() => setSeleccion(evento.eventId)}
-              >
-                <span>{evento.titulo}</span>
-                <small>{evento.respuestas} respuestas</small>
-              </button>
-            ))}
-          </div>
-
-          <div className="ui-grid mt-5">
-            <Tarjeta className="ui-stat lg-3" indice={1}>
-              <span className="ui-stat-label">Calificación promedio</span>
-              <span className="ui-stat-value">{actual.promedio?.toFixed(1) ?? "—"}</span>
-              <span className="ui-stat-delta">de 5 estrellas</span>
-            </Tarjeta>
-            <Tarjeta className="ui-stat lg-3" indice={2}>
-              <span className="ui-stat-label">Tasa de respuesta</span>
-              <span className="ui-stat-value">{actual.tasaRespuesta}%</span>
-              <span className="ui-stat-delta">{actual.respuestas} de {actual.enviadas} enviadas</span>
-            </Tarjeta>
-            <Tarjeta className="ui-stat lg-3" indice={3}>
-              <span className="ui-stat-label">Respuestas</span>
-              <span className="ui-stat-value">{actual.respuestas}</span>
-              <span className="ui-stat-delta">formularios completos</span>
-            </Tarjeta>
-            <Tarjeta className="ui-stat lg-3" indice={4}>
-              <span className="ui-stat-label">Campañas</span>
-              <span className="ui-stat-value">{actual.campanas}</span>
-              <span className="ui-stat-delta">
-                {actual.ultimoEnvioEn ? `Último envío ${FECHA.format(new Date(actual.ultimoEnvioEn))}` : "Sin envío confirmado"}
-              </span>
-            </Tarjeta>
-          </div>
-
-          <div className="ui-grid mt-5">
-            <Tarjeta className="lg-4" indice={5}>
-              <TarjetaCabecera titulo="Calificación del evento" descripcion="Distribución de 1 a 5 estrellas." />
-              <Desglose
-                datos={[...actual.calificaciones].reverse()}
-                etiqueta={(clave) => `${clave} ${clave === "1" ? "estrella" : "estrellas"}`}
-                total={actual.respuestas}
-              />
-            </Tarjeta>
-            <Tarjeta className="lg-4" indice={6}>
-              <TarjetaCabecera titulo="Contenido" descripcion="Qué tan bien funcionó la sesión." />
-              <Desglose
-                datos={actual.contenido}
-                etiqueta={(clave) => ETIQUETAS_CONTENIDO[clave] ?? clave}
-                total={actual.respuestas}
-              />
-            </Tarjeta>
-            <Tarjeta className="lg-4" indice={7}>
-              <TarjetaCabecera titulo="Cómo llegaron" descripcion="Canal que dio a conocer el evento." />
-              <Desglose
-                datos={actual.origen}
-                etiqueta={(clave) => ETIQUETAS_ORIGEN[clave] ?? clave}
-                total={actual.respuestas}
-              />
-            </Tarjeta>
-          </div>
-
-          <Tarjeta className="mt-5" indice={8}>
-            <TarjetaCabecera
-              titulo="Comentarios"
-              descripcion="Respuestas abiertas, sin nombres ni correos."
-              acciones={<Pildora tono="neutro" sm>{actual.comentarios.length}</Pildora>}
-            />
-            {actual.comentarios.length === 0 ? (
-              <p className="ui-faint px-5 py-8 text-[12.5px]">Todavía no hay comentarios para este evento.</p>
-            ) : (
-              <div className="analytics-comentarios">
-                {actual.comentarios.map((comentario, indice) => (
-                  <article key={`${comentario.respondidoEn}-${indice}`}>
-                    <div>
-                      <span aria-label={`${comentario.calificacionEvento} de 5 estrellas`}>
-                        {"★".repeat(comentario.calificacionEvento)}
-                        <i>{"★".repeat(5 - comentario.calificacionEvento)}</i>
-                      </span>
-                      <time>{FECHA.format(new Date(comentario.respondidoEn))}</time>
-                    </div>
-                    <p>{comentario.texto}</p>
-                  </article>
-                ))}
-              </div>
-            )}
-          </Tarjeta>
-
-          <p className="analytics-proximamente">
-            <Icono nombre="tendencia" tamano={14} />
-            La analítica web se integrará en esta misma sección más adelante.
-          </p>
-        </>
-      )}
-    </>
-  );
+  const [vista, setVista] = useState("Resumen");
+  return <div className="an-page">
+    <Encabezado titulo="Analytics" descripcion="Tráfico web y resultados de tus eventos." />
+    <nav className="an-tabs" aria-label="Secciones de Analytics">
+      {["Resumen", "Tráfico web", "Encuestas"].map(tab => <button type="button" key={tab} aria-current={vista === tab ? "page" : undefined} onClick={() => setVista(tab)}>{tab}</button>)}
+    </nav>
+    <div hidden={vista === "Encuestas"}><TraficoWeb detalle={vista === "Tráfico web"} /></div>
+    <div hidden={vista === "Tráfico web"}><Encuestas /></div>
+  </div>;
 }
 
-function Desglose({
-  datos,
-  etiqueta,
-  total,
-}: {
-  datos: { clave: string; cantidad: number }[];
-  etiqueta: (clave: string) => string;
-  total: number;
-}) {
-  return (
-    <div className="analytics-desglose">
-      {datos.map((dato) => {
-        const porcentaje = total ? Math.round((dato.cantidad / total) * 100) : 0;
-        return (
-          <div key={dato.clave} className="analytics-fila">
-            <div>
-              <span>{etiqueta(dato.clave)}</span>
-              <strong>{dato.cantidad}</strong>
-            </div>
-            <div className="ui-bar" aria-label={`${porcentaje}%`}>
-              <i style={{ width: `${porcentaje}%` }} />
-            </div>
-          </div>
-        );
-      })}
+function Encuestas() {
+  const datos = useQuery(api.encuestas.analytics, {});
+  const [seleccion, setSeleccion] = useState<string | null>(null);
+  const actual = datos?.find(evento => evento.eventId === seleccion) ?? datos?.[0];
+  return <section className="an-surveys" aria-labelledby="encuestas-titulo">
+    <div className="an-section-heading"><div><h2 id="encuestas-titulo">Encuestas de eventos</h2><p>Resultados acumulados del evento seleccionado.</p></div>
+      {actual && datos ? <select aria-label="Evento de la encuesta" value={actual.eventId} onChange={e => setSeleccion(e.target.value)}>{datos.map(evento => <option key={evento.eventId} value={evento.eventId}>{evento.titulo}</option>)}</select> : null}
     </div>
-  );
+    {datos === undefined ? <Tarjeta><Cargando que="las encuestas" /></Tarjeta> : !actual ? <Tarjeta><Vacio titulo="Todavía no hay encuestas enviadas" ayuda="Abre un evento y usa Mandar correos → Encuesta de satisfacción. Los resultados aparecerán aquí." /></Tarjeta> : <div className="an-card an-survey-body">
+      <p className="an-note">{actual.respuestas} respuestas de {actual.enviadas} invitaciones enviadas{actual.respuestas > 0 && actual.respuestas < 30 ? " · Muestra pequeña" : ""}</p>
+      <div className="an-stats an-stats-three">
+        <Estadistica titulo="Calificación promedio" valor={actual.promedio === undefined ? "—" : `${actual.promedio.toFixed(1)} / 5`} />
+        <Estadistica titulo="Tasa de respuesta" valor={`${actual.tasaRespuesta}%`} />
+        <Estadistica titulo="Campañas" valor={String(actual.campanas)} />
+      </div>
+      <div className="an-survey-grid">
+        <section><h3>Calificación del evento</h3><Barras filas={[...actual.calificaciones].reverse().map(fila => ({ ...fila, clave: `${fila.clave} ${fila.clave === "1" ? "estrella" : "estrellas"}` }))} total={actual.respuestas} /></section>
+        <section><h3>Contenido</h3><Barras filas={actual.contenido.map(fila => ({ ...fila, clave: CONTENIDO[fila.clave] ?? fila.clave }))} total={actual.respuestas} /></section>
+        <section><h3>Cómo llegaron</h3><Barras filas={actual.origen.map(fila => ({ ...fila, clave: ORIGEN[fila.clave] ?? fila.clave }))} total={actual.respuestas} /></section>
+      </div>
+      <section className="an-comments"><h3>Comentarios <span>{actual.comentarios.length}</span></h3><p className="an-note">Respuestas abiertas, sin nombres ni correos.</p>
+        {actual.comentarios.length === 0 ? <p className="an-note">Todavía no hay comentarios para este evento.</p> : <div className="analytics-comentarios">{actual.comentarios.map((comentario, i) => <article key={`${comentario.respondidoEn}-${i}`}><div><span aria-label={`${comentario.calificacionEvento} de 5 estrellas`}>{"★".repeat(comentario.calificacionEvento)}<i>{"★".repeat(5 - comentario.calificacionEvento)}</i></span><time dateTime={new Date(comentario.respondidoEn).toISOString()}>{FECHA.format(comentario.respondidoEn)}</time></div><p>{comentario.texto}</p></article>)}</div>}
+      </section>
+      {actual.ultimoEnvioEn ? <p className="an-note an-last">Último envío: {FECHA.format(actual.ultimoEnvioEn)}</p> : null}
+    </div>}
+  </section>;
 }

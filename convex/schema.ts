@@ -1,6 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { authTables } from "@convex-dev/auth/server";
 import { v } from "convex/values";
+import { informeValidador } from "./lib/analiticaWeb";
 import {
   areaValidador,
   direccionMensajeCorreoValidador,
@@ -28,6 +29,7 @@ import {
  * datos manipulados que llegan del exterior.
  */
 export default defineSchema({
+  webAnalyticsCache: defineTable({ clave: v.string(), informe: informeValidador }).index("by_clave", ["clave"]),
   // Tablas de Convex Auth (sesiones, cuentas, tokens de refresco, etc.)
   ...authTables,
 

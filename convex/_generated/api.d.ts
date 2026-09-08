@@ -9,6 +9,7 @@
  */
 
 import type * as admin from "../admin.js";
+import type * as analiticaWeb from "../analiticaWeb.js";
 import type * as auth from "../auth.js";
 import type * as correo from "../correo.js";
 import type * as correoActions from "../correoActions.js";
@@ -20,6 +21,7 @@ import type * as eventos from "../eventos.js";
 import type * as http from "../http.js";
 import type * as ingesta from "../ingesta.js";
 import type * as ingestaEventos from "../ingestaEventos.js";
+import type * as lib_analiticaWeb from "../lib/analiticaWeb.js";
 import type * as lib_auditoria from "../lib/auditoria.js";
 import type * as lib_conteosEvento from "../lib/conteosEvento.js";
 import type * as lib_contrasena from "../lib/contrasena.js";
@@ -42,6 +44,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
+  analiticaWeb: typeof analiticaWeb;
   auth: typeof auth;
   correo: typeof correo;
   correoActions: typeof correoActions;
@@ -53,6 +56,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   ingesta: typeof ingesta;
   ingestaEventos: typeof ingestaEventos;
+  "lib/analiticaWeb": typeof lib_analiticaWeb;
   "lib/auditoria": typeof lib_auditoria;
   "lib/conteosEvento": typeof lib_conteosEvento;
   "lib/contrasena": typeof lib_contrasena;
