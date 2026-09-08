@@ -36,6 +36,10 @@
 [data-panel] .an-area { fill: var(--an-blue); opacity: .09; }
 [data-panel] .an-line { fill: none; stroke: var(--an-blue); stroke-width: 2; stroke-linejoin: round; }
 [data-panel] .an-dot { fill: var(--an-blue); }
+[data-panel] .an-dot { cursor: pointer; outline: none; }
+[data-panel] .an-dot:focus { stroke: var(--bg-2); stroke-width: 2; }
+[data-panel] .an-tooltip rect { fill: var(--fg); }
+[data-panel] .an-tooltip text { fill: var(--bg-2); font-size: 10px; font-weight: 600; }
 [data-panel] .an-data { margin-top: 8px; font-size: 11px; color: var(--fg-2); }
 [data-panel] .an-data summary { cursor: pointer; padding: 6px 0; }
 [data-panel] .an-data table { width: 100%; text-align: left; border-collapse: collapse; }
