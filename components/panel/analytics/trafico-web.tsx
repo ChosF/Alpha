@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAction } from "convex/react";
+import { useAction, useConvexAuth } from "convex/react";
 import { ConvexError } from "convex/values";
 import { api } from "@/convex/_generated/api";
 import type { FilaWeb, InformeWeb } from "@/convex/lib/analiticaWeb";
@@ -15,10 +15,12 @@ type Estado = { tipo: "cargando" } | { tipo: "error"; mensaje: string } | { tipo
 
 export function TraficoWeb({ detalle }: { detalle: boolean }) {
   const obtener = useAction(api.analiticaWeb.obtener);
+  const { isAuthenticated, isLoading } = useConvexAuth();
   const [dias, setDias] = useState<7 | 14 | 30>(30);
   const [intento, setIntento] = useState(0);
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
   useEffect(() => {
+    if (isLoading || !isAuthenticated) return;
     let vigente = true;
     obtener({ dias }).then(resultado => {
       if (vigente) setEstado(resultado.estado === "disponible" ? { tipo: "listo", informe: resultado.informe } : { tipo: "sin_configurar" });
@@ -26,7 +28,7 @@ export function TraficoWeb({ detalle }: { detalle: boolean }) {
       if (vigente) setEstado({ tipo: "error", mensaje: error instanceof ConvexError && typeof error.data === "string" ? error.data : "No pudimos cargar el tráfico web. Intenta de nuevo." });
     });
     return () => { vigente = false; };
-  }, [dias, intento, obtener]);
+  }, [dias, intento, obtener, isAuthenticated, isLoading]);
   function recargar() { setEstado({ tipo: "cargando" }); setIntento(i => i + 1); }
   const informe = estado.tipo === "listo" ? estado.informe : null;
   return <section className="an-traffic" aria-labelledby="trafico-titulo">
