@@ -11,6 +11,7 @@
 import type * as admin from "../admin.js";
 import type * as analiticaWeb from "../analiticaWeb.js";
 import type * as auth from "../auth.js";
+import type * as boletos from "../boletos.js";
 import type * as correo from "../correo.js";
 import type * as correoActions from "../correoActions.js";
 import type * as correoArchivos from "../correoArchivos.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   analiticaWeb: typeof analiticaWeb;
   auth: typeof auth;
+  boletos: typeof boletos;
   correo: typeof correo;
   correoActions: typeof correoActions;
   correoArchivos: typeof correoArchivos;

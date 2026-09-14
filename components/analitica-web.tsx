@@ -6,6 +6,7 @@ import { rutaAnalitica } from "@/lib/rutas-analitica";
 function filtrarRutasPrivadas(evento: BeforeSendEvent) {
   const ruta = new URL(evento.url, window.location.origin).pathname;
   const esPrivada =
+    ruta === "/registro/id" ||
     ruta === "/dashboard" ||
     ruta.startsWith("/dashboard/") ||
     ruta === "/panel" ||

@@ -70,6 +70,8 @@ const asistenteValidador = v.object({
   canales: v.object({ correo: v.boolean(), whatsapp: v.boolean() }),
   telefono: v.optional(v.string()),
   estado: estadoAsistenteValidador,
+  boletoUtilizadoEn: v.optional(v.number()),
+  boletoUtilizadoPor: v.optional(v.id("users")),
   notas: v.optional(v.string()),
   origen: v.string(),
   ipHash: v.string(),

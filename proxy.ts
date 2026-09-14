@@ -4,6 +4,7 @@ import {
   nextjsMiddlewareRedirect,
 } from "@convex-dev/auth/nextjs/server";
 import { NextResponse, type NextRequest } from "next/server";
+import { destinoDashboard } from "./lib/destino-dashboard";
 
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL ?? "";
 const convexOrigins = convexUrl
@@ -50,10 +51,13 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   const { headers, politica } = prepararCsp(request);
 
   if (esPanel(request) && !esPublica(request) && !(await convexAuth.isAuthenticated())) {
-    return conCsp(nextjsMiddlewareRedirect(request, "/dashboard/acceso"), politica);
+    const destino = destinoDashboard(request.nextUrl.pathname + request.nextUrl.search);
+    const acceso = destino.startsWith("/dashboard/boletos")
+      ? `/dashboard/acceso?next=${encodeURIComponent(destino)}` : "/dashboard/acceso";
+    return conCsp(nextjsMiddlewareRedirect(request, acceso), politica);
   }
   if (esPublica(request) && (await convexAuth.isAuthenticated()) && request.nextUrl.pathname === "/dashboard/acceso") {
-    return conCsp(nextjsMiddlewareRedirect(request, "/dashboard"), politica);
+    return conCsp(nextjsMiddlewareRedirect(request, destinoDashboard(request.nextUrl.searchParams.get("next"))), politica);
   }
 
   return conCsp(NextResponse.next({ request: { headers } }), politica);

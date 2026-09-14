@@ -98,6 +98,18 @@ const nextConfig: NextConfig = {
         source: "/((?!dashboard|panel|api).*)",
         headers: [...cabecerasComunes, { key: "Content-Security-Policy", value: cspLanding }],
       },
+      {
+        source: "/registro/id",
+        headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "Cache-Control", value: "no-store, max-age=0" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+        ],
+      },
+      {
+        source: "/dashboard/boletos",
+        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      },
     ];
   },
 };

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Aviso } from "@/components/panel/piezas";
 import { MarcaAlpha } from "@/components/marca-alpha";
+import { destinoDashboard } from "@/lib/destino-dashboard";
 
 /**
  * Acceso al panel.
@@ -28,7 +29,7 @@ export default function Acceso() {
     setError(null);
     try {
       await signIn("password", { email: correo, password: contrasena, flow: "signIn" });
-      router.replace("/dashboard");
+      router.replace(destinoDashboard(new URLSearchParams(window.location.search).get("next")));
     } catch {
       setError("Correo o contrasena incorrectos.");
       setOcupado(false);
