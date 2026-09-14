@@ -12,3 +12,9 @@ export function destinoDashboard(value: string | null | undefined): string {
     return "/dashboard";
   }
 }
+
+/** Read the browser address: hosting adapters can discard empty query keys. */
+export function destinoBoletoDesdeUrl(value: string): string {
+  const codigo = new URL(value).searchParams.get("") ?? "";
+  return destinoDashboard(`/dashboard/boletos?id=${encodeURIComponent(codigo)}`);
+}

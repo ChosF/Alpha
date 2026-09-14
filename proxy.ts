@@ -50,14 +50,6 @@ const esPanel = createRouteMatcher(["/dashboard(.*)"]);
 export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   const { headers, politica } = prepararCsp(request);
 
-  // Next page searchParams can discard an empty key. Read the original QR
-  // query before routing so /registro/id?=<id> survives unchanged.
-  if (request.nextUrl.pathname === "/registro/id") {
-    const codigo = new URL(request.url).searchParams.get("");
-    const destino = destinoDashboard(`/dashboard/boletos?id=${encodeURIComponent(codigo ?? "")}`);
-    return conCsp(nextjsMiddlewareRedirect(request, destino), politica);
-  }
-
   if (esPanel(request) && !esPublica(request) && !(await convexAuth.isAuthenticated())) {
     const destino = destinoDashboard(request.nextUrl.pathname + request.nextUrl.search);
     const acceso = destino.startsWith("/dashboard/boletos")
@@ -72,5 +64,5 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/api/auth/:path*", "/registro/id"],
+  matcher: ["/dashboard/:path*", "/api/auth/:path*"],
 };

@@ -1,10 +1,15 @@
-import { redirect } from "next/navigation";
+"use client";
 
-/** Stable destination embedded in tickets already delivered by email. */
-export default async function Registro({ searchParams }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const params = await searchParams;
-  const id = params[""];
-  redirect(`/dashboard/boletos${typeof id === "string" && /^[a-zA-Z0-9]{1,64}$/.test(id) ? `?id=${encodeURIComponent(id)}` : ""}`);
+import { useEffect } from "react";
+import { destinoBoletoDesdeUrl } from "@/lib/destino-dashboard";
+
+/** Preserve the exact address embedded in old QR codes. No ticket is read here. */
+export default function Registro() {
+  useEffect(() => {
+    window.location.replace(destinoBoletoDesdeUrl(window.location.href));
+  }, []);
+  return <main className="min-h-dvh flex items-center justify-center p-6 bg-[#f2f4f7] text-[#194270]">
+    <p role="status">Abriendo boleto…</p>
+    <noscript>Activa JavaScript para abrir el boleto en el dashboard.</noscript>
+  </main>;
 }

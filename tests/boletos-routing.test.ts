@@ -12,6 +12,7 @@ vi.mock("@convex-dev/auth/nextjs/server", async () => {
   };
 });
 import proxy from "@/proxy";
+import { destinoBoletoDesdeUrl } from "@/lib/destino-dashboard";
 
 const route = proxy as unknown as (req: NextRequest, ctx: {
   convexAuth: { isAuthenticated: () => Promise<boolean> };
@@ -24,7 +25,7 @@ async function redirigir(path: string, authenticated = false) {
 }
 describe("rutas de boletos", () => {
   it("preserva la clave vacía del QR original y el retorno del login", async () => {
-    const ticket = await redirigir("/registro/id?=abc123");
+    const ticket = new URL(destinoBoletoDesdeUrl("https://www.alphaccm.org/registro/id?=abc123"), "https://www.alphaccm.org").href;
     expect(ticket).toBe("https://www.alphaccm.org/dashboard/boletos?id=abc123");
     const login = await redirigir(new URL(ticket!).pathname + new URL(ticket!).search);
     expect(new URL(login!).searchParams.get("next")).toBe("/dashboard/boletos?id=abc123");
