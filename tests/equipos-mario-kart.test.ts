@@ -42,7 +42,9 @@ describe("torneo Mario Kart", () => {
     expect(antes.find(p => p.correo === datos.correo)).toMatchObject({ equipoNombre: equipo.nombre, equipoId: equipo.id });
     const userId = await t.run(ctx => ctx.db.insert("users", { email: "staff@example.com", rol: "editor", activo: true, creadoEn: Date.now() }));
     const staff = t.withIdentity({ subject: `${userId}|session` });
-    expect((await staff.query(api.boletos.validar, { codigo: antes[1]._id })).equipo).toBe(equipo.nombre);
+    const segundo = antes.find((registro) => registro.correo === datos.correo);
+    expect(segundo).toBeDefined();
+    expect((await staff.query(api.boletos.validar, { codigo: segundo!._id })).equipo).toBe(equipo.nombre);
     await expect(staff.query(api.eventos.listarRegistros, { eventId })).resolves.toHaveLength(2);
   });
 
