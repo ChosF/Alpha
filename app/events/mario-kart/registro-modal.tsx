@@ -11,9 +11,13 @@ import { createPortal } from "react-dom";
 import { MARIO_KART_CHALLENGE } from "@/lib/mario-kart";
 import { renovarToken, tomarToken } from "./registro-cliente";
 import estilos from "./mario-kart.module.css";
+import { Torneo } from "./torneo";
 
 type Propiedades = {
   onCerrar: () => void;
+  torneo?: boolean;
+  invitacion?: string;
+  solicitud?: string;
 };
 
 type Mensaje = {
@@ -48,7 +52,7 @@ function IconoComunidad() {
   );
 }
 
-export function ModalRegistro({ onCerrar }: Propiedades) {
+export function ModalRegistro({ onCerrar, torneo, invitacion, solicitud }: Propiedades) {
   const [visible, setVisible] = useState(false);
   const [cerrando, setCerrando] = useState(false);
   const [token, setToken] = useState("");
@@ -97,7 +101,7 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
 
     const elementos = Array.from(
       evento.currentTarget.querySelectorAll<HTMLElement>(
-        'button:not(:disabled), input:not(:disabled), [href], textarea:not(:disabled)',
+        'button:not(:disabled), input:not(:disabled), select:not(:disabled), [href], textarea:not(:disabled)',
       ),
     ).filter((elemento) => elemento.offsetParent !== null);
 
@@ -226,7 +230,7 @@ export function ModalRegistro({ onCerrar }: Propiedades) {
           </div>
 
           <div className={clasesContenido}>
-            {completo ? (
+            {torneo ? <Torneo invitacion={invitacion} solicitud={solicitud} onCerrar={cerrar} /> : completo ? (
               <div className={estilos.exito} role="status" aria-live="polite">
                 {estrellasFugaces}
                 <div className={estilos.exitoHalo} aria-hidden="true" />

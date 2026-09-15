@@ -62,6 +62,7 @@ export function Boleto({ codigo }: { codigo: string }) {
       </div>
       {isAuthenticated && estado !== "sin_acceso" && dato?.nombre && <div className={styles.details}>
         <p className={styles.label}>Titular del boleto</p><h2>{dato.nombre}</h2>
+        {dato.equipo && <div className={styles.event}><p className={styles.label}>Equipo</p><h3>{dato.equipo}</h3></div>}
         <div className={styles.event}><p className={styles.label}>Evento</p><h3>{dato.evento}</h3>
           {dato.fecha && <p>{fechaEventoEnEspanol(dato.fecha)}</p>}{dato.sede && <p>{dato.sede}</p>}
         </div>

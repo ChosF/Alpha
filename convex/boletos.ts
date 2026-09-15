@@ -8,6 +8,7 @@ const estado = v.union(v.literal("valido"), v.literal("invalido"), v.literal("ve
   v.literal("utilizado"), v.literal("pendiente"), v.literal("sin_acceso"));
 const resultado = v.object({
   estado, nombre: v.optional(v.string()), evento: v.optional(v.string()),
+  equipo: v.optional(v.string()),
   fecha: v.optional(v.string()), sede: v.optional(v.string()),
   utilizadoEn: v.optional(v.number()), venceEn: v.optional(v.number()),
 });
@@ -19,7 +20,7 @@ async function leerBoleto(ctx: QueryCtx, codigo: string): Promise<Infer<typeof r
   if (!registro || !evento || registro.estado === "cancelado" || evento.estado === "borrador") {
     return { estado: "invalido" as const };
   }
-  const datos = { nombre: registro.nombre, evento: evento.titulo, fecha: evento.fechaEvento, sede: evento.sede };
+  const datos = { nombre: registro.nombre, evento: evento.titulo, fecha: evento.fechaEvento, sede: evento.sede, equipo: registro.equipoNombre };
   if (registro.boletoUtilizadoEn !== undefined || registro.estado === "asistio") {
     return { ...datos, estado: "utilizado" as const, utilizadoEn: registro.boletoUtilizadoEn };
   }

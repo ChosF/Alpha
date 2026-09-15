@@ -43,6 +43,7 @@ import {
 import { SelectorPersonalizado } from "@/components/panel/selector-personalizado";
 import { useCascaron } from "@/components/panel/ui/cascaron";
 import { CorreoEvento } from "./correo-evento";
+import { MAX_EQUIPOS_INICIAL } from "@/lib/torneo-mario-kart";
 
 type EventoLista = FunctionReturnType<typeof api.eventos.listar>[number];
 
@@ -418,6 +419,7 @@ function DetalleEvento({
                     >
                       <td className="font-medium">
                         {registro.nombre || "Sin nombre"}
+                        {registro.equipoNombre ? <span className="block text-xs ui-faint">{registro.equipoNombre}</span> : null}
                         {modoAsistencia && confirmandoAsistencia === registro._id ? (
                           <span className="evento-asistencia-confirmacion">
                             Haz clic de nuevo para confirmar asistencia
@@ -525,6 +527,7 @@ function FichaAsistente({
           <dd>{fecha(registro.creadoEn)}</dd>
           <dt>WhatsApp</dt>
           <dd>{registro.canales.whatsapp ? registro.telefono ?? "Sí" : "No"}</dd>
+          {registro.equipoNombre ? <><dt>Equipo</dt><dd>{registro.equipoNombre}</dd></> : null}
         </dl>
         {puedeEditar ? (
           <div className="ui-registration-actions grid gap-4 border-t border-[var(--line)] p-5">
@@ -743,6 +746,7 @@ function FormularioEvento({
   const [horaInicio, setHoraInicio] = useState(evento?.horaInicio ?? "");
   const [horaFin, setHoraFin] = useState(evento?.horaFin ?? "");
   const [sede, setSede] = useState(evento?.sede ?? "");
+  const [maxEquipos, setMaxEquipos] = useState(evento?.maxEquipos ?? MAX_EQUIPOS_INICIAL);
   const [error, setError] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
   const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
@@ -796,7 +800,7 @@ function FormularioEvento({
         ...(sede ? { sede } : {}),
       };
       if (evento) {
-        await actualizar({ id: evento._id, titulo, resumen, pilar, estado, ...detalles });
+        await actualizar({ id: evento._id, titulo, resumen, pilar, estado, ...detalles, ...(evento.slug === "mario-kart" ? { maxEquipos } : {}) });
         alListo(evento._id);
       } else {
         const id = await crear({ titulo, resumen, pilar, ...detalles });
@@ -840,6 +844,7 @@ function FormularioEvento({
           >
             <Entrada id="ev-sede" value={sede} maxLength={160} onChange={(e) => setSede(e.target.value)} placeholder="Ej. SUM 1102, Tec CCM" />
           </Campo>
+          {evento?.slug === "mario-kart" ? <Campo etiqueta="Límite de equipos" htmlFor="ev-equipos" ayuda="Cada equipo tiene 4 integrantes. No puede ser menor al número de equipos creados."><Entrada id="ev-equipos" type="number" min={1} max={32} step={1} value={maxEquipos} onChange={e => setMaxEquipos(Number(e.target.value))} /></Campo> : null}
           <Campo etiqueta="Pilar" htmlFor="ev-pilar">
             <Seleccion id="ev-pilar" value={pilar} onChange={(e) => setPilar(e.target.value as Pilar)}>
               {PILARES.map((opcion) => (

@@ -377,6 +377,45 @@
   white-space: nowrap;
 }
 
+.registroAcciones {
+  display: flex;
+  gap: 14px;
+  width: min(100%, 760px);
+}
+.registroAcciones .registroBoton { flex: 1; min-width: 0; padding-left: 20px; font-size: clamp(1rem, 1.55vw, 1.4rem); }
+.registroAcciones .registroTorneo {
+  background: linear-gradient(120deg, #072b4b, #12577e);
+  box-shadow: inset 0 0 0 1px #83dfff, inset 0 0 0 5px #07344d, 0 0 22px #0b7aa044;
+}
+.registroTorneo > i { background: #06283f; font-style: normal; }
+.torneo { color: #edf5ff; }
+.torneoRegla { margin: 18px 0 26px; padding: 16px 18px; border-left: 3px solid #23baff; background: #23baff0d; color: #ccdeef; font-size: 13px; line-height: 1.65; }
+.torneoOpciones { display: grid; gap: 12px; }
+.torneoOpcion { display: grid; gap: 8px; padding: 22px; border: 1px solid #426482; border-radius: 14px; background: #0d1c30; text-align: left; color: inherit; cursor: pointer; }
+.torneoOpcion strong { display: flex; justify-content: space-between; font-size: 18px; }
+.torneoOpcion > span { font-size: 13px; line-height: 1.6; color: #b7c9da; }
+.torneoOpcion:hover:not(:disabled) { border-color: #23baff; background: #112942; }
+.torneo button:disabled { opacity: .5; cursor: not-allowed; }
+.torneo button:focus-visible, .torneo select:focus-visible { outline: 2px solid #83dfff; outline-offset: 4px; }
+.torneoVolver { width: fit-content; padding: 8px 0; background: none; border: 0; color: #8edaff; cursor: pointer; font-size: 13px; }
+.torneoPrivacidad { display: grid; gap: 12px; padding: 0; border: 0; }
+.torneoPrivacidad legend { margin-bottom: 12px; font-size: 13px; }
+.torneoPrivacidad label { display: flex; gap: 12px; align-items: flex-start; border: 1px solid #426482; border-radius: 12px; padding: 16px; cursor: pointer; }
+.torneoPrivacidad label:has(input:checked) { border-color: #23baff; background: #23baff0a; }
+.torneoPrivacidad input { margin-top: 4px; accent-color: #23baff; }
+.torneoPrivacidad span { display: grid; gap: 5px; font-size: 13px; line-height: 1.5; color: #b7c9da; }
+.torneoPrivacidad strong { color: #edf5ff; font-size: 15px; }
+.torneoResumen { display: grid; gap: 8px; padding: 20px; border: 1px solid #426482; border-radius: 14px; margin-bottom: 16px; overflow-wrap: anywhere; }
+.torneoResumen > span { font-size: 12px; color: #8edaff; }
+.torneoResumen strong { font-size: 22px; }
+.torneoResumen p { font-size: 14px; line-height: 1.6; }
+.torneoSecundario { padding: 14px; border: 1px solid #426482; border-radius: 12px; background: transparent; color: #edf5ff; cursor: pointer; }
+.torneo select { width: 100%; min-width: 0; padding: 15px 12px; border: 1px solid #426482; border-radius: 12px; background: #0d1c30; color: #edf5ff; font: inherit; font-size: 14px; }
+@media (max-width: 650px) {
+  .registroAcciones { flex-direction: column; gap: 12px; }
+  .registroAcciones .registroBoton { width: 100%; font-size: 1.2rem; }
+}
+
 .registroBoton {
   position: relative;
   display: flex;

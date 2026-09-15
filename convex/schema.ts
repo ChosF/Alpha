@@ -124,6 +124,7 @@ export default defineSchema({
     estado: estadoEventoValidador,
     registroAbierto: v.boolean(),
     totalRegistros: v.number(),
+    maxEquipos: v.optional(v.number()),
     /** Metadatos del plan de trabajo. Si existen, esta misma fila aparece en la landing. */
     periodoPrograma: v.optional(v.string()),
     estadoPrograma: v.optional(estadoProgramaValidador),
@@ -141,6 +142,8 @@ export default defineSchema({
   /** Personas registradas a un evento. No se mezclan con la convocatoria de miembros. */
   eventRegistrations: defineTable({
     eventId: v.id("events"),
+    equipoId: v.optional(v.id("tournamentTeams")),
+    equipoNombre: v.optional(v.string()),
     nombre: v.string(),
     correo: v.string(),
     carrera: v.string(),
@@ -161,6 +164,23 @@ export default defineSchema({
     .index("by_event_and_correo", ["eventId", "correo"])
     .index("by_event_and_creado", ["eventId", "creadoEn"])
     .index("by_event_and_estado", ["eventId", "estado", "creadoEn"]),
+
+  tournamentTeams: defineTable({
+    eventId: v.id("events"),
+    nombre: v.string(),
+    privado: v.boolean(),
+    capitanId: v.id("eventRegistrations"),
+    miembros: v.array(v.id("eventRegistrations")),
+    invitacionHash: v.string(),
+    descalificado: v.boolean(),
+  }).index("by_event", ["eventId"]).index("by_invitation", ["invitacionHash"]),
+
+  tournamentRequests: defineTable({
+    equipoId: v.id("tournamentTeams"),
+    registroId: v.id("eventRegistrations"),
+    tokenHash: v.string(),
+    estado: v.union(v.literal("pendiente"), v.literal("aceptada"), v.literal("rechazada")),
+  }).index("by_token", ["tokenHash"]).index("by_registration", ["registroId"]),
 
   /** Campañas de correo de un evento, inmediatas o programadas. */
   eventMailJobs: defineTable({

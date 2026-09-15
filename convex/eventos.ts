@@ -11,6 +11,7 @@ import {
 } from "./lib/validadores";
 import { conAsistentes } from "./lib/conteosEvento";
 import { esFechaEventoValida, esHoraEventoValida } from "../lib/correo-evento";
+import { MAX_EQUIPOS_INICIAL } from "../lib/torneo-mario-kart";
 
 const eventoValidador = v.object({
   _id: v.id("events"),
@@ -26,6 +27,7 @@ const eventoValidador = v.object({
   estado: v.union(v.literal("borrador"), v.literal("publicado"), v.literal("cerrado")),
   registroAbierto: v.boolean(),
   totalRegistros: v.number(),
+  maxEquipos: v.optional(v.number()),
   periodoPrograma: v.optional(v.string()),
   estadoPrograma: v.optional(estadoProgramaValidador),
   ordenPrograma: v.optional(v.number()),
@@ -59,6 +61,8 @@ const eventoDestacadoValidador = v.object({
 });
 
 const asistenteValidador = v.object({
+  equipoId: v.optional(v.id("tournamentTeams")),
+  equipoNombre: v.optional(v.string()),
   _id: v.id("eventRegistrations"),
   _creationTime: v.number(),
   eventId: v.id("events"),
@@ -213,6 +217,7 @@ export const crear = mutation({
 
 export const actualizar = mutation({
   args: {
+    maxEquipos: v.optional(v.number()),
     id: v.id("events"),
     titulo: v.string(),
     resumen: v.string(),
@@ -228,10 +233,16 @@ export const actualizar = mutation({
     const actor = await requiereRol(ctx, "editor");
     const previo = await ctx.db.get(args.id);
     if (previo === null) throw new Error("Ese evento ya no existe.");
+    if (args.maxEquipos !== undefined) {
+      if (previo.slug !== "mario-kart" || !Number.isInteger(args.maxEquipos) || args.maxEquipos < 1 || args.maxEquipos > 32) throw new ConvexError("El límite debe ser un entero entre 1 y 32 equipos.");
+      const equipos = await ctx.db.query("tournamentTeams").withIndex("by_event", q => q.eq("eventId", previo._id)).collect();
+      if (args.maxEquipos < equipos.length) throw new ConvexError(`Ya hay ${equipos.length} equipos. No puedes reducir el límite por debajo de ese número.`);
+    }
     const titulo = limpiarTexto(args.titulo, 120);
     if (titulo.length < 3) throw new Error("El titulo necesita al menos 3 caracteres.");
     const detalles = limpiarDetallesEvento(args);
     await ctx.db.patch(args.id, {
+      ...(args.maxEquipos !== undefined ? { maxEquipos: args.maxEquipos } : {}),
       titulo,
       resumen: limpiarMultilinea(args.resumen, 400),
       fechaEvento: detalles.fechaEvento,
@@ -247,7 +258,7 @@ export const actualizar = mutation({
       accion: "evento.actualizado",
       entidad: "events",
       entidadId: args.id,
-      detalle: titulo,
+      detalle: `${titulo}${args.maxEquipos !== undefined ? ` · Límite de equipos: ${previo.maxEquipos ?? MAX_EQUIPOS_INICIAL} → ${args.maxEquipos}` : ""}`,
     });
     return null;
   },
