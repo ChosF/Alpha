@@ -37,7 +37,7 @@ export async function POST(request: Request) {
       const ipHash = hashDeIp(ipDePeticion(request.headers));
       if (d.sitio_web) return Response.json({ estado: "pendiente", mensaje: "Solicitud recibida." });
       if (!verificarToken(d.token, ipHash).valido) return Response.json({ error: "Vuelve a intentar en unos segundos. Si el problema continúa, cierra y abre el formulario." }, { status: 400 });
-      resultado = await cliente.mutation(api.equiposMarioKart.participar, { secreto: secretoDeIngesta(), ipHash, userAgent: request.headers.get("user-agent") ?? "", correo: d.correo, equipoId: d.equipoId as Id<"tournamentTeams"> | undefined, invitacion: d.invitacion, nombreEquipo: d.nombreEquipo, privado: d.privado, persona: d.persona, nuevoToken: randomBytes(32).toString("hex") });
+      resultado = await cliente.action(api.equiposMarioKart.participar, { secreto: secretoDeIngesta(), ipHash, userAgent: request.headers.get("user-agent") ?? "", correo: d.correo, equipoId: d.equipoId as Id<"tournamentTeams"> | undefined, invitacion: d.invitacion, nombreEquipo: d.nombreEquipo, privado: d.privado, persona: d.persona, nuevoToken: randomBytes(32).toString("hex") });
     }
     return Response.json(resultado, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

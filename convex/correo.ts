@@ -31,7 +31,7 @@ import {
   estadoMensajeCorreoValidador,
 } from "./lib/validadores";
 import { CALLING_LAF } from "../lib/calling-laf";
-import { MARIO_KART_CHALLENGE } from "../lib/mario-kart";
+import { AVISO_REGISTRO_MARIO_KART, MARIO_KART_CHALLENGE } from "../lib/mario-kart";
 import {
   enlaceAsistenciaRegistro,
   QR_ASISTENCIA_CONTENT_ID,
@@ -519,6 +519,7 @@ export function textoConfirmacionMarioKart(
     ENLACE_COMUNIDAD,
     "",
     "Si necesitas corregir algún dato, responde a este correo.",
+    AVISO_REGISTRO_MARIO_KART,
     "",
     "Sociedad Estudiantil Alpha",
     "Tecnológico de Monterrey, Campus Ciudad de México",
@@ -659,7 +660,7 @@ export function cuerpoConfirmacionMarioKart(
                 </tr>
               </table>
               <p style="margin:12px 0 0;color:#6F8BB0;font-size:10px;line-height:1.65;word-break:break-all;">Si el botón no abre, usa este enlace: <a href="${ENLACE_COMUNIDAD}" style="color:#55D7FF;text-decoration:underline;">${ENLACE_COMUNIDAD}</a></p>
-              <p style="margin:28px 0 0;color:#91A7C6;font-size:11px;line-height:1.7;">Si necesitas corregir algún dato, responde a este correo.</p>
+              <p style="margin:28px 0 0;color:#91A7C6;font-size:11px;line-height:1.7;">Si necesitas corregir algún dato, responde a este correo.<br>${escaparHtml(AVISO_REGISTRO_MARIO_KART)}</p>
               <p style="margin:9px 0 0;color:#627B9D;font-size:10px;line-height:1.7;">Recibes este mensaje porque te registraste en Mario Kart Challenge.</p>
             </td>
           </tr>

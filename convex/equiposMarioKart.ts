@@ -1,5 +1,5 @@
-import { ConvexError, v } from "convex/values";
-import { internalMutation, mutation, query, type MutationCtx } from "./_generated/server";
+import { ConvexError, v, type Infer } from "convex/values";
+import { action, internalMutation, mutation, query, type MutationCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { comparaSegura, normalizarCorreo, sha256Hex } from "./lib/texto";
@@ -8,6 +8,7 @@ import { resend } from "./correo";
 import { renderizarCorreoDashboard, textoConFirma } from "./lib/plantillaCorreo";
 import { correoContacto } from "./lib/direccionesCorreo";
 import { CIERRE_TORNEO, MAX_EQUIPOS_INICIAL, REGLA_TORNEO, TAMANO_EQUIPO } from "../lib/torneo-mario-kart";
+import { AVISO_REGISTRO_MARIO_KART } from "../lib/mario-kart";
 
 const equipoPublico = v.object({ id: v.id("tournamentTeams"), nombre: v.string(), privado: v.boolean(), miembros: v.number(), descalificado: v.boolean() });
 const resultado = v.object({ estado: v.union(v.literal("registro"), v.literal("unido"), v.literal("pendiente"), v.literal("creado"), v.literal("rechazada"), v.literal("error")), mensaje: v.string() });
@@ -33,9 +34,11 @@ export const solicitud = query({
     if (!/^[a-f0-9]{64}$/.test(token)) return null;
     const hash = await sha256Hex(token);
     const peticion = await ctx.db.query("tournamentRequests").withIndex("by_token", q => q.eq("tokenHash", hash)).unique();
-    if (!peticion) return null;
+    if (!peticion || peticion.estado !== "pendiente" || Date.now() >= CIERRE_TORNEO) return null;
     const [equipo, persona] = await Promise.all([ctx.db.get(peticion.equipoId), ctx.db.get(peticion.registroId)]);
-    if (!equipo || !persona) return null;
+    if (!equipo || !persona || equipo.descalificado || persona.estado === "cancelado" || persona.equipoId) return null;
+    const evento = await ctx.db.get(equipo.eventId);
+    if (!evento || evento.estado !== "publicado" || !evento.registroAbierto) return null;
     return { equipo: equipo.nombre, nombre: persona.nombre, correo: persona.correo, estado: peticion.estado, cerrado: Date.now() >= CIERRE_TORNEO };
   },
 });
@@ -45,6 +48,7 @@ async function enviar(ctx: MutationCtx, para: string, asunto: string, texto: str
     throw new ConvexError("Los correos del torneo no están disponibles. Intenta más tarde.");
   }
   const remitente = process.env.ALPHA_AUTO_EMAIL ?? "auto@alphaccm.org";
+  texto = `${texto}\n\n${AVISO_REGISTRO_MARIO_KART}`;
   const html = renderizarCorreoDashboard({ asunto, texto, remitente, accion }).replace("</body>", `${tabla}</body>`);
   await resend.sendEmail(ctx, { from: `Alpha CCM <${remitente}>`, to: para, subject: asunto, text: textoConFirma(`${texto}${accion ? `\n\n${accion.url}` : ""}`, remitente), html, replyTo: [correoContacto()] });
 }
@@ -72,21 +76,43 @@ async function agregar(ctx: MutationCtx, equipo: Doc<"tournamentTeams">, persona
   await enviar(ctx, persona.correo, `Ya estás en ${equipo.nombre}`, `Tu lugar en el equipo ${equipo.nombre} está confirmado.\n\n${REGLA_TORNEO}`);
 }
 
-/** Only the same-origin Next route holds this secret. Email alone never returns attendee details. */
-export const participar = mutation({
-  args: { secreto: v.string(), correo: v.string(), ipHash: v.string(), userAgent: v.string(),
+const argumentosParticipar = { secreto: v.string(), correo: v.string(), ipHash: v.string(), userAgent: v.string(),
     equipoId: v.optional(v.id("tournamentTeams")), invitacion: v.optional(v.string()),
     nombreEquipo: v.optional(v.string()), privado: v.optional(v.boolean()), nuevoToken: v.string(),
     persona: v.optional(v.object({ nombre: v.string(), carrera: v.string(), semestre: v.string(), matricula: v.string() })),
+};
+
+/** Commit the attempt before running the membership transaction, even if it fails. */
+export const participar = action({
+  args: argumentosParticipar,
+  returns: resultado,
+  handler: async (ctx, args): Promise<Infer<typeof resultado>> => {
+    if (!process.env.INGEST_SECRET || process.env.INGEST_SECRET.length < 32 || !comparaSegura(args.secreto, process.env.INGEST_SECRET)) throw new ConvexError("No autorizado.");
+    const permitido = await ctx.runMutation(internal.equiposMarioKart.consumirIntento, { correo: args.correo, ipHash: args.ipHash });
+    if (!permitido) return { estado: "error", mensaje: "Recibimos varios intentos. Intenta más tarde." };
+    return await ctx.runMutation(internal.equiposMarioKart.ejecutarParticipacion, args);
   },
+});
+
+export const consumirIntento = internalMutation({
+  args: { correo: v.string(), ipHash: v.string() },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const correo = normalizarCorreo(args.correo);
+    for (const [clave, maximo] of [[`torneo:ip:${args.ipHash}`, 40], [`torneo:correo:${await sha256Hex(correo)}`, 10]] as const) {
+      if (!(await consumirLimite(ctx, clave, maximo, 60 * 60 * 1000)).permitido) return false;
+    }
+    return true;
+  },
+});
+
+export const ejecutarParticipacion = internalMutation({
+  args: argumentosParticipar,
   returns: resultado,
   handler: async (ctx, args) => {
     if (!process.env.INGEST_SECRET || process.env.INGEST_SECRET.length < 32 || !comparaSegura(args.secreto, process.env.INGEST_SECRET)) throw new ConvexError("No autorizado.");
     const correo = normalizarCorreo(args.correo);
     if (correo.length > 120 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo) || !/^[a-f0-9]{64}$/.test(args.nuevoToken)) throw new ConvexError("Revisa tu correo.");
-    for (const [clave, maximo] of [[`torneo:ip:${args.ipHash}`, 40], [`torneo:correo:${await sha256Hex(correo)}`, 10]] as const) {
-      if (!(await consumirLimite(ctx, clave, maximo, 60 * 60 * 1000)).permitido) return { estado: "error" as const, mensaje: "Recibimos varios intentos. Intenta más tarde." };
-    }
     const evento = await ctx.db.query("events").withIndex("by_slug", q => q.eq("slug", "mario-kart")).unique();
     if (!evento || evento.estado !== "publicado" || !evento.registroAbierto || Date.now() >= CIERRE_TORNEO) throw new ConvexError("El registro al torneo está cerrado.");
     let equipo = args.equipoId ? await ctx.db.get(args.equipoId) : null;

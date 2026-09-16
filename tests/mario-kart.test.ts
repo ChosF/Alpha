@@ -3,7 +3,7 @@ import {
   cuerpoConfirmacionMarioKart,
   textoConfirmacionMarioKart,
 } from "@/convex/correo";
-import { MARIO_KART_CHALLENGE } from "@/lib/mario-kart";
+import { AVISO_REGISTRO_MARIO_KART, MARIO_KART_CHALLENGE } from "@/lib/mario-kart";
 import {
   enlaceAsistenciaRegistro,
   QR_ASISTENCIA_CONTENT_ID,
@@ -54,5 +54,7 @@ describe("datos de Mario Kart Challenge", () => {
     expect(html).toContain(`href="${acceso}"`);
     expect(html).not.toContain("Si no puedes escanearlo");
     expect(texto).toContain(acceso);
+    expect(html).toContain(AVISO_REGISTRO_MARIO_KART);
+    expect(texto).toContain(AVISO_REGISTRO_MARIO_KART);
   });
 });

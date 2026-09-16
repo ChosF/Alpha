@@ -7,6 +7,7 @@ const config = [
   {
     ignores: [
       "convex/_generated/**",
+      ".convex-tmp/**",
       ".next/**",
       "public/**",
       "node_modules/**",
@@ -16,9 +17,14 @@ const config = [
     ],
   },
   {
+    files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
     rules: {
       // El panel muestra texto que escriben terceros: nunca se inyecta HTML.
       "react/no-danger": "error",
+    },
+  },
+  {
+    rules: {
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
     },

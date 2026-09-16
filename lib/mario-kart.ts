@@ -1,3 +1,5 @@
+export const AVISO_REGISTRO_MARIO_KART = "Si no solicitaste este registro o alguien te registró sin tu autorización, responde a este correo para que el equipo de Alpha pueda revisarlo y ayudarte.";
+
 export const MARIO_KART_CHALLENGE = {
   slug: "mario-kart",
   titulo: "Mario Kart Challenge",
