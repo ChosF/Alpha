@@ -356,9 +356,9 @@
   height: var(--top-h);
   padding: 0 16px;
   border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--bg) 97%, transparent);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: color-mix(in srgb, var(--bg) 99.5%, transparent);
+  backdrop-filter: blur(48px);
+  -webkit-backdrop-filter: blur(48px);
 }
 @media (min-width: 640px) {
   .ui-top {
