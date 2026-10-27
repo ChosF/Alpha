@@ -7,6 +7,7 @@ import { NETWORKING_NIGHT } from "@/lib/networking-night";
 import { enlaceAsistenciaRegistro } from "@/lib/registro-asistencia";
 import { esquemaRegistroNetworkingNight, primerError } from "@/lib/validacion";
 import { hashDeIp, ipDePeticion, secretoDeIngesta, verificarToken } from "@/lib/seguridad";
+import { sitioPublico } from "@/lib/sitio-publico";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,7 +66,7 @@ export async function POST(peticion: Request): Promise<NextResponse> {
     }
 
     const url = process.env.NEXT_PUBLIC_CONVEX_URL;
-    const sitio = process.env.SITE_URL?.replace(/\/$/, "") ?? new URL(peticion.url).origin;
+    const sitio = sitioPublico(peticion);
     if (!url) return NextResponse.json(generico, { status: 503 });
 
     const cliente = new ConvexHttpClient(url);

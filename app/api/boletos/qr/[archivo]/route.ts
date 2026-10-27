@@ -1,5 +1,6 @@
 import QRCode from "qrcode";
 import { enlaceAsistenciaRegistro } from "@/lib/registro-asistencia";
+import { sitioPublico } from "@/lib/sitio-publico";
 
 export const runtime = "nodejs";
 
@@ -16,8 +17,7 @@ export async function GET(
   const id = /^([0-9a-z]{16,64})\.png$/.exec(archivo)?.[1];
   if (!id) return new Response("No encontrado.", { status: 404 });
 
-  const sitio = process.env.SITE_URL?.replace(/\/$/, "") ?? new URL(peticion.url).origin;
-  const png = await QRCode.toBuffer(enlaceAsistenciaRegistro(sitio, id), {
+  const png = await QRCode.toBuffer(enlaceAsistenciaRegistro(sitioPublico(peticion), id), {
     type: "png",
     width: 640,
     margin: 4,
