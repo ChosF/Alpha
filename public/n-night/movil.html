@@ -294,13 +294,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
 .note textarea::placeholder{color:rgba(13,33,64,.42)}
 
 /* Cierre */
-.cl-hang{position:relative;flex:1;min-height:36px}
-.cl-strap{position:absolute;left:58%;top:calc(-1 * (var(--sat) + 160px));bottom:16px;width:30px;margin-left:-15px;overflow:hidden;-webkit-mask:linear-gradient(transparent 110px,#000 230px);mask:linear-gradient(transparent 110px,#000 230px);background:var(--accent);box-shadow:inset 3px 0 0 rgba(4,14,36,.18),inset -3px 0 0 rgba(4,14,36,.18),0 0 30px rgba(0,102,255,.45)}
-.cl-strap span{position:absolute;left:50%;bottom:0;transform:translateX(-50%) rotate(180deg);writing-mode:vertical-rl;white-space:nowrap;font-family:var(--fd);font-weight:700;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#fff;line-height:1}
-.cl-clip{position:absolute;left:58%;bottom:0;width:38px;height:26px;margin-left:-19px;background:linear-gradient(90deg,#7f8899,#eef1f6 45%,#9aa3b2);box-shadow:0 3px 6px rgba(0,0,0,.4)}
-.st.is-on .cl-strap,.st.is-on .cl-clip{animation:clDrop 1.3s var(--E) both .1s}
-@keyframes clDrop{from{transform:translateY(-70vh)}}
-.poster{font-family:var(--fd);font-weight:700;text-transform:uppercase;font-size:var(--fs,120px);line-height:.8;letter-spacing:-.045em}
+.poster{margin-top:auto;padding-top:36px;font-family:var(--fd);font-weight:700;text-transform:uppercase;font-size:var(--fs,120px);line-height:.8;letter-spacing:-.045em}
 .poster .ln{display:block;width:max-content}
 .poster .ln:last-child{color:transparent;-webkit-text-stroke:2px #fff}
 .st.is-on .poster .ln{animation:stIn 1s var(--E) both;animation-delay:calc(var(--i) * 120ms + 150ms)}
@@ -657,7 +651,6 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
 
     <section class="st" data-time="1260" data-what="Nos vemos" data-theme="night" data-dur="0">
       <p class="st-k in">Nos vemos el</p>
-      <div class="cl-hang" aria-hidden="true"><div class="cl-strap"><span>Networking Night · Alpha · Networking Night · Alpha · Networking Night · Alpha · Networking Night · Alpha ·</span></div><i class="cl-clip"></i></div>
       <p class="poster" data-poster aria-label="Jueves 5 de noviembre"><span class="ln" style="--i:0" aria-hidden="true">Jue</span><span class="ln" style="--i:1" aria-hidden="true">5 nov</span></p>
       <ul class="cl-facts in" style="--d:400">
         <li><span>Horario</span><b class="tab">5:00 a 9:00 p.m.</b></li>
