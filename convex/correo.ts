@@ -33,6 +33,12 @@ import {
 import { CALLING_LAF } from "../lib/calling-laf";
 import { AVISO_REGISTRO_MARIO_KART, MARIO_KART_CHALLENGE } from "../lib/mario-kart";
 import {
+  AVISO_REGISTRO_NETWORKING_NIGHT,
+  copiaPagoNetworkingNight,
+  NETWORKING_NIGHT,
+  type PagoBoleto,
+} from "../lib/networking-night";
+import {
   enlaceAsistenciaRegistro,
   QR_ASISTENCIA_CONTENT_ID,
 } from "../lib/registro-asistencia";
@@ -665,6 +671,273 @@ export function cuerpoConfirmacionMarioKart(
             </td>
           </tr>
           <tr><td class="footer-pad" style="padding:23px 42px 29px;background-color:#030916;border-top:1px solid #19365D;color:#7890B1;font-size:10px;line-height:1.7;">Sociedad Estudiantil Alpha<br>Tecnológico de Monterrey, Campus Ciudad de México</td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export type ConfirmacionNetworkingNight = ConfirmacionMarioKart & { pago?: PagoBoleto };
+
+function folioRegistro(registroId: string): string {
+  return `NN-${registroId.slice(-6).toUpperCase()}`;
+}
+
+export function textoConfirmacionNetworkingNight(
+  args: ConfirmacionNetworkingNight,
+  sitio: string,
+): string {
+  const nombre = primerNombre(args.nombre);
+  const acceso = enlaceAsistenciaRegistro(sitio, args.registroId);
+  const pago = copiaPagoNetworkingNight(args.pago);
+  return [
+    `Hola${nombre ? ` ${nombre}` : ""},`,
+    "",
+    "Tu gafete para Networking Night está listo. Este correo es tu boleto.",
+    "",
+    `Fecha: ${NETWORKING_NIGHT.fechaTexto}`,
+    `Hora: ${NETWORKING_NIGHT.horaTexto} (registro desde las ${NETWORKING_NIGHT.horaRegistroTexto})`,
+    `Lugar: ${NETWORKING_NIGHT.sede}, ${NETWORKING_NIGHT.campusTexto}`,
+    pago.linea,
+    `Folio: ${folioRegistro(args.registroId)}`,
+    "",
+    "Tu acceso personal:",
+    acceso,
+    "Presenta el código QR de este correo en la entrada.",
+    "",
+    "Antes de llegar:",
+    `1. Llega desde las ${NETWORKING_NIGHT.horaRegistroTexto} para recoger tu gafete con calma.`,
+    "2. Business casual. No hace falta traje.",
+    `3. ${pago.paso}. ${pago.detalle}`,
+    "",
+    "Agrégalo a tu calendario:",
+    NETWORKING_NIGHT.calendarioUrl,
+    "",
+    "Si necesitas corregir algún dato, responde a este correo.",
+    ...(pago.pagado ? [] : ["Si la cuota cambia, te avisaremos por este medio antes del evento."]),
+    AVISO_REGISTRO_NETWORKING_NIGHT,
+    "",
+    "Sociedad Estudiantil Alpha",
+    "Tecnológico de Monterrey, Campus Ciudad de México",
+  ].join("\n");
+}
+
+export function cuerpoConfirmacionNetworkingNight(
+  args: ConfirmacionNetworkingNight,
+  sitio: string,
+): string {
+  const nombreCompleto = escaparHtml(args.nombre.trim());
+  const nombre = escaparHtml(primerNombre(args.nombre));
+  const saludo = nombre ? `Hola, ${nombre}.` : "Hola.";
+  const logo = escaparHtml(`${sitio}/alpha-mark-white.png`);
+  const calendario = escaparHtml(NETWORKING_NIGHT.calendarioUrl);
+  const pagina = escaparHtml(`${sitio}${NETWORKING_NIGHT.ruta}`);
+  const acceso = escaparHtml(enlaceAsistenciaRegistro(sitio, args.registroId));
+  const folio = folioRegistro(args.registroId);
+  const pago = copiaPagoNetworkingNight(args.pago);
+  const fuenteTitulo = "Poppins,Montserrat,'Segoe UI',Arial,sans-serif";
+  const fuente = "Montserrat,'Segoe UI',Arial,sans-serif";
+  const fondo = "#E9EDF3";
+
+  const dato = (etiqueta: string, valor: string, nota?: string) => `
+                        <div style="color:#6B7C93;font-family:${fuente};font-size:9px;font-weight:700;letter-spacing:1.8px;line-height:1.4;">${etiqueta}</div>
+                        <div style="margin-top:5px;color:#0D2140;font-family:${fuente};font-size:14px;font-weight:700;line-height:1.4;">${valor}</div>${
+                          nota
+                            ? `
+                        <div style="margin-top:3px;color:#6B7C93;font-family:${fuente};font-size:11px;line-height:1.5;">${nota}</div>`
+                            : ""
+                        }`;
+
+  const paso = (numero: string, titulo: string, texto: string, ultimo = false) => `
+                <tr>
+                  <td width="44" valign="top" style="padding:16px 0 16px 22px;color:#AFCFFF;font-family:${fuenteTitulo};font-size:13px;font-weight:700;line-height:1.5;">${numero}</td>
+                  <td valign="top" style="padding:16px 22px 16px 0;${ultimo ? "" : "border-bottom:1px solid #1D3A66;"}">
+                    <div style="color:#FFFFFF;font-family:${fuente};font-size:14px;font-weight:700;line-height:1.5;">${titulo}</div>
+                    <div style="margin-top:2px;color:#A9BEDB;font-family:${fuente};font-size:12px;line-height:1.6;">${texto}</div>
+                  </td>
+                </tr>`;
+
+  return `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light only">
+  <title>Tu boleto para Networking Night</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme: light only; }
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    table { border-collapse: collapse !important; }
+    img { -ms-interpolation-mode: bicubic; border: 0; display: block; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+    a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; }
+    @media only screen and (max-width: 600px) {
+      .page-pad { padding: 22px 12px 30px !important; }
+      .badge { width: 100% !important; }
+      .badge-pad { padding-left: 22px !important; padding-right: 22px !important; }
+      .badge-name { font-size: 28px !important; letter-spacing: -.8px !important; }
+      .stub-cell { display: block !important; width: 100% !important; padding: 0 0 16px !important; }
+      .copy-pad { padding: 34px 6px 0 !important; }
+      .headline { font-size: 26px !important; }
+      .button { display: block !important; text-align: center !important; }
+      .hide-mobile { display: none !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:${fondo};color:#0D2140;font-family:${fuente};">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">Tu gafete está listo. ${escaparHtml(NETWORKING_NIGHT.fechaTexto)}, ${escaparHtml(NETWORKING_NIGHT.horaTexto)}, ${escaparHtml(NETWORKING_NIGHT.sede)}.&#847; &zwnj; &nbsp;</div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background-color:${fondo};">
+    <tr>
+      <td class="page-pad" align="center" style="padding:30px 16px 44px;">
+        <table role="presentation" class="shell" width="560" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:560px;">
+          <tr>
+            <td style="padding:0 4px 26px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="color:#194270;font-family:${fuenteTitulo};font-size:10px;font-weight:700;letter-spacing:2.4px;line-height:1.4;">ALPHA <span style="color:#7A8CA5;">·</span> SOCIEDAD ESTUDIANTIL</td>
+                  <td class="hide-mobile" align="right" style="color:#194270;font-family:${fuenteTitulo};font-size:10px;font-weight:700;letter-spacing:2.4px;line-height:1.4;white-space:nowrap;">05 · 11 · 26</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Cinta y broche -->
+          <tr>
+            <td align="center" style="padding:0;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr><td width="40" height="54" bgcolor="#0066FF" style="width:40px;height:54px;background-color:#0066FF;font-size:0;line-height:0;">&nbsp;</td></tr>
+              </table>
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                <tr><td width="22" height="14" bgcolor="#AFCFFF" style="width:22px;height:14px;background-color:#AFCFFF;border-radius:3px 3px 0 0;font-size:0;line-height:0;">&nbsp;</td></tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Gafete -->
+          <tr>
+            <td align="center" style="padding:0;">
+              <table role="presentation" class="badge" width="420" cellspacing="0" cellpadding="0" border="0" style="width:420px;max-width:100%;background-color:#FFFFFF;border-radius:20px;box-shadow:0 22px 44px -18px rgba(12,33,73,.38);">
+                <tr>
+                  <td class="badge-pad" style="padding:16px 28px 18px;background-color:#0C2149;border-radius:20px 20px 0 0;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td align="center" style="padding:0 0 16px;">
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                            <tr><td width="58" height="10" bgcolor="${fondo}" style="width:58px;height:10px;background-color:${fondo};border-radius:5px;font-size:0;line-height:0;">&nbsp;</td></tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                            <tr>
+                              <td width="30" valign="middle"><img src="${logo}" width="24" alt="Alpha" style="width:24px;max-width:24px;height:auto;"></td>
+                              <td valign="middle" style="color:#FFFFFF;font-family:${fuenteTitulo};font-size:12px;font-weight:700;letter-spacing:2.6px;line-height:1.2;">NETWORKING NIGHT</td>
+                              <td align="right" valign="middle" style="color:#AFCFFF;font-family:${fuente};font-size:11px;font-weight:700;line-height:1.2;white-space:nowrap;">${escaparHtml(NETWORKING_NIGHT.fechaCorta)}</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="badge-pad" style="padding:30px 28px 6px;">
+                    <div style="color:#0066FF;font-family:${fuente};font-size:10px;font-weight:700;letter-spacing:2.4px;line-height:1.4;">ASISTENTE</div>
+                    <div class="badge-name" role="heading" aria-level="1" style="margin-top:8px;color:#0D2140;font-family:${fuenteTitulo};font-size:34px;font-weight:700;letter-spacing:-1px;line-height:1.02;text-transform:uppercase;">${nombreCompleto}</div>
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:16px;">
+                      <tr><td width="44" height="4" bgcolor="#0066FF" style="width:44px;height:4px;background-color:#0066FF;border-radius:2px;font-size:0;line-height:0;">&nbsp;</td></tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" class="badge-pad" style="padding:24px 28px 26px;">
+                    <a href="${acceso}" target="_blank" style="display:inline-block;text-decoration:none;">
+                      <img src="cid:${QR_ASISTENCIA_CONTENT_ID}" width="196" alt="Código QR de acceso para Networking Night" style="display:block;width:196px;max-width:100%;height:auto;border:1px solid #DCE4EF;border-radius:12px;">
+                    </a>
+                    <div style="margin-top:12px;color:#6B7C93;font-family:${fuente};font-size:11px;line-height:1.6;">Tu acceso personal. Preséntalo en la entrada.</div>
+                  </td>
+                </tr>
+
+                <!-- Perforación -->
+                <tr>
+                  <td style="padding:0;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td width="13" height="26" bgcolor="${fondo}" style="width:13px;height:26px;background-color:${fondo};border-radius:0 13px 13px 0;font-size:0;line-height:0;">&nbsp;</td>
+                        <td valign="middle" style="padding:0 10px;"><div style="height:0;border-top:2px dashed #C9D4E3;font-size:0;line-height:0;">&nbsp;</div></td>
+                        <td width="13" height="26" bgcolor="${fondo}" style="width:13px;height:26px;background-color:${fondo};border-radius:13px 0 0 13px;font-size:0;line-height:0;">&nbsp;</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Talón -->
+                <tr>
+                  <td class="badge-pad" style="padding:20px 28px 6px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td class="stub-cell" width="50%" valign="top" style="padding:0 10px 18px 0;">${dato("FECHA", "Jueves 5 de noviembre")}
+                        </td>
+                        <td class="stub-cell" width="50%" valign="top" style="padding:0 0 18px 10px;">${dato("HORA", escaparHtml(NETWORKING_NIGHT.horaTexto), `Registro desde las ${escaparHtml(NETWORKING_NIGHT.horaRegistroTexto)}`)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="stub-cell" width="50%" valign="top" style="padding:0 10px 18px 0;">${dato("LUGAR", escaparHtml(NETWORKING_NIGHT.sede), escaparHtml(NETWORKING_NIGHT.campus))}
+                        </td>
+                        <td class="stub-cell" width="50%" valign="top" style="padding:0 0 18px 10px;">${dato("CUOTA", escaparHtml(pago.valor), escaparHtml(pago.nota))}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="badge-pad" style="padding:14px 28px 18px;border-top:1px solid #E4EAF2;border-radius:0 0 20px 20px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td style="color:#6B7C93;font-family:${fuente};font-size:9px;font-weight:700;letter-spacing:1.8px;line-height:1.4;">ADMITE 1 · BOLETO PERSONAL</td>
+                        <td align="right" style="color:#194270;font-family:${fuenteTitulo};font-size:11px;font-weight:700;letter-spacing:1.4px;line-height:1.4;white-space:nowrap;">${folio}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Mensaje -->
+          <tr>
+            <td class="copy-pad" style="padding:44px 30px 0;">
+              <p style="margin:0;color:#0066FF;font-family:${fuente};font-size:13px;font-weight:700;line-height:1.5;">${saludo}</p>
+              <h2 class="headline" style="margin:8px 0 0;color:#0D2140;font-family:${fuenteTitulo};font-size:30px;font-weight:700;letter-spacing:-.8px;line-height:1.1;text-transform:uppercase;">Tu gafete está listo.</h2>
+              <p style="margin:14px 0 0;color:#41516A;font-family:${fuente};font-size:15px;line-height:1.7;">Recibimos tu registro para Networking Night. Este correo es tu boleto: guárdalo y muéstralo en la entrada.</p>
+
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:26px;background-color:#0C2149;border-radius:16px;">
+                <tr>
+                  <td colspan="2" style="padding:20px 22px 4px;color:#AFCFFF;font-family:${fuente};font-size:9px;font-weight:700;letter-spacing:2.2px;line-height:1.4;">ANTES DE LLEGAR</td>
+                </tr>${paso("01", `Llega desde las ${escaparHtml(NETWORKING_NIGHT.horaRegistroTexto)}`, "Así recoges tu gafete con calma antes de la apertura a las 5:00.")}${paso("02", "Business casual", "Pantalón de vestir o chino, camisa o blusa. No hace falta traje.")}${paso("03", escaparHtml(pago.paso), escaparHtml(pago.detalle), true)}
+                <tr><td colspan="2" height="8" style="height:8px;font-size:0;line-height:0;">&nbsp;</td></tr>
+              </table>
+
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:22px;">
+                <tr>
+                  <td bgcolor="#0066FF" style="background-color:#0066FF;border-radius:999px;"><a class="button" href="${calendario}" target="_blank" style="display:block;padding:16px 20px;color:#FFFFFF;font-family:${fuente};font-size:13px;font-weight:700;line-height:1;text-align:center;text-decoration:none;">Agregar a Google Calendar</a></td>
+                </tr>
+                <tr><td height="10" style="height:10px;font-size:0;line-height:0;">&nbsp;</td></tr>
+                <tr>
+                  <td><a class="button" href="${pagina}" target="_blank" style="display:block;padding:14px 20px;border:2px solid #194270;border-radius:999px;color:#194270;font-family:${fuente};font-size:13px;font-weight:700;line-height:1;text-align:center;text-decoration:none;">Ver la página del evento</a></td>
+                </tr>
+              </table>
+
+              <p style="margin:28px 0 0;color:#6B7C93;font-family:${fuente};font-size:11px;line-height:1.7;">Si necesitas corregir algún dato, responde a este correo.${pago.pagado ? "" : " Si la cuota cambia, te avisaremos por este medio antes del evento."}<br>${escaparHtml(AVISO_REGISTRO_NETWORKING_NIGHT)}</p>
+              <p style="margin:18px 0 0;padding-top:18px;border-top:1px solid #D3DCE8;color:#7A8CA5;font-family:${fuente};font-size:10px;line-height:1.7;">Sociedad Estudiantil Alpha<br>Tecnológico de Monterrey, Campus Ciudad de México<br>Recibes este mensaje porque te registraste en Networking Night.</p>
+            </td>
+          </tr>
         </table>
       </td>
     </tr>

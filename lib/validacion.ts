@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { AREAS } from "@/convex/lib/validadores";
 import { limpiarMultilinea, limpiarTexto, normalizarCorreo, normalizarTelefono } from "@/convex/lib/texto";
+import {
+  INTERESES_NETWORKING_NIGHT,
+  MAX_HABILIDADES_NETWORKING_NIGHT,
+  MAX_INTERESES_NETWORKING_NIGHT,
+  METODOS_PAGO_NETWORKING_NIGHT,
+  SEMESTRES_NETWORKING_NIGHT,
+} from "@/lib/networking-night";
 
 /**
  * Validacion del formulario publico.
@@ -184,6 +191,42 @@ export function aPayloadEventoConvex(
     userAgent: extra.userAgent,
   };
 }
+
+export const esquemaRegistroNetworkingNight = z.object({
+  nombre: texto(3, 80, "Nombre"),
+  correo: z
+    .string()
+    .max(120, "El correo es demasiado largo.")
+    .transform(normalizarCorreo)
+    .refine((c) => /^[^@\s]+@tec\.mx$/.test(c), "Usa tu correo institucional @tec.mx."),
+  matricula: z
+    .string()
+    .transform((valor) => limpiarTexto(valor, 12).toUpperCase())
+    .refine((valor) => /^[AL]\d{8}$/.test(valor), "La matrícula va como A01234567."),
+  carrera: texto(2, 60, "Carrera"),
+  semestre: z.enum(SEMESTRES_NETWORKING_NIGHT, { error: "Elige tu semestre." }),
+  intereses: z
+    .array(z.enum(INTERESES_NETWORKING_NIGHT, { error: "Ese interés no está en la lista." }))
+    .max(MAX_INTERESES_NETWORKING_NIGHT, `Elige hasta ${MAX_INTERESES_NETWORKING_NIGHT} intereses.`)
+    .optional()
+    .default([]),
+  habilidades: z
+    .array(z.string().transform((valor) => limpiarTexto(valor, 32)))
+    .max(MAX_HABILIDADES_NETWORKING_NIGHT, `Agrega hasta ${MAX_HABILIDADES_NETWORKING_NIGHT} habilidades.`)
+    .optional()
+    .default([]),
+  cvStorageId: z
+    .string()
+    .regex(/^[a-z0-9]{16,64}$/, "No pudimos leer tu CV. Vuelve a subirlo.")
+    .optional(),
+  metodoPago: z.enum(METODOS_PAGO_NETWORKING_NIGHT, {
+    error: "Por ahora solo puedes pagar en efectivo el día del evento.",
+  }),
+  consentimiento: z.literal(true, { error: "Acepta el aviso de privacidad para continuar." }),
+  ...defensasFormulario,
+});
+
+export type DatosRegistroNetworkingNight = z.infer<typeof esquemaRegistroNetworkingNight>;
 
 /** Primer mensaje de error legible, para devolver algo util al formulario. */
 export function primerError(error: z.ZodError): string {

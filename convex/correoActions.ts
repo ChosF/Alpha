@@ -7,14 +7,18 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
 import { components, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { action, internalAction } from "./_generated/server";
+import { action, internalAction, type ActionCtx } from "./_generated/server";
 import {
   cuerpoConfirmacionMarioKart,
+  cuerpoConfirmacionNetworkingNight,
   textoConfirmacionMarioKart,
+  textoConfirmacionNetworkingNight,
 } from "./correo";
 import { correoContacto } from "./lib/direccionesCorreo";
 import { renderizarCorreoDashboard, textoConFirma } from "./lib/plantillaCorreo";
 import { normalizarCorreo } from "./lib/texto";
+import { estadoPagoValidador, metodoPagoValidador } from "./lib/validadores";
+import type { PagoBoleto } from "../lib/networking-night";
 import {
   enlaceAsistenciaRegistro,
   QR_ASISTENCIA_CONTENT_ID,
@@ -25,6 +29,7 @@ const MAX_ADJUNTO_BYTES = 10 * 1024 * 1024;
 const MAX_TOTAL_ADJUNTOS_BYTES = 18 * 1024 * 1024;
 const MAX_HTML_ENTRANTE_BYTES = 500_000;
 const ASUNTO_MARIO_KART = "Tu registro para Mario Kart Challenge está confirmado";
+const ASUNTO_NETWORKING_NIGHT = "Tu boleto para Networking Night";
 
 const resendManual = new ResendComponent(components.resend, {
   testMode: process.env.RESEND_TEST_MODE !== "false",
@@ -110,68 +115,105 @@ function textoDesdeHtml(html: string): string {
     .trim();
 }
 
+type DatosBoleto = { nombre: string; correo: string; registroId: string; pago?: PagoBoleto };
+
+/** Envía un boleto con el QR de asistencia incrustado. Devuelve false si el correo automático no está activo. */
+async function enviarBoletoConQr(
+  ctx: ActionCtx,
+  args: { nombre: string; correo: string; registroId: Id<"eventRegistrations">; pago?: PagoBoleto },
+  boleto: {
+    asunto: string;
+    archivo: string;
+    texto: (datos: DatosBoleto, sitio: string) => string;
+    html: (datos: DatosBoleto, sitio: string) => string;
+  },
+): Promise<boolean> {
+  const sitio = process.env.SITE_URL?.replace(/\/$/, "");
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!sitio || !apiKey || process.env.RESEND_TEST_MODE !== "false") return false;
+
+  const destinatario = normalizarCorreo(args.correo);
+  const remitente = normalizarCorreo(process.env.ALPHA_AUTO_EMAIL ?? "auto@alphaccm.org");
+  const respuestaA = correoContacto();
+  const datos = { ...args, registroId: String(args.registroId) };
+  const acceso = enlaceAsistenciaRegistro(sitio, datos.registroId);
+  const qr = await QRCode.toBuffer(acceso, {
+    type: "png",
+    width: 640,
+    margin: 4,
+    errorCorrectionLevel: "M",
+    color: { dark: "#020612", light: "#FFFFFFFF" },
+  });
+  const cliente = new Resend(apiKey);
+
+  await resendManual.sendEmailManually(
+    ctx,
+    {
+      from: `Alpha CCM <${remitente}>`,
+      to: destinatario,
+      subject: boleto.asunto,
+      replyTo: [respuestaA],
+    },
+    async (emailId) => {
+      const respuesta = await cliente.emails.send(
+        {
+          from: `Alpha CCM <${remitente}>`,
+          to: destinatario,
+          subject: boleto.asunto,
+          text: boleto.texto(datos, sitio),
+          html: boleto.html(datos, sitio),
+          replyTo: respuestaA,
+          attachments: [
+            {
+              filename: boleto.archivo,
+              content: qr,
+              contentType: "image/png",
+              contentId: QR_ASISTENCIA_CONTENT_ID,
+            },
+          ],
+        },
+        { idempotencyKey: `alpha-${emailId}` },
+      );
+      if (respuesta.error || !respuesta.data) {
+        throw new Error(respuesta.error?.message ?? "Resend no aceptó la confirmación.");
+      }
+      return respuesta.data.id;
+    },
+  );
+  return true;
+}
+
+const argsBoleto = {
+  nombre: v.string(),
+  correo: v.string(),
+  registroId: v.id("eventRegistrations"),
+};
+
 export const enviarConfirmacionMarioKart = internalAction({
+  args: argsBoleto,
+  returns: v.boolean(),
+  handler: async (ctx, args): Promise<boolean> =>
+    enviarBoletoConQr(ctx, args, {
+      asunto: ASUNTO_MARIO_KART,
+      archivo: "acceso-mario-kart.png",
+      texto: textoConfirmacionMarioKart,
+      html: cuerpoConfirmacionMarioKart,
+    }),
+});
+
+export const enviarConfirmacionNetworkingNight = internalAction({
   args: {
-    nombre: v.string(),
-    correo: v.string(),
-    registroId: v.id("eventRegistrations"),
+    ...argsBoleto,
+    pago: v.optional(v.object({ metodo: metodoPagoValidador, estado: estadoPagoValidador, montoMxn: v.number() })),
   },
   returns: v.boolean(),
-  handler: async (ctx, args): Promise<boolean> => {
-    const sitio = process.env.SITE_URL?.replace(/\/$/, "");
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!sitio || !apiKey || process.env.RESEND_TEST_MODE !== "false") return false;
-
-    const destinatario = normalizarCorreo(args.correo);
-    const remitente = normalizarCorreo(process.env.ALPHA_AUTO_EMAIL ?? "auto@alphaccm.org");
-    const respuestaA = correoContacto();
-    const datos = { ...args, registroId: String(args.registroId) };
-    const acceso = enlaceAsistenciaRegistro(sitio, datos.registroId);
-    const qr = await QRCode.toBuffer(acceso, {
-      type: "png",
-      width: 640,
-      margin: 4,
-      errorCorrectionLevel: "M",
-      color: { dark: "#020612", light: "#FFFFFFFF" },
-    });
-    const cliente = new Resend(apiKey);
-
-    await resendManual.sendEmailManually(
-      ctx,
-      {
-        from: `Alpha CCM <${remitente}>`,
-        to: destinatario,
-        subject: ASUNTO_MARIO_KART,
-        replyTo: [respuestaA],
-      },
-      async (emailId) => {
-        const respuesta = await cliente.emails.send(
-          {
-            from: `Alpha CCM <${remitente}>`,
-            to: destinatario,
-            subject: ASUNTO_MARIO_KART,
-            text: textoConfirmacionMarioKart(datos, sitio),
-            html: cuerpoConfirmacionMarioKart(datos, sitio),
-            replyTo: respuestaA,
-            attachments: [
-              {
-                filename: "acceso-mario-kart.png",
-                content: qr,
-                contentType: "image/png",
-                contentId: QR_ASISTENCIA_CONTENT_ID,
-              },
-            ],
-          },
-          { idempotencyKey: `alpha-${emailId}` },
-        );
-        if (respuesta.error || !respuesta.data) {
-          throw new Error(respuesta.error?.message ?? "Resend no aceptó la confirmación.");
-        }
-        return respuesta.data.id;
-      },
-    );
-    return true;
-  },
+  handler: async (ctx, args): Promise<boolean> =>
+    enviarBoletoConQr(ctx, args, {
+      asunto: ASUNTO_NETWORKING_NIGHT,
+      archivo: "boleto-networking-night.png",
+      texto: textoConfirmacionNetworkingNight,
+      html: cuerpoConfirmacionNetworkingNight,
+    }),
 });
 
 export const enviarConAdjuntos = action({

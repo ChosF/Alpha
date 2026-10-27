@@ -66,10 +66,18 @@ export function Boleto({ codigo }: { codigo: string }) {
         <div className={styles.event}><p className={styles.label}>Evento</p><h3>{dato.evento}</h3>
           {dato.fecha && <p>{fechaEventoEnEspanol(dato.fecha)}</p>}{dato.sede && <p>{dato.sede}</p>}
         </div>
+        {dato.pago && <div className={styles.event}><p className={styles.label}>Cuota</p>
+          <h3>{dato.pago.estado === "pagado"
+            ? `Pagado${dato.pago.metodo === "stripe" ? " en línea" : " en efectivo"} · $${dato.pago.montoMxn} MXN`
+            : `Cobrar $${dato.pago.montoMxn} MXN en efectivo`}</h3>
+          {dato.pago.estado === "pendiente" && estado === "valido" && <p>{dato.pago.metodo === "stripe"
+            ? "El pago en línea no se completó. Recibe el efectivo antes de confirmar."
+            : "Recibe el pago antes de confirmar."} Al confirmar se registra como pagado.</p>}
+        </div>}
         {dato.utilizadoEn && <p className={styles.receipt}>Asistencia registrada · {new Intl.DateTimeFormat("es-MX", { timeZone: "America/Mexico_City", dateStyle: "short", timeStyle: "short" }).format(dato.utilizadoEn)}</p>}
       </div>}
       <div className={styles.actions}>
-        {estado === "valido" && <button disabled={ocupado || !conexion.isWebSocketConnected} onClick={() => void admitir()}>{ocupado ? "Confirmando…" : "Confirmar asistencia"}</button>}
+        {estado === "valido" && <button disabled={ocupado || !conexion.isWebSocketConnected} onClick={() => void admitir()}>{ocupado ? "Confirmando…" : dato?.pago?.estado === "pendiente" ? "Cobrado · confirmar asistencia" : "Confirmar asistencia"}</button>}
         {!conexion.isWebSocketConnected && isAuthenticated && <p role="status">Sin conexión. Espera a reconectar para validar el ingreso.</p>}
         {error && <p role="alert" className={styles.error}>{error}</p>}
         {estado === "sin_acceso" && !isAuthenticated && <Link className={styles.login} href={`/dashboard/acceso?next=${encodeURIComponent(`/dashboard/boletos?id=${codigo}`)}`}>Iniciar sesión</Link>}

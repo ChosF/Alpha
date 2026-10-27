@@ -85,6 +85,20 @@ export const pilarValidador = v.union(...PILARES.map((p) => v.literal(p)));
 export const tipoRegistroValidador = v.union(...TIPOS_REGISTRO.map((t) => v.literal(t)));
 export const estadoEventoValidador = v.union(...ESTADOS_EVENTO.map((e) => v.literal(e)));
 export const estadoAsistenteValidador = v.union(...ESTADOS_ASISTENTE.map((e) => v.literal(e)));
+export const metodoPagoValidador = v.union(v.literal("efectivo"), v.literal("stripe"));
+export const estadoPagoValidador = v.union(v.literal("pendiente"), v.literal("pagado"));
+/** Cuota de un registro. Lo pendiente se cobra en efectivo al confirmar el ingreso con el QR. */
+export const pagoRegistroValidador = v.object({
+  metodo: metodoPagoValidador,
+  estado: estadoPagoValidador,
+  montoMxn: v.number(),
+  pagadoEn: v.optional(v.number()),
+});
+export const perfilRegistroValidador = v.object({
+  intereses: v.array(v.string()),
+  habilidades: v.array(v.string()),
+  cvStorageId: v.optional(v.id("_storage")),
+});
 export const estadoHiloCorreoValidador = v.union(
   ...ESTADOS_HILO_CORREO.map((e) => v.literal(e)),
 );

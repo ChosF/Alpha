@@ -8,6 +8,8 @@ import {
   estadoHiloCorreoValidador,
   estadoIngestaCorreoValidador,
   estadoAsistenteValidador,
+  pagoRegistroValidador,
+  perfilRegistroValidador,
   estadoEventoValidador,
   estadoMensajeCorreoValidador,
   estadoProgramaValidador,
@@ -151,6 +153,9 @@ export default defineSchema({
     matricula: v.optional(v.string()),
     canales: v.object({ correo: v.boolean(), whatsapp: v.boolean() }),
     telefono: v.optional(v.string()),
+    /** Perfil para presentar a la persona con ponentes y exatecs afines. */
+    perfil: v.optional(perfilRegistroValidador),
+    pago: v.optional(pagoRegistroValidador),
     estado: estadoAsistenteValidador,
     boletoUtilizadoEn: v.optional(v.number()),
     boletoUtilizadoPor: v.optional(v.id("users")),

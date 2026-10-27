@@ -5,6 +5,8 @@ import { requiereRol } from "./lib/rbac";
 import { limpiarMultilinea, limpiarTexto, normalizarCorreo } from "./lib/texto";
 import {
   estadoAsistenteValidador,
+  pagoRegistroValidador,
+  perfilRegistroValidador,
   estadoEventoValidador,
   estadoProgramaValidador,
   pilarValidador,
@@ -73,6 +75,8 @@ const asistenteValidador = v.object({
   matricula: v.optional(v.string()),
   canales: v.object({ correo: v.boolean(), whatsapp: v.boolean() }),
   telefono: v.optional(v.string()),
+  perfil: v.optional(perfilRegistroValidador),
+  pago: v.optional(pagoRegistroValidador),
   estado: estadoAsistenteValidador,
   boletoUtilizadoEn: v.optional(v.number()),
   boletoUtilizadoPor: v.optional(v.id("users")),

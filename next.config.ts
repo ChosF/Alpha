@@ -20,6 +20,19 @@ const cspLanding = [
   "upgrade-insecure-requests",
 ].join("; ");
 
+/**
+ * Networking Night sube el CV directo al almacenamiento de Convex, así que su
+ * página es la única de la landing que puede conectarse a ese origen.
+ */
+const origenConvex = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_CONVEX_URL ?? "").origin;
+  } catch {
+    return "https://*.convex.cloud";
+  }
+})();
+const cspNetworkingNight = cspLanding.replace("connect-src 'self'", `connect-src 'self' ${origenConvex}`);
+
 const cabecerasComunes = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
@@ -41,7 +54,15 @@ const nextConfig: NextConfig = {
 
   async rewrites() {
     return {
-      beforeFiles: [{ source: "/", destination: "/landing/alpha.html" }],
+      beforeFiles: [
+        { source: "/", destination: "/landing/alpha.html" },
+        {
+          source: "/eventos/n-night",
+          has: [{ type: "header", key: "user-agent", value: "(.*)(Mobi|Android|iPhone|iPod)(.*)" }],
+          destination: "/n-night/movil.html",
+        },
+        { source: "/eventos/n-night", destination: "/n-night/escritorio.html" },
+      ],
       afterFiles: [],
       fallback: [],
     };
@@ -97,6 +118,16 @@ const nextConfig: NextConfig = {
         // estricta del panel con la permisiva de la landing.
         source: "/((?!dashboard|panel|api).*)",
         headers: [...cabecerasComunes, { key: "Content-Security-Policy", value: cspLanding }],
+      },
+      {
+        // Va después de la regla de la landing para que su CSP gane. Fuera de
+        // buscadores hasta que se anuncie el evento.
+        source: "/:ruta(eventos/n-night|n-night/.*)",
+        headers: [
+          { key: "Content-Security-Policy", value: cspNetworkingNight },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+          { key: "Vary", value: "User-Agent" },
+        ],
       },
       {
         source: "/registro/id",
