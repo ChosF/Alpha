@@ -156,6 +156,7 @@ export default defineSchema({
     /** Perfil para presentar a la persona con ponentes y exatecs afines. */
     perfil: v.optional(perfilRegistroValidador),
     pago: v.optional(pagoRegistroValidador),
+    boletoEnviadoEn: v.optional(v.number()),
     estado: estadoAsistenteValidador,
     boletoUtilizadoEn: v.optional(v.number()),
     boletoUtilizadoPor: v.optional(v.id("users")),

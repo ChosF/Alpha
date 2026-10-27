@@ -40,6 +40,7 @@ import {
 } from "../lib/networking-night";
 import {
   enlaceAsistenciaRegistro,
+  imagenQrRegistro,
   QR_ASISTENCIA_CONTENT_ID,
 } from "../lib/registro-asistencia";
 
@@ -735,6 +736,7 @@ export function cuerpoConfirmacionNetworkingNight(
   const calendario = escaparHtml(NETWORKING_NIGHT.calendarioUrl);
   const pagina = escaparHtml(`${sitio}${NETWORKING_NIGHT.ruta}`);
   const acceso = escaparHtml(enlaceAsistenciaRegistro(sitio, args.registroId));
+  const qr = escaparHtml(imagenQrRegistro(sitio, args.registroId));
   const folio = folioRegistro(args.registroId);
   const pago = copiaPagoNetworkingNight(args.pago);
   const fuenteTitulo = "Poppins,Montserrat,'Segoe UI',Arial,sans-serif";
@@ -858,7 +860,7 @@ export function cuerpoConfirmacionNetworkingNight(
                 <tr>
                   <td align="center" class="badge-pad" style="padding:24px 28px 26px;">
                     <a href="${acceso}" target="_blank" style="display:inline-block;text-decoration:none;">
-                      <img src="cid:${QR_ASISTENCIA_CONTENT_ID}" width="196" alt="Código QR de acceso para Networking Night" style="display:block;width:196px;max-width:100%;height:auto;border:1px solid #DCE4EF;border-radius:12px;">
+                      <img src="${qr}" width="196" height="196" alt="Código QR de acceso para Networking Night" style="display:block;width:196px;max-width:100%;height:auto;border:1px solid #DCE4EF;border-radius:12px;">
                     </a>
                     <div style="margin-top:12px;color:#6B7C93;font-family:${fuente};font-size:11px;line-height:1.6;">Tu acceso personal. Preséntalo en la entrada.</div>
                   </td>

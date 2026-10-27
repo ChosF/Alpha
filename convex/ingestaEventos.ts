@@ -21,6 +21,8 @@ import { enviarConfirmacionCallingLaf } from "./correo";
 const SLUG_CALLING_LAF = CALLING_LAF.slug;
 const SLUG_MARIO_KART = MARIO_KART_CHALLENGE.slug;
 const SLUG_NETWORKING_NIGHT = NETWORKING_NIGHT.slug;
+/** Un registro repetido solo reenvía el boleto si el último salió hace al menos esto. */
+const ESPERA_REENVIO_BOLETO_MS = 30 * 60 * 1000;
 const SUBIDAS_CV_POR_IP = { maximo: 6, ventanaMs: 10 * 60 * 1000 };
 const pagoBoletoValidador = v.object({
   metodo: metodoPagoValidador,
@@ -427,6 +429,7 @@ export const guardarNetworkingNight = internalMutation({
     nombre: v.optional(v.string()),
     correo: v.optional(v.string()),
     pago: v.optional(pagoBoletoValidador),
+    enviarBoleto: v.optional(v.boolean()),
   }),
   handler: async (
     ctx,
@@ -439,6 +442,7 @@ export const guardarNetworkingNight = internalMutation({
     nombre?: string;
     correo?: string;
     pago?: PagoBoleto;
+    enviarBoleto?: boolean;
   }> => {
     const descartarCv = async () => {
       if (datos.cvStorageId && (await ctx.db.system.get(datos.cvStorageId))) {
@@ -499,6 +503,10 @@ export const guardarNetworkingNight = internalMutation({
       .unique();
     if (existente !== null) {
       await descartarCv();
+      const ahora = Date.now();
+      const enviarBoleto =
+        existente.boletoEnviadoEn === undefined || ahora - existente.boletoEnviadoEn >= ESPERA_REENVIO_BOLETO_MS;
+      if (enviarBoleto) await ctx.db.patch(existente._id, { boletoEnviadoEn: ahora });
       return {
         ok: true,
         creado: false,
@@ -506,6 +514,7 @@ export const guardarNetworkingNight = internalMutation({
         nombre: existente.nombre,
         correo: existente.correo,
         ...(existente.pago ? { pago: pagoDelBoleto(existente.pago) } : {}),
+        enviarBoleto,
       };
     }
 
@@ -535,6 +544,7 @@ export const guardarNetworkingNight = internalMutation({
       canales: { correo: true, whatsapp: false },
       perfil: { intereses, habilidades, ...(cvStorageId ? { cvStorageId } : {}) },
       pago,
+      boletoEnviadoEn: ahora,
       estado: "registrado",
       origen: `evento:${SLUG_NETWORKING_NIGHT}`,
       ipHash: limpiarTexto(datos.ipHash, 128),
@@ -546,7 +556,7 @@ export const guardarNetworkingNight = internalMutation({
       totalRegistros: evento.totalRegistros + 1,
       actualizadoEn: ahora,
     });
-    return { ok: true, creado: true, registroId, nombre, correo, pago };
+    return { ok: true, creado: true, registroId, nombre, correo, pago, enviarBoleto: true };
   },
 });
 
@@ -574,9 +584,22 @@ export const confirmarPagoEnLineaNetworkingNight = internalMutation({
   },
 });
 
+/** Si el boleto no salió, el siguiente intento con ese correo puede reenviarlo. */
+export const liberarEnvioBoletoNetworkingNight = internalMutation({
+  args: { registroId: v.id("eventRegistrations") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    if (await ctx.db.get(args.registroId)) {
+      await ctx.db.patch(args.registroId, { boletoEnviadoEn: undefined });
+    }
+    return null;
+  },
+});
+
 /**
  * Un correo repetido no devuelve el boleto en pantalla: se reenvía al buzón
  * del titular, para que nadie obtenga el QR de otra persona con su correo.
+ * Los intentos repetidos dentro de la espera no mandan otra copia.
  */
 export const registrarNetworkingNight = action({
   args: { secreto: v.string(), datos: datosNetworkingNight },
@@ -609,22 +632,29 @@ export const registrarNetworkingNight = action({
       return { ok: false, ...(resultado.motivo ? { motivo: resultado.motivo } : {}) };
     }
 
-    let correoEnviado = false;
-    try {
-      correoEnviado = await ctx.runAction(internal.correoActions.enviarConfirmacionNetworkingNight, {
-        nombre: resultado.nombre,
-        correo: resultado.correo,
-        registroId: resultado.registroId,
-        ...(resultado.pago ? { pago: resultado.pago } : {}),
-      });
-      if (!correoEnviado) {
-        console.error("No se encoló el boleto de Networking Night: correo automático no configurado.");
+    let correoEnviado = resultado.enviarBoleto !== true;
+    if (resultado.enviarBoleto) {
+      try {
+        correoEnviado = await ctx.runAction(internal.correoActions.enviarConfirmacionNetworkingNight, {
+          nombre: resultado.nombre,
+          correo: resultado.correo,
+          registroId: resultado.registroId,
+          ...(resultado.pago ? { pago: resultado.pago } : {}),
+        });
+        if (!correoEnviado) {
+          console.error("No se encoló el boleto de Networking Night: correo automático no configurado.");
+        }
+      } catch (error) {
+        console.error(
+          "No se pudo encolar el boleto de Networking Night.",
+          error instanceof Error ? error.message : "Error desconocido",
+        );
       }
-    } catch (error) {
-      console.error(
-        "No se pudo encolar el boleto de Networking Night.",
-        error instanceof Error ? error.message : "Error desconocido",
-      );
+      if (!correoEnviado) {
+        await ctx.runMutation(internal.ingestaEventos.liberarEnvioBoletoNetworkingNight, {
+          registroId: resultado.registroId,
+        });
+      }
     }
 
     return resultado.creado

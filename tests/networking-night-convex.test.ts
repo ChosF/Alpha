@@ -108,6 +108,20 @@ describe("Networking Night", () => {
     expect(cerrado).toEqual({ ok: false, motivo: "cerrado" });
   });
 
+  it("un registro repetido no reenvía el boleto antes de 30 minutos", async () => {
+    const t = preparar();
+    const guardar = () => t.mutation(internal.ingestaEventos.guardarNetworkingNight, { datos });
+    const nuevo = await guardar();
+    expect(nuevo).toMatchObject({ creado: true, enviarBoleto: true });
+    vi.setSystemTime(new Date("2026-10-27T18:29:00Z"));
+    expect(await guardar()).toMatchObject({ creado: false, enviarBoleto: false });
+    vi.setSystemTime(new Date("2026-10-27T18:31:00Z"));
+    expect(await guardar()).toMatchObject({ creado: false, enviarBoleto: true });
+
+    await t.mutation(internal.ingestaEventos.liberarEnvioBoletoNetworkingNight, { registroId: nuevo.registroId! });
+    expect((await t.run((ctx) => ctx.db.get(nuevo.registroId!)))?.boletoEnviadoEn).toBeUndefined();
+  });
+
   it("rechaza datos inválidos, el secreto incorrecto y el registro genérico", async () => {
     const t = preparar();
     for (const cambio of [{ correo: "ana@gmail.com" }, { matricula: "12345" }, { semestre: "12" }]) {
@@ -209,6 +223,8 @@ describe("Networking Night", () => {
     expect(enLinea).not.toContain("Lleva $70 MXN en efectivo");
     expect(enLinea).not.toContain("Si la cuota cambia");
     expect(textoEnLinea).toContain("Cuota: $70 MXN, pagada en línea");
+    expect(efectivo).toContain('src="https://www.alphaccm.org/api/boletos/qr/j97abc123xyz.png"');
+    expect(efectivo).not.toContain("cid:");
     expect(efectivo).toContain("NN-123XYZ");
     expect(efectivo).not.toMatch(/—/);
   });

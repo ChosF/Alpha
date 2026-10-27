@@ -124,6 +124,8 @@ async function enviarBoletoConQr(
   boleto: {
     asunto: string;
     archivo: string;
+    /** El HTML muestra el QR por cid; si no, el PNG va como adjunto descargable. */
+    qrIncrustado: boolean;
     texto: (datos: DatosBoleto, sitio: string) => string;
     html: (datos: DatosBoleto, sitio: string) => string;
   },
@@ -168,7 +170,7 @@ async function enviarBoletoConQr(
               filename: boleto.archivo,
               content: qr,
               contentType: "image/png",
-              contentId: QR_ASISTENCIA_CONTENT_ID,
+              ...(boleto.qrIncrustado ? { contentId: QR_ASISTENCIA_CONTENT_ID } : {}),
             },
           ],
         },
@@ -196,6 +198,7 @@ export const enviarConfirmacionMarioKart = internalAction({
     enviarBoletoConQr(ctx, args, {
       asunto: ASUNTO_MARIO_KART,
       archivo: "acceso-mario-kart.png",
+      qrIncrustado: true,
       texto: textoConfirmacionMarioKart,
       html: cuerpoConfirmacionMarioKart,
     }),
@@ -211,6 +214,7 @@ export const enviarConfirmacionNetworkingNight = internalAction({
     enviarBoletoConQr(ctx, args, {
       asunto: ASUNTO_NETWORKING_NIGHT,
       archivo: "boleto-networking-night.png",
+      qrIncrustado: false,
       texto: textoConfirmacionNetworkingNight,
       html: cuerpoConfirmacionNetworkingNight,
     }),
