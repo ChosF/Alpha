@@ -44,8 +44,26 @@ import { SelectorPersonalizado } from "@/components/panel/selector-personalizado
 import { useCascaron } from "@/components/panel/ui/cascaron";
 import { CorreoEvento } from "./correo-evento";
 import { MAX_EQUIPOS_INICIAL } from "@/lib/torneo-mario-kart";
+import { NETWORKING_NIGHT } from "@/lib/networking-night";
 
 type EventoLista = FunctionReturnType<typeof api.eventos.listar>[number];
+type Registro = Doc<"eventRegistrations">;
+
+/** Eventos con página propia fuera de /eventos/[slug] mientras no tengan ruta pública. */
+const RUTAS_PROPIAS: Record<string, string> = { [NETWORKING_NIGHT.slug]: NETWORKING_NIGHT.ruta };
+
+function rutaPublicaDe(evento: { slug: string; rutaPublica?: string }): string {
+  return evento.rutaPublica ?? RUTAS_PROPIAS[evento.slug] ?? `/eventos/${evento.slug}`;
+}
+
+function cuotaDe(slug: string): number | undefined {
+  return slug === NETWORKING_NIGHT.slug ? NETWORKING_NIGHT.cuotaMxn : undefined;
+}
+
+function textoPago(pago: NonNullable<Registro["pago"]>): string {
+  if (pago.estado === "pendiente") return `Pendiente · $${pago.montoMxn} MXN en efectivo`;
+  return pago.metodo === "stripe" ? `Pagado en línea · $${pago.montoMxn} MXN` : `Pagado en efectivo · $${pago.montoMxn} MXN`;
+}
 
 export function ListaEventos() {
   const router = useRouter();
@@ -82,7 +100,7 @@ export function ListaEventos() {
                 <Avatar texto={iniciales(item.titulo)} />
                 <span className="ui-proj-text">
                   <strong>{item.titulo}</strong>
-                  <span>alphaccm.org/eventos/{item.slug}</span>
+                  <span>alphaccm.org{rutaPublicaDe(item)}</span>
                 </span>
                 <span className="ui-proj-side">
                   {item.asistentes}/{item.totalRegistros}
@@ -181,6 +199,8 @@ function DetalleEvento({
   const [avisoAsistencia, setAvisoAsistencia] = useState<{ tono: "error" | "exito"; texto: string } | null>(null);
   const cambiarRegistro = useMutation(api.eventos.cambiarRegistroAbierto);
   const cambiarEstadoRegistro = useMutation(api.eventos.cambiarEstadoRegistro);
+  const cuota = cuotaDe(evento.slug);
+  const pagos = useQuery(api.eventos.resumenPagos, cuota !== undefined ? { eventId: evento._id } : "skip");
   const registros = useQuery(api.eventos.listarRegistros, {
     eventId: evento._id,
     ...(busqueda ? { busqueda } : {}),
@@ -219,7 +239,7 @@ function DetalleEvento({
     setAvisoAsistencia(null);
   };
 
-  const prepararORegistrarAsistencia = async (registro: Doc<"eventRegistrations">) => {
+  const prepararORegistrarAsistencia = async (registro: Registro) => {
     if (!modoAsistencia || procesandoAsistencia !== null) return;
     setAvisoAsistencia(null);
     if (registro.estado === "asistio") {
@@ -235,9 +255,10 @@ function DetalleEvento({
     setProcesandoAsistencia(registro._id);
     try {
       await cambiarEstadoRegistro({ id: registro._id, estado: "asistio" });
+      const cobro = registro.pago?.estado === "pendiente" ? ` Cobro de $${registro.pago.montoMxn} MXN en efectivo registrado.` : "";
       setAvisoAsistencia({
         tono: "exito",
-        texto: `Asistencia registrada${registro.nombre ? `: ${registro.nombre}` : "."}`,
+        texto: `Asistencia registrada${registro.nombre ? `: ${registro.nombre}.` : "."}${cobro}`,
       });
     } catch (error) {
       setAvisoAsistencia({
@@ -260,7 +281,14 @@ function DetalleEvento({
           </Link>
           <h2 className="ui-title">{evento.titulo}</h2>
           <p className="ui-desc mt-1 max-w-2xl">{evento.resumen || "Sin resumen."}</p>
-          <p className="ui-faint mt-2 text-[12px]">alphaccm.org/eventos/{evento.slug}</p>
+          <a
+            href={rutaPublicaDe(evento)}
+            target="_blank"
+            rel="noreferrer"
+            className="ui-faint mt-2 inline-block text-[12px] hover:underline"
+          >
+            alphaccm.org{rutaPublicaDe(evento)}
+          </a>
         </div>
         <InformacionFechaEvento evento={evento} />
         <div className="evento-detalle-acciones">
@@ -292,7 +320,9 @@ function DetalleEvento({
               </Boton>
             </>
           ) : null}
-          {esAdmin ? <BotonExportar eventId={evento._id} slug={evento.slug} estado={estado} /> : null}
+          {esAdmin ? (
+            <BotonExportar eventId={evento._id} slug={evento.slug} estado={estado} conPerfil={cuota !== undefined} />
+          ) : null}
           {puedeEditar && modoAsistencia ? (
             <Boton variante="acento" icono="mas" onClick={() => setRegistrandoEnPuerta(true)}>
               Registrar
@@ -312,17 +342,31 @@ function DetalleEvento({
       </div>
 
       <div className="ui-grid mb-5">
-        <Tarjeta className="ui-stat lg-4">
+        <Tarjeta className={`ui-stat ${cuota !== undefined ? "lg-3" : "lg-4"}`}>
           <span className="ui-stat-label">Registros</span>
           <span className="ui-stat-value">{evento.totalRegistros}</span>
         </Tarjeta>
-        <Tarjeta className="ui-stat lg-4">
+        <Tarjeta className={`ui-stat ${cuota !== undefined ? "lg-3" : "lg-4"}`}>
           <span className="ui-stat-label">Asistentes</span>
           <span className="ui-stat-value">{evento.asistentes}</span>
         </Tarjeta>
-        <Tarjeta className="ui-stat lg-4">
+        {cuota !== undefined ? (
+          <Tarjeta className="ui-stat lg-3">
+            <span className="ui-stat-label">Cuotas cobradas</span>
+            <span className="ui-stat-value">${pagos?.cobradoMxn ?? 0}</span>
+            <span className="ui-stat-delta">
+              {pagos
+                ? `${pagos.pagados} pagadas${pagos.enLinea ? ` (${pagos.enLinea} en línea)` : ""} · ${pagos.pendientes} por cobrar de $${cuota}`
+                : "Cargando…"}
+            </span>
+          </Tarjeta>
+        ) : null}
+        <Tarjeta className={`ui-stat ${cuota !== undefined ? "lg-3" : "lg-4"}`}>
           <span className="ui-stat-label">Registro</span>
           <span className="ui-stat-value text-[18px]">{evento.registroAbierto ? "Abierto" : "Cerrado"}</span>
+          {!evento.registroAbierto && evento.estado === "publicado" ? (
+            <span className="ui-stat-delta">La página pública no acepta registros.</span>
+          ) : null}
         </Tarjeta>
       </div>
 
@@ -398,6 +442,7 @@ function DetalleEvento({
                     <th>Nombre</th>
                     <th>Correo</th>
                     <th>Carrera</th>
+                    {cuota !== undefined ? <th>Pago</th> : null}
                     <th>Estado</th>
                   </tr>
                 </thead>
@@ -422,12 +467,27 @@ function DetalleEvento({
                         {registro.equipoNombre ? <span className="block text-xs ui-faint">{registro.equipoNombre}</span> : null}
                         {modoAsistencia && confirmandoAsistencia === registro._id ? (
                           <span className="evento-asistencia-confirmacion">
-                            Haz clic de nuevo para confirmar asistencia
+                            {registro.pago?.estado === "pendiente"
+                              ? `Cobra $${registro.pago.montoMxn} MXN y haz clic de nuevo para confirmar`
+                              : "Haz clic de nuevo para confirmar asistencia"}
                           </span>
                         ) : null}
                       </td>
                       <td className="ui-faint">{registro.correo || "—"}</td>
                       <td>{registro.carrera || "—"}</td>
+                      {cuota !== undefined ? (
+                        <td>
+                          {registro.pago ? (
+                            <Pildora tono={registro.pago.estado === "pagado" ? "ok" : "warn"} sm>
+                              {registro.pago.estado === "pagado"
+                                ? registro.pago.metodo === "stripe" ? "En línea" : "Pagado"
+                                : `$${registro.pago.montoMxn} pendiente`}
+                            </Pildora>
+                          ) : (
+                            <span className="ui-faint">—</span>
+                          )}
+                        </td>
+                      ) : null}
                       <td>
                         <Pildora tono={TONO_ESTADO[registro.estado] ?? "neutro"} sm>
                           {ETIQUETAS[registro.estado]}
@@ -476,12 +536,18 @@ function FichaAsistente({
   puedeEditar,
   alCerrar,
 }: {
-  registro: Doc<"eventRegistrations">;
+  registro: Registro;
   puedeEditar: boolean;
   alCerrar: () => void;
 }) {
   const cambiarEstado = useMutation(api.eventos.cambiarEstadoRegistro);
+  const cambiarPago = useMutation(api.eventos.cambiarPagoRegistro);
   const guardarNotas = useMutation(api.eventos.guardarNotasRegistro);
+  const urlCv = useQuery(
+    api.eventos.urlCvRegistro,
+    puedeEditar && registro.perfil?.cvStorageId ? { id: registro._id } : "skip",
+  );
+  const [errorPago, setErrorPago] = useState<string | null>(null);
   const [notas, setNotas] = useState(registro.notas ?? "");
   const [mensaje, setMensaje] = useState<string | null>(null);
   const telefono = registro.telefono?.replace(/\D/g, "") ?? "";
@@ -528,6 +594,39 @@ function FichaAsistente({
           <dt>WhatsApp</dt>
           <dd>{registro.canales.whatsapp ? registro.telefono ?? "Sí" : "No"}</dd>
           {registro.equipoNombre ? <><dt>Equipo</dt><dd>{registro.equipoNombre}</dd></> : null}
+          {registro.perfil ? (
+            <>
+              <dt>Intereses</dt>
+              <dd>{registro.perfil.intereses.join(", ") || "—"}</dd>
+              <dt>Habilidades</dt>
+              <dd>{registro.perfil.habilidades.join(", ") || "—"}</dd>
+              <dt>CV</dt>
+              <dd>
+                {!registro.perfil.cvStorageId ? (
+                  "No subió CV"
+                ) : !puedeEditar ? (
+                  "Subió CV"
+                ) : urlCv ? (
+                  <a href={urlCv} target="_blank" rel="noreferrer" className="underline">
+                    Abrir PDF
+                  </a>
+                ) : urlCv === null ? (
+                  "El archivo ya no está disponible"
+                ) : (
+                  "Cargando…"
+                )}
+              </dd>
+            </>
+          ) : null}
+          {registro.pago ? (
+            <>
+              <dt>Pago</dt>
+              <dd>
+                {textoPago(registro.pago)}
+                {registro.pago.pagadoEn ? <span className="block ui-faint">{fecha(registro.pago.pagadoEn)}</span> : null}
+              </dd>
+            </>
+          ) : null}
         </dl>
         {puedeEditar ? (
           <div className="ui-registration-actions grid gap-4 border-t border-[var(--line)] p-5">
@@ -540,7 +639,24 @@ function FichaAsistente({
               <a className="ui-btn ui-btn-sm" href={`/dashboard/correo?para=${encodeURIComponent(registro.correo)}`}>
                 Correo
               </a>
+              {registro.pago && registro.pago.metodo === "efectivo" ? (
+                <Boton
+                  tamano="sm"
+                  icono={registro.pago.estado === "pendiente" ? "check" : undefined}
+                  onClick={() => {
+                    setErrorPago(null);
+                    void cambiarPago({ id: registro._id, pagado: registro.pago?.estado === "pendiente" }).catch((e: unknown) =>
+                      setErrorPago(e instanceof Error ? e.message : "No se pudo actualizar el pago."),
+                    );
+                  }}
+                >
+                  {registro.pago.estado === "pendiente"
+                    ? `Recibí $${registro.pago.montoMxn} en efectivo`
+                    : "Marcar cuota como pendiente"}
+                </Boton>
+              ) : null}
             </div>
+            {errorPago ? <Aviso tono="error">{errorPago}</Aviso> : null}
             <Campo etiqueta="Estado" htmlFor={`asistente-estado-${registro._id}`}>
               <SelectorPersonalizado
                 id={`asistente-estado-${registro._id}`}
@@ -909,9 +1025,20 @@ function FormularioEvento({
 }
 
 type Formato = "xlsx" | "csv";
-const ENCABEZADOS = ["Nombre", "Correo", "Carrera", "Semestre", "Matricula", "Correo autorizado", "WhatsApp", "Telefono", "Estado", "Notas", "Registrado"] as const;
+const ENCABEZADOS = ["Nombre", "Correo", "Carrera", "Semestre", "Matricula", "Correo autorizado", "WhatsApp", "Telefono", "Estado", "Notas", "Registrado"];
+const ENCABEZADOS_PERFIL = ["Intereses", "Habilidades", "CV", "Pago", "Metodo de pago", "Monto MXN", "Pagado en"];
 
-function BotonExportar({ eventId, slug, estado }: { eventId: Id<"events">; slug: string; estado: EstadoAsistente | "" }) {
+function BotonExportar({
+  eventId,
+  slug,
+  estado,
+  conPerfil,
+}: {
+  eventId: Id<"events">;
+  slug: string;
+  estado: EstadoAsistente | "";
+  conPerfil: boolean;
+}) {
   const [pedido, setPedido] = useState<{ formato: Formato; id: number } | null>(null);
   const filas = useQuery(api.eventos.paraExportar, pedido ? { eventId, ...(estado ? { estado } : {}) } : "skip");
   const anotar = useMutation(api.eventos.registrarExportacion);
@@ -933,11 +1060,23 @@ function BotonExportar({ eventId, slug, estado }: { eventId: Id<"events">; slug:
       ETIQUETAS[r.estado] ?? r.estado,
       r.notas ?? "",
       new Date(r.creadoEn).toISOString(),
+      ...(conPerfil
+        ? [
+            r.perfil?.intereses.join(", ") ?? "",
+            r.perfil?.habilidades.join(", ") ?? "",
+            r.perfil?.cvStorageId ? "Si" : "No",
+            r.pago ? (r.pago.estado === "pagado" ? "Pagado" : "Pendiente") : "",
+            r.pago ? (r.pago.metodo === "stripe" ? "En linea" : "Efectivo") : "",
+            r.pago ? String(r.pago.montoMxn) : "",
+            r.pago?.pagadoEn ? new Date(r.pago.pagadoEn).toISOString() : "",
+          ]
+        : []),
     ]);
+    const encabezados = conPerfil ? [...ENCABEZADOS, ...ENCABEZADOS_PERFIL] : ENCABEZADOS;
     const blob =
       pedido.formato === "xlsx"
-        ? construirXlsx(ENCABEZADOS, datos)
-        : new Blob([construirCsv(ENCABEZADOS, datos)], { type: "text/csv;charset=utf-8" });
+        ? construirXlsx(encabezados, datos)
+        : new Blob([construirCsv(encabezados, datos)], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const enlace = document.createElement("a");
     enlace.href = url;
@@ -945,7 +1084,7 @@ function BotonExportar({ eventId, slug, estado }: { eventId: Id<"events">; slug:
     enlace.click();
     URL.revokeObjectURL(url);
     void anotar({ eventId, cantidad: filas.length });
-  }, [pedido, filas, anotar, eventId, slug]);
+  }, [pedido, filas, anotar, eventId, slug, conPerfil]);
 
   return (
     <Menu

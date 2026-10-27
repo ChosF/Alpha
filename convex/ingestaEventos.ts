@@ -343,55 +343,33 @@ const datosNetworkingNight = v.object({
 });
 
 /**
- * Fecha, horario y sede viven en el código porque también están en la
- * página, el boleto y el correo. El registro se abre solo mientras no haya
- * inscritos, para que cerrarlo desde el panel después no se revierta.
+ * Crea la fila del evento si aún no existe. Después manda el panel: fecha,
+ * sede, resumen y apertura del registro se editan ahí y aquí no se tocan.
  */
 async function asegurarEventoNetworkingNight(ctx: MutationCtx): Promise<Doc<"events">> {
-  const sede = `${NETWORKING_NIGHT.sede}, ${NETWORKING_NIGHT.campus}`;
   const existente = await ctx.db
     .query("events")
     .withIndex("by_slug", (q) => q.eq("slug", SLUG_NETWORKING_NIGHT))
     .unique();
+  if (existente !== null) return existente;
+
   const ahora = Date.now();
-
-  if (existente === null) {
-    const id = await ctx.db.insert("events", {
-      slug: SLUG_NETWORKING_NIGHT,
-      titulo: NETWORKING_NIGHT.titulo,
-      resumen: NETWORKING_NIGHT.resumen,
-      pilar: "industria",
-      fechaEvento: NETWORKING_NIGHT.fechaIso,
-      horaInicio: NETWORKING_NIGHT.horaInicio,
-      horaFin: NETWORKING_NIGHT.horaFin,
-      sede,
-      estado: "publicado",
-      registroAbierto: true,
-      totalRegistros: 0,
-      creadoEn: ahora,
-      actualizadoEn: ahora,
-    });
-    return (await ctx.db.get(id))!;
-  }
-
-  const cambios: Partial<Doc<"events">> = {};
-  if (existente.fechaEvento !== NETWORKING_NIGHT.fechaIso) cambios.fechaEvento = NETWORKING_NIGHT.fechaIso;
-  if (existente.horaInicio !== NETWORKING_NIGHT.horaInicio) cambios.horaInicio = NETWORKING_NIGHT.horaInicio;
-  if (existente.horaFin !== NETWORKING_NIGHT.horaFin) cambios.horaFin = NETWORKING_NIGHT.horaFin;
-  if (existente.sede !== sede) cambios.sede = sede;
-  if (
-    existente.periodoPrograma !== undefined &&
-    existente.periodoPrograma !== NETWORKING_NIGHT.periodoPrograma
-  ) {
-    cambios.periodoPrograma = NETWORKING_NIGHT.periodoPrograma;
-  }
-  if (existente.totalRegistros === 0 && (existente.estado !== "publicado" || !existente.registroAbierto)) {
-    cambios.estado = "publicado";
-    cambios.registroAbierto = true;
-  }
-  if (Object.keys(cambios).length === 0) return existente;
-  await ctx.db.patch(existente._id, { ...cambios, actualizadoEn: ahora });
-  return { ...existente, ...cambios };
+  const id = await ctx.db.insert("events", {
+    slug: SLUG_NETWORKING_NIGHT,
+    titulo: NETWORKING_NIGHT.titulo,
+    resumen: NETWORKING_NIGHT.resumen,
+    pilar: "industria",
+    fechaEvento: NETWORKING_NIGHT.fechaIso,
+    horaInicio: NETWORKING_NIGHT.horaInicio,
+    horaFin: NETWORKING_NIGHT.horaFin,
+    sede: `${NETWORKING_NIGHT.sede}, ${NETWORKING_NIGHT.campus}`,
+    estado: "publicado",
+    registroAbierto: true,
+    totalRegistros: 0,
+    creadoEn: ahora,
+    actualizadoEn: ahora,
+  });
+  return (await ctx.db.get(id))!;
 }
 
 function listaLimpia(valores: string[], maximo: number, largo: number): string[] {

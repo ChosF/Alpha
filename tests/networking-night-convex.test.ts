@@ -48,16 +48,30 @@ afterEach(() => {
 });
 
 describe("Networking Night", () => {
-  it("abre la fila del programa sin promoverla en la landing y guarda perfil y cuota en efectivo", async () => {
+  it("el panel manda sobre una fila existente: no la reabre ni le cambia datos", async () => {
     const t = preparar();
-    await t.run((ctx) =>
+    const eventId = await t.run((ctx) =>
       ctx.db.insert("events", {
-        slug: NETWORKING_NIGHT.slug, titulo: "Networking Night", resumen: "", pilar: "industria",
-        estado: "borrador", registroAbierto: false, totalRegistros: 0, periodoPrograma: "4 de Noviembre",
-        estadoPrograma: "planeacion", creadoEn: Date.now(), actualizadoEn: Date.now(),
+        slug: NETWORKING_NIGHT.slug, titulo: "Networking Night", resumen: "Editado en el panel", pilar: "industria",
+        fechaEvento: "2026-11-06", sede: "Otra sede", estado: "publicado", registroAbierto: false, totalRegistros: 0,
+        periodoPrograma: "4 de Noviembre", estadoPrograma: "planeacion", creadoEn: Date.now(), actualizadoEn: Date.now(),
       }),
     );
 
+    expect(await t.action(api.ingestaEventos.registrarNetworkingNight, { secreto: SECRETO, datos })).toEqual({
+      ok: false, motivo: "cerrado",
+    });
+    await (await staff(t)).mutation(api.eventos.cambiarRegistroAbierto, { eventId, abierto: true });
+    const abierto = await t.action(api.ingestaEventos.registrarNetworkingNight, { secreto: SECRETO, datos });
+    expect(abierto).toMatchObject({ ok: true, creado: true });
+    expect(await eventoNetworkingNight(t)).toMatchObject({
+      resumen: "Editado en el panel", fechaEvento: "2026-11-06", sede: "Otra sede",
+      periodoPrograma: "4 de Noviembre", registroAbierto: true, totalRegistros: 1,
+    });
+  });
+
+  it("crea el evento sin promoverlo en la landing y guarda perfil y cuota en efectivo", async () => {
+    const t = preparar();
     const resultado = await t.action(api.ingestaEventos.registrarNetworkingNight, { secreto: SECRETO, datos });
     expect(resultado).toMatchObject({ ok: true, creado: true, nombre: datos.nombre, correoEnviado: false });
     expect(resultado.pago).toEqual({ metodo: "efectivo", estado: "pendiente", montoMxn: 70 });
@@ -65,7 +79,7 @@ describe("Networking Night", () => {
     const evento = await eventoNetworkingNight(t);
     expect(evento).toMatchObject({
       estado: "publicado", registroAbierto: true, fechaEvento: "2026-11-05", horaInicio: "17:00",
-      horaFin: "21:00", periodoPrograma: "5 de Noviembre", totalRegistros: 1,
+      horaFin: "21:00", totalRegistros: 1,
     });
     expect(evento?.rutaPublica).toBeUndefined();
 
@@ -150,6 +164,36 @@ describe("Networking Night", () => {
       "Asistencia confirmada con boleto QR",
       "Asistencia confirmada con boleto QR; cobro en efectivo de $70 MXN",
     ]);
+  });
+
+  it("el panel cobra al marcar asistencia, corrige pagos a mano y cobra en puerta", async () => {
+    const t = preparar();
+    const uno = await t.action(api.ingestaEventos.registrarNetworkingNight, { secreto: SECRETO, datos });
+    const dos = await t.action(api.ingestaEventos.registrarNetworkingNight, {
+      secreto: SECRETO, datos: { ...datos, correo: "a07654321@tec.mx", matricula: "A07654321", ipHash: "ip-2" },
+    });
+    const evento = (await eventoNetworkingNight(t))!;
+    const sesion = await staff(t);
+
+    await sesion.mutation(api.eventos.cambiarEstadoRegistro, { id: uno.registroId!, estado: "asistio" });
+    expect((await t.run((ctx) => ctx.db.get(uno.registroId!)))?.pago).toMatchObject({ metodo: "efectivo", estado: "pagado" });
+
+    await sesion.mutation(api.eventos.cambiarPagoRegistro, { id: dos.registroId!, pagado: true });
+    await sesion.mutation(api.eventos.cambiarPagoRegistro, { id: dos.registroId!, pagado: false });
+    expect((await t.run((ctx) => ctx.db.get(dos.registroId!)))?.pago).toEqual({ metodo: "efectivo", estado: "pendiente", montoMxn: 70 });
+
+    const puerta = await sesion.mutation(api.eventos.registrarAsistenteEnPuerta, {
+      eventId: evento._id, nombre: "Sin registro", matricula: "", correo: "a09999999@tec.mx", semestre: "", carrera: "",
+    });
+    expect((await t.run((ctx) => ctx.db.get(puerta.id)))?.pago).toMatchObject({ metodo: "efectivo", estado: "pagado", montoMxn: 70 });
+
+    expect(await sesion.query(api.eventos.resumenPagos, { eventId: evento._id })).toEqual({
+      pagados: 2, pendientes: 1, enLinea: 0, cobradoMxn: 140,
+    });
+    expect(await sesion.query(api.eventos.urlCvRegistro, { id: uno.registroId! })).toBeNull();
+
+    await t.mutation(internal.ingestaEventos.confirmarPagoEnLineaNetworkingNight, { registroId: dos.registroId!, montoMxn: 70 });
+    await expect(sesion.mutation(api.eventos.cambiarPagoRegistro, { id: dos.registroId!, pagado: false })).rejects.toThrow(/Stripe/);
   });
 
   it("el correo cambia según la cuota", () => {

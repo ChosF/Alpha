@@ -1,4 +1,5 @@
 import { ConvexError, v, type GenericId } from "convex/values";
+import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { registrarEnBitacora } from "./lib/auditoria";
 import { requiereRol } from "./lib/rbac";
@@ -14,6 +15,19 @@ import {
 import { conAsistentes } from "./lib/conteosEvento";
 import { esFechaEventoValida, esHoraEventoValida } from "../lib/correo-evento";
 import { MAX_EQUIPOS_INICIAL } from "../lib/torneo-mario-kart";
+import { NETWORKING_NIGHT } from "../lib/networking-night";
+
+/** Cuota que se cobra en la entrada a quien llega sin haber pagado. */
+function cuotaDelEvento(slug: string): number | undefined {
+  return slug === NETWORKING_NIGHT.slug ? NETWORKING_NIGHT.cuotaMxn : undefined;
+}
+
+/** Llegar con la cuota pendiente implica pagarla en efectivo en la entrada. */
+function cobroAlLlegar(registro: Doc<"eventRegistrations">, ahora: number) {
+  return registro.pago?.estado === "pendiente"
+    ? { metodo: "efectivo" as const, estado: "pagado" as const, montoMxn: registro.pago.montoMxn, pagadoEn: ahora }
+    : undefined;
+}
 
 const eventoValidador = v.object({
   _id: v.id("events"),
@@ -527,15 +541,90 @@ export const cambiarEstadoRegistro = mutation({
     const registro = await ctx.db.get(args.id);
     if (registro === null) throw new Error("Ese registro ya no existe.");
     if (registro.estado === args.estado) return null;
-    await ctx.db.patch(args.id, { estado: args.estado, actualizadoEn: Date.now() });
+    const ahora = Date.now();
+    const cobro = args.estado === "asistio" ? cobroAlLlegar(registro, ahora) : undefined;
+    await ctx.db.patch(args.id, { estado: args.estado, actualizadoEn: ahora, ...(cobro ? { pago: cobro } : {}) });
     await registrarEnBitacora(ctx, {
       actor,
       accion: "evento.registro.estado",
       entidad: "eventRegistrations",
       entidadId: args.id,
-      detalle: `${registro.estado} -> ${args.estado}`,
+      detalle: `${registro.estado} -> ${args.estado}${cobro ? `; cobro en efectivo de $${cobro.montoMxn} MXN` : ""}`,
     });
     return null;
+  },
+});
+
+/** Corrige a mano una cuota en efectivo. Un pago en línea no se revierte aquí. */
+export const cambiarPagoRegistro = mutation({
+  args: { id: v.id("eventRegistrations"), pagado: v.boolean() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const actor = await requiereRol(ctx, "editor");
+    const registro = await ctx.db.get(args.id);
+    if (registro === null) throw new Error("Ese registro ya no existe.");
+    if (!registro.pago) throw new Error("Este registro no tiene cuota.");
+    if (registro.pago.estado === (args.pagado ? "pagado" : "pendiente")) return null;
+    if (!args.pagado && registro.pago.metodo === "stripe") {
+      throw new Error("Un pago en línea se revierte desde Stripe, no desde el panel.");
+    }
+    const ahora = Date.now();
+    const { montoMxn } = registro.pago;
+    await ctx.db.patch(args.id, {
+      pago: args.pagado
+        ? { metodo: "efectivo", estado: "pagado", montoMxn, pagadoEn: ahora }
+        : { metodo: "efectivo", estado: "pendiente", montoMxn },
+      actualizadoEn: ahora,
+    });
+    await registrarEnBitacora(ctx, {
+      actor,
+      accion: args.pagado ? "evento.registro.pago_recibido" : "evento.registro.pago_pendiente",
+      entidad: "eventRegistrations",
+      entidadId: args.id,
+      detalle: `$${montoMxn} MXN en efectivo`,
+    });
+    return null;
+  },
+});
+
+export const resumenPagos = query({
+  args: { eventId: v.id("events") },
+  returns: v.object({
+    pagados: v.number(),
+    pendientes: v.number(),
+    enLinea: v.number(),
+    cobradoMxn: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    await requiereRol(ctx, "lector");
+    const resumen = { pagados: 0, pendientes: 0, enLinea: 0, cobradoMxn: 0 };
+    const filas = await ctx.db
+      .query("eventRegistrations")
+      .withIndex("by_event_and_creado", (q) => q.eq("eventId", args.eventId))
+      .take(5000);
+    for (const fila of filas) {
+      if (!fila.pago || fila.estado === "cancelado") continue;
+      if (fila.pago.estado === "pendiente") {
+        resumen.pendientes += 1;
+        continue;
+      }
+      resumen.pagados += 1;
+      resumen.cobradoMxn += fila.pago.montoMxn;
+      if (fila.pago.metodo === "stripe") resumen.enLinea += 1;
+    }
+    return resumen;
+  },
+});
+
+/** Los CV son datos personales: solo quien edita el evento puede abrirlos. */
+export const urlCvRegistro = query({
+  args: { id: v.id("eventRegistrations") },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    await requiereRol(ctx, "editor");
+    const registro = await ctx.db.get(args.id);
+    const cv = registro?.perfil?.cvStorageId;
+    return cv ? await ctx.storage.getUrl(cv) : null;
   },
 });
 
@@ -573,19 +662,21 @@ export const registrarAsistenteEnPuerta = mutation({
         .unique();
       if (existente !== null) {
         if (existente.estado !== "asistio") {
-          await ctx.db.patch(existente._id, { estado: "asistio", actualizadoEn: ahora });
+          const cobro = cobroAlLlegar(existente, ahora);
+          await ctx.db.patch(existente._id, { estado: "asistio", actualizadoEn: ahora, ...(cobro ? { pago: cobro } : {}) });
           await registrarEnBitacora(ctx, {
             actor,
             accion: "evento.registro.asistencia_puerta",
             entidad: "eventRegistrations",
             entidadId: existente._id,
-            detalle: "Registro existente",
+            detalle: cobro ? `Registro existente; cobro en efectivo de $${cobro.montoMxn} MXN` : "Registro existente",
           });
         }
         return { id: existente._id, creado: false };
       }
     }
 
+    const cuota = cuotaDelEvento(evento.slug);
     const id = await ctx.db.insert("eventRegistrations", {
       eventId: args.eventId,
       nombre,
@@ -594,6 +685,9 @@ export const registrarAsistenteEnPuerta = mutation({
       semestre,
       ...(matricula ? { matricula } : {}),
       canales: { correo: false, whatsapp: false },
+      ...(cuota !== undefined
+        ? { pago: { metodo: "efectivo" as const, estado: "pagado" as const, montoMxn: cuota, pagadoEn: ahora } }
+        : {}),
       estado: "asistio",
       origen: "panel:asistencia",
       ipHash: "no-aplica",
