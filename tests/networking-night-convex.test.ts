@@ -79,7 +79,7 @@ describe("Networking Night", () => {
     const evento = await eventoNetworkingNight(t);
     expect(evento).toMatchObject({
       estado: "publicado", registroAbierto: true, fechaEvento: "2026-11-05", horaInicio: "17:00",
-      horaFin: "21:00", totalRegistros: 1,
+      horaFin: "19:30", totalRegistros: 1,
     });
     expect(evento?.rutaPublica).toBeUndefined();
 

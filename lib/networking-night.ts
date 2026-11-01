@@ -15,15 +15,15 @@ export const NETWORKING_NIGHT = {
   fechaCorta: "Jue 5 nov",
   periodoPrograma: "5 de Noviembre",
   horaInicio: "17:00",
-  horaFin: "21:00",
-  horaTexto: "5:00 a 9:00 p.m.",
+  horaFin: "19:30",
+  horaTexto: "5:00 a 7:30 p.m.",
   horaRegistroTexto: "4:40 p.m.",
   sede: "Claustro CEDETEC",
   campus: "Tec CCM",
   campusTexto: "Tecnológico de Monterrey, Campus Ciudad de México",
   cuotaMxn: 70,
   calendarioUrl:
-    "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Networking%20Night%20%C2%B7%20Alpha&dates=20261105T230000Z%2F20261106T030000Z&details=Networking%20Night%20de%20Alpha.%20Registro%20desde%20las%204%3A40%20p.m.%20Business%20casual.%20Lleva%20tu%20boleto%20con%20c%C3%B3digo%20QR%20y%20%2470%20MXN%20en%20efectivo.&location=Claustro%20CEDETEC%2C%20Tecnol%C3%B3gico%20de%20Monterrey%20Campus%20Ciudad%20de%20M%C3%A9xico&ctz=America%2FMexico_City",
+    "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Networking%20Night%20%C2%B7%20Alpha&dates=20261105T230000Z%2F20261106T013000Z&details=Networking%20Night%20de%20Alpha.%20Registro%20desde%20las%204%3A40%20p.m.%20Business%20casual.%20Lleva%20tu%20boleto%20con%20c%C3%B3digo%20QR%20y%20%2470%20MXN%20en%20efectivo.&location=Claustro%20CEDETEC%2C%20Tecnol%C3%B3gico%20de%20Monterrey%20Campus%20Ciudad%20de%20M%C3%A9xico&ctz=America%2FMexico_City",
 } as const;
 
 export const AVISO_REGISTRO_NETWORKING_NIGHT =

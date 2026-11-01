@@ -3,7 +3,7 @@
   "use strict";
 
   var CALENDARIO =
-    "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Networking%20Night%20%C2%B7%20Alpha&dates=20261105T230000Z%2F20261106T030000Z&details=Networking%20Night%20de%20Alpha.%20Registro%20desde%20las%204%3A40%20p.m.%20Business%20casual.%20Lleva%20tu%20boleto%20con%20c%C3%B3digo%20QR%20y%20%2470%20MXN%20en%20efectivo.&location=Claustro%20CEDETEC%2C%20Tecnol%C3%B3gico%20de%20Monterrey%20Campus%20Ciudad%20de%20M%C3%A9xico&ctz=America%2FMexico_City";
+    "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Networking%20Night%20%C2%B7%20Alpha&dates=20261105T230000Z%2F20261106T013000Z&details=Networking%20Night%20de%20Alpha.%20Registro%20desde%20las%204%3A40%20p.m.%20Business%20casual.%20Lleva%20tu%20boleto%20con%20c%C3%B3digo%20QR%20y%20%2470%20MXN%20en%20efectivo.&location=Claustro%20CEDETEC%2C%20Tecnol%C3%B3gico%20de%20Monterrey%20Campus%20Ciudad%20de%20M%C3%A9xico&ctz=America%2FMexico_City";
   var CLAVE = "alpha-nn-boleto";
   var token = null;
 
@@ -114,7 +114,7 @@
       var dy = qy + q + 96;
       x.strokeStyle = "#c9d4e3"; x.lineWidth = 3; x.setLineDash([14, 12]);
       x.beginPath(); x.moveTo(pad, dy); x.lineTo(W - pad, dy); x.stroke(); x.setLineDash([]);
-      var celdas = [["FECHA", "Jue 5 nov 2026"], ["HORA", "5:00 a 9:00 p.m."], ["LUGAR", "Claustro CEDETEC"], ["CUOTA", p.valor]];
+      var celdas = [["FECHA", "Jue 5 nov 2026"], ["HORA", "5:00 a 7:30 p.m."], ["LUGAR", "Claustro CEDETEC"], ["CUOTA", p.valor]];
       celdas.forEach(function (cel, i) {
         var cx = pad + 10 + (i % 2) * ((W - 2 * pad) / 2), cy = dy + 70 + Math.floor(i / 2) * 120;
         x.fillStyle = "#6b7c93"; x.font = "700 22px " + fb; x.fillText(cel[0], cx, cy);
