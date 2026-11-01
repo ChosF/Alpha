@@ -92,6 +92,7 @@ const asistenteValidador = v.object({
   perfil: v.optional(perfilRegistroValidador),
   pago: v.optional(pagoRegistroValidador),
   estado: estadoAsistenteValidador,
+  boletoEnviadoEn: v.optional(v.number()),
   boletoUtilizadoEn: v.optional(v.number()),
   boletoUtilizadoPor: v.optional(v.id("users")),
   notas: v.optional(v.string()),
