@@ -198,7 +198,7 @@ export const esquemaRegistroNetworkingNight = z.object({
     .string()
     .max(120, "El correo es demasiado largo.")
     .transform(normalizarCorreo)
-    .refine((c) => /^[^@\s]+@tec\.mx$/.test(c), "Usa tu correo institucional @tec.mx."),
+    .refine((c) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c), "Escribe un correo electrónico válido."),
   matricula: z
     .string()
     .transform((valor) => limpiarTexto(valor, 12).toUpperCase())

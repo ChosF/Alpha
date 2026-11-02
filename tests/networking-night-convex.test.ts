@@ -124,7 +124,8 @@ describe("Networking Night", () => {
 
   it("rechaza datos inválidos, el secreto incorrecto y el registro genérico", async () => {
     const t = preparar();
-    for (const cambio of [{ correo: "ana@gmail.com" }, { matricula: "12345" }, { semestre: "12" }]) {
+    expect(await t.action(api.ingestaEventos.registrarNetworkingNight, { secreto: SECRETO, datos: { ...datos, correo: "ana@gmail.com" } })).toMatchObject({ ok: true, creado: true });
+    for (const cambio of [{ correo: "correo-invalido" }, { correo: "ana@sin-dominio" }, { matricula: "12345" }, { semestre: "12" }]) {
       expect(
         await t.action(api.ingestaEventos.registrarNetworkingNight, { secreto: SECRETO, datos: { ...datos, ...cambio } }),
       ).toEqual({ ok: false, motivo: "datos" });

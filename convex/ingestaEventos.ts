@@ -467,7 +467,7 @@ export const guardarNetworkingNight = internalMutation({
     const habilidades = listaLimpia(datos.habilidades, MAX_HABILIDADES_NETWORKING_NIGHT, 32);
     if (
       nombre.length < 3 ||
-      !/^[^@\s]+@tec\.mx$/.test(correo) ||
+      correo.length > 120 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo) ||
       !/^[AL]\d{8}$/.test(matricula) ||
       carrera.length < 2 ||
       !(SEMESTRES_NETWORKING_NIGHT as readonly string[]).includes(semestre)

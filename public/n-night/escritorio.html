@@ -809,10 +809,10 @@ dialog.rgd[open]{display:grid;grid-template-columns:minmax(360px,42%) 1fr;animat
           <input class="rgd-in" id="d-nombre" name="nombre" autocomplete="name" required minlength="3" placeholder="Nombre y apellido" data-req="Falta tu nombre." data-msg="Escribe tu nombre completo.">
         </fieldset>
         <fieldset class="rgd-step" data-rstep aria-labelledby="dq2">
-          <h3 class="rgd-q" id="dq2">Tu correo Tec</h3>
-          <p class="rgd-h">El que termina en @tec.mx. Ahí te llega tu boleto.</p>
-          <label class="sr-only" for="d-correo">Correo Tec</label>
-          <input class="rgd-in" id="d-correo" name="correo" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="a01234567@tec.mx" required pattern="^[^@\s]+@tec\.mx$" data-req="Falta tu correo Tec." data-msg="Usa tu correo que termina en @tec.mx.">
+          <h3 class="rgd-q" id="dq2">Tu correo</h3>
+          <p class="rgd-h">Ahí te llega tu boleto.</p>
+          <label class="sr-only" for="d-correo">Correo electrónico</label>
+          <input class="rgd-in" id="d-correo" name="correo" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="nombre@correo.com" maxlength="120" required pattern="^[^@\s]+@[^@\s]+\.[^@\s]+$" data-req="Falta tu correo." data-msg="Escribe un correo electrónico válido.">
         </fieldset>
         <fieldset class="rgd-step" data-rstep aria-labelledby="dq3">
           <h3 class="rgd-q" id="dq3">Tu matrícula</h3>
@@ -897,7 +897,7 @@ dialog.rgd[open]{display:grid;grid-template-columns:minmax(360px,42%) 1fr;animat
           <h3 class="rgd-q" id="dq10">Revisa y confirma</h3>
           <dl class="rgd-rev" data-rev></dl>
           <label class="rgd-consent"><input type="checkbox" name="consentimiento" required data-req="Acepta el aviso de privacidad para continuar."><span>Acepto el <a href="/terminos#datos" target="_blank" rel="noopener">aviso de privacidad</a>. Mis datos se usan solo para organizar Networking Night.</span></label>
-          <p class="rgd-note">Te enviaremos tu boleto con QR a tu correo Tec.</p>
+          <p class="rgd-note">Te enviaremos tu boleto con QR a tu correo.</p>
         </fieldset>
       </div>
       <div class="rgd-hp" aria-hidden="true"><label for="d-sitio">Sitio web</label><input id="d-sitio" name="sitio_web" tabindex="-1" autocomplete="off"></div>
@@ -910,7 +910,7 @@ dialog.rgd[open]{display:grid;grid-template-columns:minmax(360px,42%) 1fr;animat
         <div class="rgd-pass-copy">
           <p class="rgd-kick">Registro confirmado</p>
           <h3 data-ps-h tabindex="-1">Listo</h3>
-          <p data-ps-p>Este es tu boleto. También te lo enviamos a tu correo Tec.</p>
+          <p data-ps-p>Este es tu boleto. También te lo enviamos a tu correo.</p>
           <div class="rgd-act">
             <button class="btn btn-primary" type="button" data-pass-dl>Descargar boleto</button>
             <a class="btn btn-out" data-pass-cal target="_blank" rel="noopener">Agregar a Google Calendar</a>
@@ -1092,7 +1092,7 @@ dialog.rgd[open]{display:grid;grid-template-columns:minmax(360px,42%) 1fr;animat
     if (!b) {
       $(".rgd-kick", passScr).textContent = "Ya estabas registrado";
       $("[data-ps-h]", dlg).textContent = "Ya tienes lugar";
-      $("[data-ps-p]", dlg).textContent = "Ese correo ya estaba registrado. Te reenviamos tu boleto a tu correo Tec.";
+      $("[data-ps-p]", dlg).textContent = "Ese correo ya estaba registrado. Te reenviamos tu boleto a tu correo.";
       return;
     }
     var p = NN.pago(b.pago);
@@ -1106,7 +1106,7 @@ dialog.rgd[open]{display:grid;grid-template-columns:minmax(360px,42%) 1fr;animat
     $("[data-ps-h]", dlg).textContent = "Listo, " + first(b.nombre);
     $("[data-ps-p]", dlg).textContent = correo === false
       ? "Este es tu boleto. Descárgalo: con este QR entras."
-      : "Este es tu boleto. También te lo enviamos a tu correo Tec.";
+      : "Este es tu boleto. También te lo enviamos a tu correo.";
     $("[data-mb-name]", dlg).textContent = b.nombre; $("[data-mb-name]", dlg).classList.remove("empty");
     if (b.sub) $("[data-mb-sub]", dlg).textContent = b.sub;
   }

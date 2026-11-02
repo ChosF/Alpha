@@ -735,10 +735,10 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
           <input class="rin" id="r-nombre" name="nombre" autocomplete="name" required minlength="3" placeholder="Nombre y apellido" enterkeyhint="next" data-req="Falta tu nombre." data-msg="Escribe tu nombre completo.">
         </fieldset>
         <fieldset class="rg-step" data-rstep aria-labelledby="q2">
-          <h3 class="rg-q" id="q2">Tu correo Tec</h3>
-          <p class="rg-h">El que termina en @tec.mx.</p>
-          <label class="sr-only" for="r-correo">Correo Tec</label>
-          <input class="rin" id="r-correo" name="correo" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="a01234567@tec.mx" required pattern="^[^@\s]+@tec\.mx$" enterkeyhint="next" data-req="Falta tu correo Tec." data-msg="Usa tu correo que termina en @tec.mx.">
+          <h3 class="rg-q" id="q2">Tu correo</h3>
+          <p class="rg-h">Ahí te llega tu boleto.</p>
+          <label class="sr-only" for="r-correo">Correo electrónico</label>
+          <input class="rin" id="r-correo" name="correo" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="nombre@correo.com" maxlength="120" required pattern="^[^@\s]+@[^@\s]+\.[^@\s]+$" enterkeyhint="next" data-req="Falta tu correo." data-msg="Escribe un correo electrónico válido.">
         </fieldset>
         <fieldset class="rg-step" data-rstep aria-labelledby="q3">
           <h3 class="rg-q" id="q3">Tu matrícula</h3>
@@ -823,7 +823,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
           <h3 class="rg-q" id="q10">Revisa y confirma</h3>
           <dl class="rev" data-rev></dl>
           <label class="consent"><input type="checkbox" name="consentimiento" required data-req="Acepta el aviso de privacidad para continuar."><span>Acepto el <a href="/terminos#datos" target="_blank" rel="noopener">aviso de privacidad</a>. Mis datos se usan solo para organizar Networking Night.</span></label>
-          <p class="rg-note">Te enviaremos tu boleto con QR a tu correo Tec.</p>
+          <p class="rg-note">Te enviaremos tu boleto con QR a tu correo.</p>
         </fieldset>
       </div>
       <div class="hp" aria-hidden="true"><label for="r-sitio">Sitio web</label><input id="r-sitio" name="sitio_web" tabindex="-1" autocomplete="off"></div>
@@ -833,7 +833,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
 
     <div class="pass-scr" data-pass-scr hidden>
       <h3 class="ps-h" data-ps-h tabindex="-1">Listo</h3>
-      <p class="ps-p" data-ps-p>Este es tu boleto. También te lo enviamos a tu correo Tec.</p>
+      <p class="ps-p" data-ps-p>Este es tu boleto. También te lo enviamos a tu correo.</p>
       <div class="slot" aria-hidden="true"></div>
       <div class="ps-wrap">
         <div class="pass" data-pass role="group" aria-label="Tu boleto para Networking Night">
@@ -1390,7 +1390,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
     passScr.classList.toggle("is-dup", !b);
     if (!b) {
       $("[data-ps-h]").textContent = "Ya tienes lugar";
-      $("[data-ps-p]").textContent = "Ese correo ya estaba registrado. Te reenviamos tu boleto a tu correo Tec.";
+      $("[data-ps-p]").textContent = "Ese correo ya estaba registrado. Te reenviamos tu boleto a tu correo.";
       return;
     }
     var p = NN.pago(b.pago);
@@ -1403,7 +1403,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
     $("[data-ps-h]").textContent = "Listo, " + first(b.nombre);
     $("[data-ps-p]").textContent = correo === false
       ? "Este es tu boleto. Descárgalo: con este QR entras."
-      : "Este es tu boleto. También te lo enviamos a tu correo Tec.";
+      : "Este es tu boleto. También te lo enviamos a tu correo.";
   }
   function revealPass() {
     var pass = $("[data-pass]"); pass.classList.remove("tilt"); pass.style.animation = "none"; void pass.offsetWidth; pass.style.animation = "";

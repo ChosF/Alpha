@@ -4,6 +4,7 @@ import {
   aPayloadEventoConvex,
   esquemaRegistro,
   esquemaRegistroEvento,
+  esquemaRegistroNetworkingNight,
 } from "@/lib/validacion";
 
 /**
@@ -238,5 +239,31 @@ describe("registro de eventos", () => {
         telefono: "55 1234 5678",
       }).success,
     ).toBe(true);
+  });
+
+  it("acepta correos externos e institucionales válidos en Networking Night y rechaza inválidos", () => {
+    const baseNN = {
+      nombre: "Ana Pérez Ruiz",
+      correo: "a01234567@tec.mx",
+      matricula: "A01234567",
+      carrera: "LAF",
+      semestre: "5",
+      metodoPago: "efectivo" as const,
+      consentimiento: true as const,
+      token: "1700000000.abc.firma",
+    };
+    expect(esquemaRegistroNetworkingNight.safeParse(baseNN).success).toBe(true);
+    expect(
+      esquemaRegistroNetworkingNight.safeParse({ ...baseNN, correo: "ana@gmail.com" }).success,
+    ).toBe(true);
+    expect(
+      esquemaRegistroNetworkingNight.safeParse({ ...baseNN, correo: "ex@exatec.tec.mx" }).success,
+    ).toBe(true);
+    expect(
+      esquemaRegistroNetworkingNight.safeParse({ ...baseNN, correo: "correo-invalido" }).success,
+    ).toBe(false);
+    expect(
+      esquemaRegistroNetworkingNight.safeParse({ ...baseNN, correo: "ana@sin-dominio" }).success,
+    ).toBe(false);
   });
 });
