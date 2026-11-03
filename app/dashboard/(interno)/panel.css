@@ -99,6 +99,10 @@
   --shadow-pop: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 16px 40px -12px rgba(0, 0, 0, 0.7);
   --overlay: rgba(0, 0, 0, 0.6);
   --selection: rgba(0, 102, 255, 0.35);
+  --glass-shine-top: rgba(255, 255, 255, 0.14);
+  --glass-shine-bot: rgba(255, 255, 255, 0.04);
+  --glass-border: color-mix(in srgb, var(--line) 75%, rgba(255, 255, 255, 0.12));
+  --glass-pill-shine: rgba(255, 255, 255, 0.08);
 }
 
 [data-panel][data-theme="light"] {
@@ -123,6 +127,10 @@
   --shadow-pop: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 16px 40px -16px rgba(13, 33, 64, 0.25);
   --overlay: rgba(10, 10, 10, 0.4);
   --selection: rgba(0, 102, 255, 0.18);
+  --glass-shine-top: rgba(255, 255, 255, 0.65);
+  --glass-shine-bot: rgba(255, 255, 255, 0.25);
+  --glass-border: color-mix(in srgb, var(--line) 45%, rgba(255, 255, 255, 0.5));
+  --glass-pill-shine: rgba(255, 255, 255, 0.4);
 }
 
 [data-panel][data-accent="classic"] {
@@ -471,11 +479,14 @@
   min-width: 0;
   padding: 4px;
   --r: 14px;
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--bg-2) 88%, transparent);
-  box-shadow: var(--shadow-pop);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
-  backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--bg-2) 48%, transparent);
+  box-shadow:
+    inset 1px 1px 1px 0 var(--glass-shine-top),
+    inset -1px -1px 1px 0 var(--glass-shine-bot),
+    var(--shadow-pop);
+  -webkit-backdrop-filter: blur(4px) saturate(1.2);
+  backdrop-filter: blur(4px) saturate(1.2);
   pointer-events: auto;
 }
 .ui-tabbar-list {
@@ -502,8 +513,9 @@
   height: calc(100% - 8px);
   width: 0;
   --r: 10px;
-  background: var(--bg-3);
-  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg-3) 65%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+  box-shadow: inset 0 1px 0 var(--glass-pill-shine);
   opacity: 0;
   will-change: transform, width;
   transition:
@@ -521,7 +533,7 @@
   min-height: 52px;
   padding: 0 2px;
   --r: 10px;
-  color: var(--fg-3);
+  color: var(--fg-2);
   font-size: 10px;
   font-weight: 500;
   letter-spacing: -0.01em;
