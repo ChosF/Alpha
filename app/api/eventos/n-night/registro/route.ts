@@ -16,8 +16,9 @@ const MAXIMO_BYTES = 8 * 1024;
 
 /**
  * Registro de Networking Night. Un registro nuevo devuelve el boleto con su
- * QR para mostrarlo y descargarlo en la página. Un correo ya registrado solo
- * recibe el boleto en su buzón: así nadie obtiene el QR de otra persona.
+ * QR para mostrarlo y descargarlo en la página, o el estado de revisión si es
+ * Exatec, Aliado Alpha o un ponente por confirmar. Un correo ya registrado solo
+ * recibe la copia o estado en su buzón: así nadie obtiene el QR de otra persona.
  */
 export async function POST(peticion: Request): Promise<NextResponse> {
   const generico = { error: "No pudimos guardar tu registro. Intenta de nuevo." };
@@ -69,22 +70,67 @@ export async function POST(peticion: Request): Promise<NextResponse> {
     const sitio = sitioPublico(peticion);
     if (!url) return NextResponse.json(generico, { status: 503 });
 
+    const payloadConvex =
+      datos.tipo === "estudiante"
+        ? {
+            tipo: "estudiante" as const,
+            nombre: datos.nombre,
+            correo: datos.correo,
+            matricula: datos.matricula,
+            carrera: datos.carrera,
+            semestre: datos.semestre,
+            intereses: datos.intereses,
+            habilidades: datos.habilidades.filter(Boolean),
+            ...(datos.cvStorageId ? { cvStorageId: datos.cvStorageId as Id<"_storage"> } : {}),
+            metodoPago: datos.metodoPago,
+            ipHash,
+            userAgent: peticion.headers.get("user-agent") ?? "",
+          }
+        : datos.tipo === "aliado"
+          ? {
+              tipo: "aliado" as const,
+              nombre: datos.nombre,
+              correo: datos.correo,
+              matricula: datos.matricula,
+              carrera: datos.carrera,
+              semestre: datos.semestre,
+              intereses: datos.intereses,
+              habilidades: datos.habilidades.filter(Boolean),
+              ...(datos.cvStorageId ? { cvStorageId: datos.cvStorageId as Id<"_storage"> } : {}),
+              area: datos.area,
+              ipHash,
+              userAgent: peticion.headers.get("user-agent") ?? "",
+            }
+          : datos.tipo === "exatec"
+            ? {
+                tipo: "exatec" as const,
+                nombre: datos.nombre,
+                correo: datos.correo,
+                carrera: datos.carrera,
+                generacion: datos.generacion,
+                ...(datos.matricula ? { matricula: datos.matricula } : {}),
+                ...(datos.empresa ? { empresa: datos.empresa } : {}),
+                ...(datos.puesto ? { puesto: datos.puesto } : {}),
+                ...(datos.linkedin ? { linkedin: datos.linkedin } : {}),
+                intereses: datos.intereses,
+                habilidades: datos.habilidades.filter(Boolean),
+                cvStorageId: datos.cvStorageId as Id<"_storage">,
+                ipHash,
+                userAgent: peticion.headers.get("user-agent") ?? "",
+              }
+            : {
+                tipo: "ponente" as const,
+                nombre: datos.nombre,
+                correo: datos.correo,
+                ponenteId: datos.ponenteId,
+                ipHash,
+                userAgent: peticion.headers.get("user-agent") ?? "",
+              };
+
     const cliente = new ConvexHttpClient(url);
     const resultado = await cliente.action(api.ingestaEventos.registrarNetworkingNight, {
       secreto: secretoDeIngesta(),
-      datos: {
-        nombre: datos.nombre,
-        correo: datos.correo,
-        matricula: datos.matricula,
-        carrera: datos.carrera,
-        semestre: datos.semestre,
-        intereses: datos.intereses,
-        habilidades: datos.habilidades.filter(Boolean),
-        ...(datos.cvStorageId ? { cvStorageId: datos.cvStorageId as Id<"_storage"> } : {}),
-        metodoPago: datos.metodoPago,
-        ipHash,
-        userAgent: peticion.headers.get("user-agent") ?? "",
-      },
+      datos: payloadConvex,
     });
 
     if (!resultado.ok) {
@@ -92,18 +138,47 @@ export async function POST(peticion: Request): Promise<NextResponse> {
         resultado.motivo === "cerrado"
           ? ["El registro para Networking Night no está disponible.", 409]
           : resultado.motivo === "cv"
-            ? ["Tu CV debe ser un PDF de máximo 5 MB. Vuelve a subirlo o continúa sin él.", 400]
+            ? [
+                datos.tipo === "exatec"
+                  ? "Para confirmar tu perfil de exatec, sube tu CV en PDF (máximo 5 MB)."
+                  : "Tu CV debe ser un PDF de máximo 5 MB. Vuelve a subirlo o continúa sin él.",
+                400,
+              ]
             : resultado.motivo === "datos"
               ? ["Revisa tus datos e intenta de nuevo.", 400]
               : ["Recibimos varios intentos seguidos. Espera unos minutos y vuelve a intentar.", 429];
       return NextResponse.json({ error: mensaje }, { status: estado });
     }
 
-    if (!resultado.creado || !resultado.registroId) {
-      return NextResponse.json({ ok: true, creado: false, correoEnviado: resultado.correoEnviado === true });
+    if (!resultado.creado) {
+      return NextResponse.json({
+        ok: true,
+        creado: false,
+        resultado: resultado.resultado ?? "boleto",
+        correoEnviado: resultado.correoEnviado === true,
+      });
+    }
+
+    if (resultado.resultado === "revision") {
+      return NextResponse.json({
+        ok: true,
+        creado: true,
+        resultado: "revision",
+        correoEnviado: resultado.correoEnviado === true,
+        solicitud: {
+          nombre: resultado.nombre ?? datos.nombre,
+          tipo: resultado.tipo ?? datos.tipo,
+          ...(resultado.area ? { area: resultado.area } : {}),
+        },
+      });
+    }
+
+    if (!resultado.registroId) {
+      return NextResponse.json(generico, { status: 500 });
     }
 
     const registroId = String(resultado.registroId);
+    const tipo = resultado.tipo ?? datos.tipo;
     const qr = await QRCode.toDataURL(enlaceAsistenciaRegistro(sitio, registroId), {
       width: 480,
       margin: 2,
@@ -114,12 +189,22 @@ export async function POST(peticion: Request): Promise<NextResponse> {
     return NextResponse.json({
       ok: true,
       creado: true,
+      resultado: "boleto",
       correoEnviado: resultado.correoEnviado === true,
       boleto: {
         nombre: resultado.nombre ?? datos.nombre,
         folio: `NN-${registroId.slice(-6).toUpperCase()}`,
         qr,
-        pago: resultado.pago ?? { metodo: "efectivo", estado: "pendiente", montoMxn: NETWORKING_NIGHT.cuotaMxn },
+        tipo,
+        ...(tipo === "estudiante"
+          ? {
+              pago: resultado.pago ?? {
+                metodo: "efectivo",
+                estado: "pendiente",
+                montoMxn: NETWORKING_NIGHT.cuotaMxn,
+              },
+            }
+          : {}),
       },
     });
   } catch (error) {

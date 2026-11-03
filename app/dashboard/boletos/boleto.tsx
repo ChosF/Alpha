@@ -7,6 +7,7 @@ import type { FunctionReturnType } from "convex/server";
 import { api } from "@/convex/_generated/api";
 import { MarcaAlpha } from "@/components/marca-alpha";
 import { fechaEventoEnEspanol } from "@/lib/correo-evento";
+import { GAFETES_NETWORKING_NIGHT } from "@/lib/networking-night";
 import styles from "./boleto.module.css";
 
 type Ticket = FunctionReturnType<typeof api.boletos.validar>;
@@ -16,6 +17,7 @@ const mensajes = {
   vencido: ["Boleto vencido", "El periodo de ingreso a este evento ha terminado."],
   utilizado: ["Boleto utilizado", "La asistencia ya está registrada. Este boleto no admite otro ingreso."],
   pendiente: ["Ingreso no disponible", "El ingreso se habilita el día del evento. Si la fecha está pendiente, revísala en el dashboard."],
+  en_revision: ["Perfil en revisión", "Esta solicitud de cortesía aún no ha sido aprobada en el dashboard."],
   sin_acceso: ["Acceso restringido", "Necesitas una cuenta activa con rol de administrador o editor para validar boletos."],
 } as const;
 
@@ -52,6 +54,8 @@ export function Boleto({ codigo }: { codigo: string }) {
     finally { bloqueo.current = false; setOcupado(false); }
   }
 
+  const gafete = dato?.tipo ? GAFETES_NETWORKING_NIGHT[dato.tipo] : undefined;
+
   return <main className={styles.page}>
     <header className={styles.header}><MarcaAlpha className={styles.logo} /><Link href="/dashboard">Dashboard <span aria-hidden="true">↗</span></Link></header>
     <div className={styles.shell}><section className={styles.ticket} aria-busy={ocupado}>
@@ -62,18 +66,23 @@ export function Boleto({ codigo }: { codigo: string }) {
       </div>
       {isAuthenticated && estado !== "sin_acceso" && dato?.nombre && <div className={styles.details}>
         <p className={styles.label}>Titular del boleto</p><h2>{dato.nombre}</h2>
+        {gafete && dato?.tipo && <div className={styles.event}><p className={styles.label}>Gafete</p>
+          <h3 className={styles.gafete}><span className={styles.swatch} data-tipo={dato.tipo} aria-hidden="true" />Entrega gafete {gafete.nombre} · {gafete.etiqueta}</h3>
+        </div>}
         {dato.equipo && <div className={styles.event}><p className={styles.label}>Equipo</p><h3>{dato.equipo}</h3></div>}
         <div className={styles.event}><p className={styles.label}>Evento</p><h3>{dato.evento}</h3>
           {dato.fecha && <p>{fechaEventoEnEspanol(dato.fecha)}</p>}{dato.sede && <p>{dato.sede}</p>}
         </div>
-        {dato.pago && <div className={styles.event}><p className={styles.label}>Cuota</p>
+        {dato.pago ? <div className={styles.event}><p className={styles.label}>Cuota</p>
           <h3>{dato.pago.estado === "pagado"
             ? `Pagado${dato.pago.metodo === "stripe" ? " en línea" : " en efectivo"} · $${dato.pago.montoMxn} MXN`
             : `Cobrar $${dato.pago.montoMxn} MXN en efectivo`}</h3>
           {dato.pago.estado === "pendiente" && estado === "valido" && <p>{dato.pago.metodo === "stripe"
             ? "El pago en línea no se completó. Recibe el efectivo antes de confirmar."
             : "Recibe el pago antes de confirmar."} Al confirmar se registra como pagado.</p>}
-        </div>}
+        </div> : dato.tipo && dato.tipo !== "estudiante" ? <div className={styles.event}><p className={styles.label}>Cuota</p>
+          <h3>Cortesía · sin cobro en puerta</h3>
+        </div> : null}
         {dato.utilizadoEn && <p className={styles.receipt}>Asistencia registrada · {new Intl.DateTimeFormat("es-MX", { timeZone: "America/Mexico_City", dateStyle: "short", timeStyle: "short" }).format(dato.utilizadoEn)}</p>}
       </div>}
       <div className={styles.actions}>

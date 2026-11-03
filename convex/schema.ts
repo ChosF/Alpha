@@ -8,6 +8,9 @@ import {
   estadoHiloCorreoValidador,
   estadoIngestaCorreoValidador,
   estadoAsistenteValidador,
+  tipoAsistenteValidador,
+  detalleTipoValidador,
+  verificacionValidador,
   pagoRegistroValidador,
   perfilRegistroValidador,
   estadoEventoValidador,
@@ -155,6 +158,9 @@ export default defineSchema({
     telefono: v.optional(v.string()),
     /** Perfil para presentar a la persona con ponentes y exatecs afines. */
     perfil: v.optional(perfilRegistroValidador),
+    tipoAsistente: v.optional(tipoAsistenteValidador),
+    detalleTipo: v.optional(detalleTipoValidador),
+    verificacion: v.optional(verificacionValidador),
     pago: v.optional(pagoRegistroValidador),
     boletoEnviadoEn: v.optional(v.number()),
     estado: estadoAsistenteValidador,
@@ -169,7 +175,9 @@ export default defineSchema({
   })
     .index("by_event_and_correo", ["eventId", "correo"])
     .index("by_event_and_creado", ["eventId", "creadoEn"])
-    .index("by_event_and_estado", ["eventId", "estado", "creadoEn"]),
+    .index("by_event_and_estado", ["eventId", "estado", "creadoEn"])
+    .index("by_event_and_tipo", ["eventId", "tipoAsistente"])
+    .index("by_event_and_verificacion", ["eventId", "verificacion.estado", "creadoEn"]),
 
   tournamentTeams: defineTable({
     eventId: v.id("events"),

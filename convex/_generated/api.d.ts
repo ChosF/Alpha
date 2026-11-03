@@ -37,6 +37,7 @@ import type * as metricas from "../metricas.js";
 import type * as preferencias from "../preferencias.js";
 import type * as registros from "../registros.js";
 import type * as usuarios from "../usuarios.js";
+import type * as verificaciones from "../verificaciones.js";
 
 import type {
   ApiFromModules,
@@ -74,6 +75,7 @@ declare const fullApi: ApiFromModules<{
   preferencias: typeof preferencias;
   registros: typeof registros;
   usuarios: typeof usuarios;
+  verificaciones: typeof verificaciones;
 }>;
 
 /**

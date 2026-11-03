@@ -5,7 +5,15 @@
   var CALENDARIO =
     "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Networking%20Night%20%C2%B7%20Alpha&dates=20261105T230000Z%2F20261106T013000Z&details=Networking%20Night%20de%20Alpha.%20Registro%20desde%20las%204%3A40%20p.m.%20Business%20casual.%20Lleva%20tu%20boleto%20con%20c%C3%B3digo%20QR%20y%20%2470%20MXN%20en%20efectivo.&location=Claustro%20CEDETEC%2C%20Tecnol%C3%B3gico%20de%20Monterrey%20Campus%20Ciudad%20de%20M%C3%A9xico&ctz=America%2FMexico_City";
   var CLAVE = "alpha-nn-boleto";
+  var CLAVE_SOLICITUD = "alpha-nn-solicitud";
   var token = null;
+
+  var GAFETES = {
+    estudiante: { etiqueta: "Estudiante", gafete: "Gafete Blanco", rol: "ASISTENTE · GAFETE BLANCO", hex: "#0066ff" },
+    exatec: { etiqueta: "Exatec", gafete: "Gafete Plata", rol: "EXATEC · GAFETE PLATA", hex: "#64748b" },
+    ponente: { etiqueta: "Ponente", gafete: "Gafete Dorado", rol: "PONENTE · GAFETE DORADO", hex: "#b08b3e" },
+    aliado: { etiqueta: "Aliado Alpha", gafete: "Gafete Azul", rol: "ALIADO ALPHA · GAFETE AZUL", hex: "#194270" },
+  };
 
   function pedirToken() {
     token = fetch("/api/registro/token", { cache: "no-store" })
@@ -41,7 +49,7 @@
     });
   }
 
-  /** datos: nombre, correo, matricula, carrera, semestre, intereses, habilidades, metodoPago, consentimiento, sitio_web. */
+  /** Envía los datos del registro (discriminados por `tipo`) y sube el CV si se adjuntó. */
   function enviar(datos, cv) {
     var cvId = cv ? subirCv(cv) : Promise.resolve(undefined);
     return cvId.then(function (id) {
@@ -56,18 +64,45 @@
     });
   }
 
-  function pago(p) {
+  function pago(p, tipo) {
+    if (tipo && tipo !== "estudiante") {
+      return {
+        valor: "Cortesía",
+        nota: "Tu acceso es cortesía de Alpha. Solo muestra tu QR en la entrada.",
+        corto: "Cortesía",
+      };
+    }
     var monto = "$" + ((p && p.montoMxn) || 70) + " MXN";
     if (p && p.estado === "pagado") return { valor: "Pagado", nota: "Tu cuota ya está pagada. Solo muestra tu QR en la entrada.", corto: "Pagado" };
     if (p && p.metodo === "stripe") return { valor: monto, nota: "Tu pago en línea no se ha confirmado. Si no se completa, pagas " + monto + " en efectivo en la entrada.", corto: monto };
     return { valor: monto + " efectivo", nota: "Lleva " + monto + " en efectivo. Se cobran en la entrada cuando escaneamos tu QR.", corto: monto };
   }
 
-  function guardar(boleto) { try { localStorage.setItem(CLAVE, JSON.stringify(boleto)); } catch (e) {} }
+  function guardar(boleto) {
+    try {
+      localStorage.setItem(CLAVE, JSON.stringify(boleto));
+      localStorage.removeItem(CLAVE_SOLICITUD);
+    } catch (e) {}
+  }
   function leer() {
     try { var b = JSON.parse(localStorage.getItem(CLAVE) || "null"); return b && b.qr && b.nombre ? b : null; } catch (e) { return null; }
   }
   function olvidar() { try { localStorage.removeItem(CLAVE); } catch (e) {} }
+
+  function guardarSolicitud(solicitud) {
+    try {
+      localStorage.setItem(CLAVE_SOLICITUD, JSON.stringify(solicitud));
+    } catch (e) {}
+  }
+  function leerSolicitud() {
+    try {
+      var s = JSON.parse(localStorage.getItem(CLAVE_SOLICITUD) || "null");
+      return s && s.nombre && s.tipo ? s : null;
+    } catch (e) { return null; }
+  }
+  function olvidarSolicitud() {
+    try { localStorage.removeItem(CLAVE_SOLICITUD); } catch (e) {}
+  }
 
   function imagen(src) {
     return new Promise(function (ok, mal) { var i = new Image(); i.onload = function () { ok(i); }; i.onerror = mal; i.src = src; });
@@ -90,16 +125,17 @@
     return listo.then(function () {
       return Promise.all([imagen(boleto.qr), imagen("/n-night/assets/alpha-mark-white.png").catch(function () { return null; })]);
     }).then(function (img) {
-      var qr = img[0], logo = img[1], p = pago(boleto.pago);
+      var qr = img[0], logo = img[1], p = pago(boleto.pago, boleto.tipo);
+      var g = GAFETES[boleto.tipo] || GAFETES.estudiante;
       x.fillStyle = "#0c2149"; x.fillRect(0, 0, W, H);
       x.fillStyle = "#ffffff"; x.fillRect(48, 48, W - 96, H - 96);
-      x.fillStyle = "#0066ff"; x.fillRect(48, 48, W - 96, 150);
+      x.fillStyle = g.hex; x.fillRect(48, 48, W - 96, 150);
       x.fillStyle = "#ffffff"; x.font = "700 46px " + fd; x.textBaseline = "middle";
       x.fillText("NETWORKING NIGHT", pad + 10, 123);
       if (logo) { var lh = 58, lw = logo.width * lh / logo.height; x.drawImage(logo, W - pad - 10 - lw, 123 - lh / 2, lw, lh); }
 
       x.textBaseline = "alphabetic";
-      x.fillStyle = "#0066ff"; x.font = "700 26px " + fb; x.fillText("ASISTENTE", pad + 10, 290);
+      x.fillStyle = g.hex; x.font = "700 26px " + fb; x.fillText(g.rol, pad + 10, 290);
       x.fillStyle = "#0d2140"; x.font = "700 76px " + fd;
       var y = 370;
       lineas(x, boleto.nombre.toUpperCase(), W - 2 * pad - 20).slice(0, 3).forEach(function (l) { x.fillText(l, pad + 10, y); y += 80; });
@@ -114,7 +150,7 @@
       var dy = qy + q + 96;
       x.strokeStyle = "#c9d4e3"; x.lineWidth = 3; x.setLineDash([14, 12]);
       x.beginPath(); x.moveTo(pad, dy); x.lineTo(W - pad, dy); x.stroke(); x.setLineDash([]);
-      var celdas = [["FECHA", "Jue 5 nov 2026"], ["HORA", "5:00 a 7:30 p.m."], ["LUGAR", "Claustro CEDETEC"], ["CUOTA", p.valor]];
+      var celdas = [["FECHA", "Jue 5 nov 2026"], ["HORA", "5:00 a 7:30 p.m."], ["LUGAR", "Claustro CEDETEC"], ["ACCESO", p.valor]];
       celdas.forEach(function (cel, i) {
         var cx = pad + 10 + (i % 2) * ((W - 2 * pad) / 2), cy = dy + 70 + Math.floor(i / 2) * 120;
         x.fillStyle = "#6b7c93"; x.font = "700 22px " + fb; x.fillText(cel[0], cx, cy);
@@ -133,7 +169,7 @@
     });
   }
 
-  window.NNRegistro = {
+  var api = {
     calendario: CALENDARIO,
     preparar: function () { if (!token) pedirToken(); },
     enviar: enviar,
@@ -141,6 +177,12 @@
     guardar: guardar,
     leer: leer,
     olvidar: olvidar,
+    guardarSolicitud: guardarSolicitud,
+    leerSolicitud: leerSolicitud,
+    olvidarSolicitud: olvidarSolicitud,
     descargar: descargar,
+    GAFETES: GAFETES,
   };
+  window.NNRegistro = api;
+  window.AlphaNN = api;
 })();

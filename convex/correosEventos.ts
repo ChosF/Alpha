@@ -76,6 +76,7 @@ async function destinatariosDeEvento(ctx: ContextoLectura, eventId: Id<"events">
   const unicos = new Map<string, { nombre: string; correo: string }>();
   for (const registro of registros) {
     if (!registro.canales.correo) continue;
+    if (registro.verificacion && registro.verificacion.estado !== "aprobada") continue;
     if (
       registro.estado !== "registrado" &&
       registro.estado !== "confirmado" &&

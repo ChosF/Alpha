@@ -3257,3 +3257,156 @@ a.ui-todo:hover {
   background: var(--accent);
   box-shadow: inset 0 0 0 4px var(--bg-2);
 }
+
+
+/* Verificacion y tipos de asistente (Networking Night) */
+[data-panel] .ui-gafete-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  --r: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-3);
+  color: var(--fg);
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+[data-panel] .ui-gafete-pill::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  --r: 999px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.28);
+  flex: none;
+}
+[data-panel] .ui-gafete-pill[data-tipo="exatec"]::before {
+  background: #b7bdc8;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.22);
+}
+[data-panel] .ui-gafete-pill[data-tipo="ponente"]::before {
+  background: #c2a565;
+  box-shadow: inset 0 0 0 1px rgba(194, 165, 101, 0.55);
+}
+[data-panel] .ui-gafete-pill[data-tipo="aliado"]::before {
+  background: #0066ff;
+  box-shadow: none;
+}
+
+[data-panel] .ui-tipo-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px 0;
+}
+[data-panel] .ui-tipo-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  --r: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--fg-2);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+[data-panel] .ui-tipo-tab:hover {
+  border-color: var(--line-2);
+  color: var(--fg);
+}
+[data-panel] .ui-tipo-tab[data-active="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+[data-panel] .ui-tipo-tab-count {
+  font-family: var(--font-num);
+  font-size: 11px;
+  color: var(--fg-3);
+}
+[data-panel] .ui-tipo-tab[data-active="true"] .ui-tipo-tab-count {
+  color: var(--fg);
+}
+[data-panel] .ui-tipo-tab[data-alert="true"] {
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--line));
+}
+
+[data-panel] .ui-verif-card {
+  margin: 16px 20px 0;
+  padding: 14px 16px;
+  --r: 10px;
+  border: 1px solid color-mix(in srgb, var(--warn) 42%, var(--line));
+  background: color-mix(in srgb, var(--warn) 6%, var(--bg-2));
+  display: grid;
+  gap: 12px;
+}
+[data-panel] .ui-verif-card[data-estado="aprobada"] {
+  border-color: color-mix(in srgb, var(--ok) 35%, var(--line));
+  background: color-mix(in srgb, var(--ok) 5%, var(--bg-2));
+}
+[data-panel] .ui-verif-card[data-estado="rechazada"] {
+  border-color: color-mix(in srgb, var(--bad) 35%, var(--line));
+  background: color-mix(in srgb, var(--bad) 5%, var(--bg-2));
+}
+[data-panel] .ui-verif-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+[data-panel] .ui-verif-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+}
+[data-panel] .ui-verif-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--fg-2);
+}
+[data-panel] .ui-padron-box {
+  padding: 10px 12px;
+  --r: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  display: grid;
+  gap: 8px;
+}
+[data-panel] .ui-padron-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--fg-2);
+}
+[data-panel] .ui-padron-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  --r: 6px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  font-size: 12px;
+}
+[data-panel] .ui-padron-item[data-match="aliado"] {
+  border-color: color-mix(in srgb, var(--ok) 45%, var(--line));
+}
+[data-panel] .ui-padron-item[data-match="miembro"] {
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--line));
+}

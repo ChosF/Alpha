@@ -35,6 +35,18 @@ export const ESTADOS_ASISTENTE = [
   "asistio",
 ] as const;
 
+export const TIPOS_ASISTENTE = ["estudiante", "exatec", "ponente", "aliado"] as const;
+
+export const ESTADOS_VERIFICACION = ["pendiente", "aprobada", "rechazada"] as const;
+
+export const AREAS_ALIADO = [
+  "comunicacion",
+  "finanzas",
+  "patrocinios",
+  "logistica",
+  "responsabilidad",
+] as const;
+
 export const ESTADOS_HILO_CORREO = ["abierto", "resuelto", "spam"] as const;
 
 export const DIRECCIONES_MENSAJE_CORREO = ["entrante", "saliente"] as const;
@@ -69,6 +81,9 @@ export type Pilar = (typeof PILARES)[number];
 export type TipoRegistro = (typeof TIPOS_REGISTRO)[number];
 export type EstadoEvento = (typeof ESTADOS_EVENTO)[number];
 export type EstadoAsistente = (typeof ESTADOS_ASISTENTE)[number];
+export type TipoAsistente = (typeof TIPOS_ASISTENTE)[number];
+export type EstadoVerificacion = (typeof ESTADOS_VERIFICACION)[number];
+export type AreaAliado = (typeof AREAS_ALIADO)[number];
 export type EstadoHiloCorreo = (typeof ESTADOS_HILO_CORREO)[number];
 export type DireccionMensajeCorreo = (typeof DIRECCIONES_MENSAJE_CORREO)[number];
 export type EstadoMensajeCorreo = (typeof ESTADOS_MENSAJE_CORREO)[number];
@@ -85,6 +100,9 @@ export const pilarValidador = v.union(...PILARES.map((p) => v.literal(p)));
 export const tipoRegistroValidador = v.union(...TIPOS_REGISTRO.map((t) => v.literal(t)));
 export const estadoEventoValidador = v.union(...ESTADOS_EVENTO.map((e) => v.literal(e)));
 export const estadoAsistenteValidador = v.union(...ESTADOS_ASISTENTE.map((e) => v.literal(e)));
+export const tipoAsistenteValidador = v.union(...TIPOS_ASISTENTE.map((t) => v.literal(t)));
+export const estadoVerificacionValidador = v.union(...ESTADOS_VERIFICACION.map((e) => v.literal(e)));
+export const areaAliadoValidador = v.union(...AREAS_ALIADO.map((a) => v.literal(a)));
 export const metodoPagoValidador = v.union(v.literal("efectivo"), v.literal("stripe"));
 export const estadoPagoValidador = v.union(v.literal("pendiente"), v.literal("pagado"));
 /** Cuota de un registro. Lo pendiente se cobra en efectivo al confirmar el ingreso con el QR. */
@@ -98,6 +116,31 @@ export const perfilRegistroValidador = v.object({
   intereses: v.array(v.string()),
   habilidades: v.array(v.string()),
   cvStorageId: v.optional(v.id("_storage")),
+});
+/** Evidencia que respalda una cortesía. Discriminada para que cada tipo guarde solo lo suyo. */
+export const detalleTipoValidador = v.union(
+  v.object({
+    tipo: v.literal("exatec"),
+    generacion: v.string(),
+    empresa: v.optional(v.string()),
+    puesto: v.optional(v.string()),
+    linkedin: v.optional(v.string()),
+  }),
+  v.object({
+    tipo: v.literal("ponente"),
+    ponenteId: v.string(),
+  }),
+  v.object({
+    tipo: v.literal("aliado"),
+    area: areaAliadoValidador,
+  }),
+);
+export const verificacionValidador = v.object({
+  estado: estadoVerificacionValidador,
+  metodo: v.union(v.literal("automatica"), v.literal("manual")),
+  motivo: v.optional(v.string()),
+  revisadoPor: v.optional(v.id("users")),
+  revisadoEn: v.optional(v.number()),
 });
 export const estadoHiloCorreoValidador = v.union(
   ...ESTADOS_HILO_CORREO.map((e) => v.literal(e)),
@@ -125,6 +168,7 @@ export const graficaInicioValidador = v.union(
 /** Etiquetas en espanol para el panel y las exportaciones. */
 export const ETIQUETAS: Record<string, string> = {
   operaciones: "Operaciones y Logistica",
+  logistica: "Logística",
   comunicacion: "Comunicacion",
   finanzas: "Finanzas",
   patrocinios: "Patrocinios",
@@ -145,6 +189,12 @@ export const ETIQUETAS: Record<string, string> = {
   comunidad: "Inclusion y comunidad",
   miembro: "Miembro",
   aliado: "Aliado",
+  estudiante: "Estudiante",
+  exatec: "Exatec",
+  ponente: "Ponente",
+  pendiente: "Por verificar",
+  aprobada: "Verificado",
+  rechazada: "Rechazado",
   borrador: "Borrador",
   publicado: "Publicado",
   cerrado: "Cerrado",

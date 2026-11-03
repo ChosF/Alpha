@@ -5,12 +5,15 @@ import { registrarEnBitacora } from "./lib/auditoria";
 import { requiereRol } from "./lib/rbac";
 import { limpiarMultilinea, limpiarTexto, normalizarCorreo } from "./lib/texto";
 import {
+  detalleTipoValidador,
   estadoAsistenteValidador,
   pagoRegistroValidador,
   perfilRegistroValidador,
   estadoEventoValidador,
   estadoProgramaValidador,
   pilarValidador,
+  tipoAsistenteValidador,
+  verificacionValidador,
 } from "./lib/validadores";
 import { conAsistentes } from "./lib/conteosEvento";
 import { esFechaEventoValida, esHoraEventoValida } from "../lib/correo-evento";
@@ -89,6 +92,9 @@ const asistenteValidador = v.object({
   matricula: v.optional(v.string()),
   canales: v.object({ correo: v.boolean(), whatsapp: v.boolean() }),
   telefono: v.optional(v.string()),
+  tipoAsistente: v.optional(tipoAsistenteValidador),
+  detalleTipo: v.optional(detalleTipoValidador),
+  verificacion: v.optional(verificacionValidador),
   perfil: v.optional(perfilRegistroValidador),
   pago: v.optional(pagoRegistroValidador),
   estado: estadoAsistenteValidador,
@@ -541,6 +547,9 @@ export const cambiarEstadoRegistro = mutation({
     const actor = await requiereRol(ctx, "editor");
     const registro = await ctx.db.get(args.id);
     if (registro === null) throw new Error("Ese registro ya no existe.");
+    if (args.estado === "asistio" && registro.verificacion && registro.verificacion.estado !== "aprobada") {
+      throw new ConvexError("Primero aprueba la verificación del registro antes de marcar asistencia.");
+    }
     if (registro.estado === args.estado) return null;
     const ahora = Date.now();
     const cobro = args.estado === "asistio" ? cobroAlLlegar(registro, ahora) : undefined;
@@ -637,6 +646,7 @@ export const registrarAsistenteEnPuerta = mutation({
     correo: v.string(),
     semestre: v.string(),
     carrera: v.string(),
+    tipo: v.optional(tipoAsistenteValidador),
   },
   returns: v.object({
     id: v.id("eventRegistrations"),
@@ -678,6 +688,8 @@ export const registrarAsistenteEnPuerta = mutation({
     }
 
     const cuota = cuotaDelEvento(evento.slug);
+    const tipo = args.tipo ?? "estudiante";
+    const cobraEnPuerta = cuota !== undefined && tipo === "estudiante";
     const id = await ctx.db.insert("eventRegistrations", {
       eventId: args.eventId,
       nombre,
@@ -686,7 +698,18 @@ export const registrarAsistenteEnPuerta = mutation({
       semestre,
       ...(matricula ? { matricula } : {}),
       canales: { correo: false, whatsapp: false },
-      ...(cuota !== undefined
+      ...(cuota !== undefined ? { tipoAsistente: tipo } : {}),
+      ...(cuota !== undefined && tipo !== "estudiante"
+        ? {
+            verificacion: {
+              estado: "aprobada" as const,
+              metodo: "manual" as const,
+              revisadoPor: actor._id,
+              revisadoEn: ahora,
+            },
+          }
+        : {}),
+      ...(cobraEnPuerta
         ? { pago: { metodo: "efectivo" as const, estado: "pagado" as const, montoMxn: cuota, pagadoEn: ahora } }
         : {}),
       estado: "asistio",

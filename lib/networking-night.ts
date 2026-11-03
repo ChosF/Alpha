@@ -39,8 +39,115 @@ export type PagoBoleto = {
   montoMxn: number;
 };
 
-/** Texto del boleto según la cuota: pagada en línea, por cobrar en efectivo o en línea sin confirmar. */
-export function copiaPagoNetworkingNight(pago: PagoBoleto | undefined) {
+export const TIPOS_ASISTENTE_NETWORKING_NIGHT = [
+  "estudiante",
+  "exatec",
+  "ponente",
+  "aliado",
+] as const;
+export type TipoAsistenteNetworkingNight = (typeof TIPOS_ASISTENTE_NETWORKING_NIGHT)[number];
+
+export const AREAS_ALIADO_NETWORKING_NIGHT = [
+  "comunicacion",
+  "finanzas",
+  "patrocinios",
+  "logistica",
+  "responsabilidad",
+] as const;
+export type AreaAliadoNetworkingNight = (typeof AREAS_ALIADO_NETWORKING_NIGHT)[number];
+
+export const ETIQUETAS_AREAS_ALIADO: Record<AreaAliadoNetworkingNight, string> = {
+  comunicacion: "Comunicación",
+  finanzas: "Finanzas",
+  patrocinios: "Patrocinios",
+  logistica: "Logística",
+  responsabilidad: "Responsabilidad Social",
+};
+
+export const PONENTES_NETWORKING_NIGHT = [
+  {
+    id: "maritza-lara",
+    nombre: "Maritza Lara Aguillón",
+    foto: "/n-night/assets/maritza-lara.jpg",
+    rol: "Ponencia 1 · Mercado Libre",
+  },
+  {
+    id: "andrea-gutierrez",
+    nombre: "Andrea Gutiérrez Lomelí",
+    foto: "/n-night/assets/andrea-gutierrez.jpg",
+    rol: "Panel · Moody's Local",
+  },
+  {
+    id: "diego-ramirez",
+    nombre: "Diego Ramírez",
+    foto: "/n-night/assets/diego-ramirez.jpg",
+    rol: "Panel · GBM",
+  },
+  {
+    id: "alan-vazquez",
+    nombre: "Alan Vázquez, CFA",
+    foto: "/n-night/assets/alan-vazquez.jpg",
+    rol: "Ponencia 2 · Valores Mexicanos",
+  },
+] as const;
+export type PonenteNetworkingNightId = (typeof PONENTES_NETWORKING_NIGHT)[number]["id"];
+export const IDS_PONENTES_NETWORKING_NIGHT = PONENTES_NETWORKING_NIGHT.map((p) => p.id) as [
+  PonenteNetworkingNightId,
+  ...PonenteNetworkingNightId[],
+];
+export const OPCIONES_PONENTE_NETWORKING_NIGHT = [
+  ...IDS_PONENTES_NETWORKING_NIGHT,
+  "otro",
+] as const;
+export type OpcionPonenteNetworkingNight = (typeof OPCIONES_PONENTE_NETWORKING_NIGHT)[number];
+
+export const GAFETES_NETWORKING_NIGHT = {
+  estudiante: { color: "#FFFFFF", nombre: "Blanco", etiqueta: "Estudiante", boleto: "ASISTENTE" },
+  exatec: { color: "#B7BDC8", nombre: "Plata", etiqueta: "Exatec", boleto: "EXATEC" },
+  ponente: { color: "#C2A565", nombre: "Dorado", etiqueta: "Ponente", boleto: "PONENTE" },
+  aliado: { color: "#194270", nombre: "Azul", etiqueta: "Aliado Alpha", boleto: "ALIADO ALPHA" },
+} as const;
+
+/** Sin acentos, sin títulos profesionales y sin signos: "Alan Vázquez, CFA" → ["alan","vazquez"]. */
+export function tokensNombrePonente(texto: string): string[] {
+  return texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\b(cfa|frm|mba|lic|ing|dr|dra|mtro|mtra)\b\.?/g, " ")
+    .replace(/[^a-z\s]/g, " ")
+    .split(/\s+/)
+    .filter((t) => t.length > 1);
+}
+
+/** Exige el nombre de pila y al menos un apellido del ponente elegido. */
+export function coincidePonenteNetworkingNight(
+  ponenteId: string,
+  nombreEscrito: string,
+): boolean {
+  const ponente = PONENTES_NETWORKING_NIGHT.find((p) => p.id === ponenteId);
+  if (!ponente) return false;
+  const [pila, ...apellidos] = tokensNombrePonente(ponente.nombre);
+  if (!pila) return false;
+  const dados = new Set(tokensNombrePonente(nombreEscrito));
+  return dados.has(pila) && apellidos.some((a) => dados.has(a));
+}
+
+/** Texto del boleto según la cuota: pagada en línea, por cobrar en efectivo, en línea sin confirmar o cortesía. */
+export function copiaPagoNetworkingNight(
+  pago: PagoBoleto | undefined,
+  tipo?: TipoAsistenteNetworkingNight,
+) {
+  if (tipo && tipo !== "estudiante") {
+    return {
+      pagado: true,
+      valor: "Cortesía",
+      nota: "Sin cuota · acceso cortesía",
+      paso: "Tu acceso es cortesía de Alpha",
+      detalle: "Solo muestra tu QR en la entrada. No necesitas llevar efectivo.",
+      linea: "Cuota: cortesía de Alpha",
+    };
+  }
   const monto = `$${pago?.montoMxn ?? NETWORKING_NIGHT.cuotaMxn} MXN`;
   if (pago?.estado === "pagado") {
     return {

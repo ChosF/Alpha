@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   aPayloadConvex,
@@ -6,6 +7,7 @@ import {
   esquemaRegistroEvento,
   esquemaRegistroNetworkingNight,
 } from "@/lib/validacion";
+import { PONENTES_NETWORKING_NIGHT, coincidePonenteNetworkingNight } from "@/lib/networking-night";
 
 /**
  * Validacion del formulario publico: lo que se acepta y, sobre todo, lo que no.
@@ -126,9 +128,6 @@ describe("reglas por tipo", () => {
 
 describe("defensas", () => {
   it("acepta el campo trampa en la validacion para poder fingir exito despues", () => {
-    // El rechazo NO ocurre aqui a proposito: el route handler responde 200 sin
-    // guardar nada, para no ensenarle al bot que fue detectado. Si esta
-    // validacion fallara, el 400 lo delataria.
     const r = esquemaRegistro.safeParse({ ...base, sitio_web: "http://spam" });
     expect(r.success).toBe(true);
     expect(r.success && r.data.sitio_web).toBe("http://spam");
@@ -146,7 +145,6 @@ describe("defensas", () => {
 
   it("no deja pasar etiquetas con guion bajo de Convex ni campos extra", () => {
     const r = esquemaRegistro.safeParse({ ...base, estado: "activo", _id: "trampa" });
-    // Zod descarta lo que no esta declarado: el payload nunca lleva estado.
     expect(r.success).toBe(true);
     if (r.success) {
       expect(Object.keys(r.data)).not.toContain("estado");
@@ -265,5 +263,98 @@ describe("registro de eventos", () => {
     expect(
       esquemaRegistroNetworkingNight.safeParse({ ...baseNN, correo: "ana@sin-dominio" }).success,
     ).toBe(false);
+  });
+
+  it("valida los 4 tipos de registro de Networking Night (estudiante, aliado, exatec, ponente)", () => {
+    const comun = {
+      nombre: "Carlos Mendoza",
+      correo: "carlos@tec.mx",
+      consentimiento: true as const,
+      token: "1700000000.abc.firma",
+    };
+
+    // Aliado requiere area de las 5 permitidas y no requiere pago
+    expect(
+      esquemaRegistroNetworkingNight.safeParse({
+        ...comun,
+        tipo: "aliado",
+        area: "finanzas",
+        matricula: "A01234567",
+        semestre: "6",
+        carrera: "LAF",
+      }).success,
+    ).toBe(true);
+    expect(
+      esquemaRegistroNetworkingNight.safeParse({
+        ...comun,
+        tipo: "aliado",
+        area: "presidencia",
+        matricula: "A01234567",
+        semestre: "6",
+        carrera: "LAF",
+      }).success,
+    ).toBe(false);
+
+    // Exatec exige cvStorageId y generacion de 4 digitos
+    expect(
+      esquemaRegistroNetworkingNight.safeParse({
+        ...comun,
+        tipo: "exatec",
+        generacion: "2021",
+        carrera: "LAF",
+      }).success,
+    ).toBe(false);
+    expect(
+      esquemaRegistroNetworkingNight.safeParse({
+        ...comun,
+        tipo: "exatec",
+        generacion: "2021",
+        carrera: "LAF",
+        cvStorageId: "kg2abc1234567890",
+        empresa: "GBM",
+        puesto: "Associate",
+      }).success,
+    ).toBe(true);
+
+    // Ponente acepta IDs canonicos y "otro"
+    expect(
+      esquemaRegistroNetworkingNight.safeParse({
+        ...comun,
+        tipo: "ponente",
+        nombre: "Maritza Lara Aguillón",
+        ponenteId: "maritza-lara",
+      }).success,
+    ).toBe(true);
+    expect(
+      esquemaRegistroNetworkingNight.safeParse({
+        ...comun,
+        tipo: "ponente",
+        nombre: "Invitado Especial",
+        ponenteId: "otro",
+      }).success,
+    ).toBe(true);
+    expect(
+      esquemaRegistroNetworkingNight.safeParse({
+        ...comun,
+        tipo: "ponente",
+        nombre: "Invitado",
+        ponenteId: "inexistente",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("sincroniza la lista canónica de ponentes con escritorio.html y movil.html", () => {
+    const escritorio = fs.readFileSync("public/n-night/escritorio.html", "utf8");
+    const movil = fs.readFileSync("public/n-night/movil.html", "utf8");
+    for (const ponente of PONENTES_NETWORKING_NIGHT) {
+      expect(escritorio).toContain(`value="${ponente.id}"`);
+      expect(movil).toContain(`value="${ponente.id}"`);
+      expect(coincidePonenteNetworkingNight(ponente.id, ponente.nombre)).toBe(true);
+      expect(coincidePonenteNetworkingNight(ponente.id, "Alan Vázquez, CFA")).toBe(
+        ponente.id === "alan-vazquez",
+      );
+    }
+    expect(coincidePonenteNetworkingNight("maritza-lara", "Juan Pérez")).toBe(false);
+    expect(coincidePonenteNetworkingNight("otro", "Maritza Lara Aguillón")).toBe(false);
   });
 });

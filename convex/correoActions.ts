@@ -11,14 +11,27 @@ import { action, internalAction, type ActionCtx } from "./_generated/server";
 import {
   cuerpoConfirmacionMarioKart,
   cuerpoConfirmacionNetworkingNight,
+  cuerpoRechazoNetworkingNight,
+  cuerpoSolicitudNetworkingNight,
   textoConfirmacionMarioKart,
   textoConfirmacionNetworkingNight,
+  textoRechazoNetworkingNight,
+  textoSolicitudNetworkingNight,
 } from "./correo";
 import { correoContacto } from "./lib/direccionesCorreo";
 import { renderizarCorreoDashboard, textoConFirma } from "./lib/plantillaCorreo";
 import { normalizarCorreo } from "./lib/texto";
-import { estadoPagoValidador, metodoPagoValidador } from "./lib/validadores";
-import type { PagoBoleto } from "../lib/networking-night";
+import {
+  areaAliadoValidador,
+  estadoPagoValidador,
+  metodoPagoValidador,
+  tipoAsistenteValidador,
+} from "./lib/validadores";
+import type {
+  AreaAliadoNetworkingNight,
+  PagoBoleto,
+  TipoAsistenteNetworkingNight,
+} from "../lib/networking-night";
 import {
   enlaceAsistenciaRegistro,
   QR_ASISTENCIA_CONTENT_ID,
@@ -30,6 +43,8 @@ const MAX_TOTAL_ADJUNTOS_BYTES = 18 * 1024 * 1024;
 const MAX_HTML_ENTRANTE_BYTES = 500_000;
 const ASUNTO_MARIO_KART = "Tu registro para Mario Kart Challenge está confirmado";
 const ASUNTO_NETWORKING_NIGHT = "Tu boleto para Networking Night";
+const ASUNTO_SOLICITUD_NETWORKING_NIGHT = "Estamos verificando tu perfil para Networking Night";
+const ASUNTO_RECHAZO_NETWORKING_NIGHT = "Sobre tu registro para Networking Night";
 
 const resendManual = new ResendComponent(components.resend, {
   testMode: process.env.RESEND_TEST_MODE !== "false",
@@ -115,12 +130,24 @@ function textoDesdeHtml(html: string): string {
     .trim();
 }
 
-type DatosBoleto = { nombre: string; correo: string; registroId: string; pago?: PagoBoleto };
+type DatosBoleto = {
+  nombre: string;
+  correo: string;
+  registroId: string;
+  pago?: PagoBoleto;
+  tipo?: TipoAsistenteNetworkingNight;
+};
 
 /** Envía un boleto con el QR de asistencia incrustado. Devuelve false si el correo automático no está activo. */
 async function enviarBoletoConQr(
   ctx: ActionCtx,
-  args: { nombre: string; correo: string; registroId: Id<"eventRegistrations">; pago?: PagoBoleto },
+  args: {
+    nombre: string;
+    correo: string;
+    registroId: Id<"eventRegistrations">;
+    pago?: PagoBoleto;
+    tipo?: TipoAsistenteNetworkingNight;
+  },
   boleto: {
     asunto: string;
     archivo: string;
@@ -207,7 +234,14 @@ export const enviarConfirmacionMarioKart = internalAction({
 export const enviarConfirmacionNetworkingNight = internalAction({
   args: {
     ...argsBoleto,
-    pago: v.optional(v.object({ metodo: metodoPagoValidador, estado: estadoPagoValidador, montoMxn: v.number() })),
+    pago: v.optional(
+      v.object({
+        metodo: metodoPagoValidador,
+        estado: estadoPagoValidador,
+        montoMxn: v.number(),
+      }),
+    ),
+    tipo: v.optional(tipoAsistenteValidador),
   },
   returns: v.boolean(),
   handler: async (ctx, args): Promise<boolean> =>
@@ -218,6 +252,112 @@ export const enviarConfirmacionNetworkingNight = internalAction({
       texto: textoConfirmacionNetworkingNight,
       html: cuerpoConfirmacionNetworkingNight,
     }),
+});
+
+export const enviarSolicitudNetworkingNight = internalAction({
+  args: {
+    nombre: v.string(),
+    correo: v.string(),
+    tipo: tipoAsistenteValidador,
+    area: v.optional(areaAliadoValidador),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args): Promise<boolean> => {
+    const sitio = process.env.SITE_URL?.replace(/\/$/, "");
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!sitio || !apiKey || process.env.RESEND_TEST_MODE !== "false") return false;
+
+    const destinatario = normalizarCorreo(args.correo);
+    const remitente = normalizarCorreo(process.env.ALPHA_AUTO_EMAIL ?? "auto@alphaccm.org");
+    const respuestaA = correoContacto();
+    const cliente = new Resend(apiKey);
+    const datos: {
+      nombre: string;
+      correo: string;
+      tipo: TipoAsistenteNetworkingNight;
+      area?: AreaAliadoNetworkingNight;
+    } = {
+      nombre: args.nombre,
+      correo: destinatario,
+      tipo: args.tipo,
+      ...(args.area ? { area: args.area } : {}),
+    };
+
+    await resendManual.sendEmailManually(
+      ctx,
+      {
+        from: `Alpha CCM <${remitente}>`,
+        to: destinatario,
+        subject: ASUNTO_SOLICITUD_NETWORKING_NIGHT,
+        replyTo: [respuestaA],
+      },
+      async (emailId) => {
+        const respuesta = await cliente.emails.send(
+          {
+            from: `Alpha CCM <${remitente}>`,
+            to: destinatario,
+            subject: ASUNTO_SOLICITUD_NETWORKING_NIGHT,
+            text: textoSolicitudNetworkingNight(datos),
+            html: cuerpoSolicitudNetworkingNight(datos, sitio),
+            replyTo: respuestaA,
+          },
+          { idempotencyKey: `alpha-${emailId}` },
+        );
+        if (respuesta.error || !respuesta.data) {
+          throw new Error(respuesta.error?.message ?? "Resend no aceptó el aviso de revisión.");
+        }
+        return respuesta.data.id;
+      },
+    );
+    return true;
+  },
+});
+
+export const enviarRechazoNetworkingNight = internalAction({
+  args: {
+    nombre: v.string(),
+    correo: v.string(),
+    tipo: tipoAsistenteValidador,
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args): Promise<boolean> => {
+    const sitio = process.env.SITE_URL?.replace(/\/$/, "");
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!sitio || !apiKey || process.env.RESEND_TEST_MODE !== "false") return false;
+
+    const destinatario = normalizarCorreo(args.correo);
+    const remitente = normalizarCorreo(process.env.ALPHA_AUTO_EMAIL ?? "auto@alphaccm.org");
+    const respuestaA = correoContacto();
+    const cliente = new Resend(apiKey);
+
+    await resendManual.sendEmailManually(
+      ctx,
+      {
+        from: `Alpha CCM <${remitente}>`,
+        to: destinatario,
+        subject: ASUNTO_RECHAZO_NETWORKING_NIGHT,
+        replyTo: [respuestaA],
+      },
+      async (emailId) => {
+        const respuesta = await cliente.emails.send(
+          {
+            from: `Alpha CCM <${remitente}>`,
+            to: destinatario,
+            subject: ASUNTO_RECHAZO_NETWORKING_NIGHT,
+            text: textoRechazoNetworkingNight({ nombre: args.nombre, tipo: args.tipo }),
+            html: cuerpoRechazoNetworkingNight({ nombre: args.nombre, tipo: args.tipo }, sitio),
+            replyTo: respuestaA,
+          },
+          { idempotencyKey: `alpha-${emailId}` },
+        );
+        if (respuesta.error || !respuesta.data) {
+          throw new Error(respuesta.error?.message ?? "Resend no aceptó el aviso de resolución.");
+        }
+        return respuesta.data.id;
+      },
+    );
+    return true;
+  },
 });
 
 export const enviarConAdjuntos = action({
@@ -232,15 +372,18 @@ export const enviarConAdjuntos = action({
     adjuntos: v.array(v.id("mailAttachmentDrafts")),
   },
   returns: v.object({ threadId: v.id("mailThreads"), messageId: v.id("mailMessages") }),
-  handler: async (ctx, args): Promise<{ threadId: Id<"mailThreads">; messageId: Id<"mailMessages"> }> => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ threadId: Id<"mailThreads">; messageId: Id<"mailMessages"> }> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new ConvexError("Tu sesion ya no permite enviar correo.");
 
     const preparado: PreparadoEnvioAdjuntos = await ctx.runMutation(
       internal.correo.prepararEnvioConAdjuntos,
       {
-      actorId: userId as Id<"users">,
-      ...args,
+        actorId: userId as Id<"users">,
+        ...args,
       },
     );
     if (preparado.yaEnviado) {
@@ -280,7 +423,11 @@ export const enviarConAdjuntos = action({
           }),
           replyTo: preparado.remitente,
           ...(preparado.headers
-            ? { headers: Object.fromEntries(preparado.headers.map(({ name, value }) => [name, value])) }
+            ? {
+                headers: Object.fromEntries(
+                  preparado.headers.map(({ name, value }) => [name, value]),
+                ),
+              }
             : {}),
           attachments: adjuntos,
         },

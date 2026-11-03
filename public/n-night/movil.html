@@ -481,6 +481,52 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
 .ps-foot{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:12px;font-size:12px;line-height:1.4;color:var(--n700)}
 .ps-foot b{flex:none;font-family:var(--fd);font-size:12px;color:var(--b800, #194270);letter-spacing:.06em}
 .pass-scr.is-dup .ps-wrap,.pass-scr.is-dup .slot,.pass-scr.is-dup [data-pass-dl]{display:none}
+.pass-scr.is-rev [data-pass-dl],.pass-scr.is-rev .ps-qr{display:none}
+.pass-scr:not(.is-rev) .ps-rev-box{display:none}
+.reg[data-tipo="exatec"] .mstrap{background:#8c96a8}
+.reg[data-tipo="exatec"] .mb{background:linear-gradient(165deg,#f5f7fa 0%,#d7dde7 65%,#b7bdc8 100%)}
+.reg[data-tipo="exatec"] .mb .badge-hd,.reg[data-tipo="exatec"] .ps-hd{background:#3b4454}
+.reg[data-tipo="ponente"] .mstrap{background:#c2a565}
+.reg[data-tipo="ponente"] .mb{background:linear-gradient(165deg,#fcf8ef 0%,#ebd9b4 65%,#c2a565 100%)}
+.reg[data-tipo="ponente"] .mb .badge-hd,.reg[data-tipo="ponente"] .ps-hd{background:#6b531e}
+.reg[data-tipo="aliado"] .mstrap{background:#0066ff}
+.reg[data-tipo="aliado"] .mb{background:linear-gradient(165deg,#1f4f88 0%,#194270 65%,#0d2140 100%);color:#fff}
+.reg[data-tipo="aliado"] .mb .badge-hd,.reg[data-tipo="aliado"] .ps-hd{background:#0066ff}
+.reg[data-tipo="aliado"] .mb-bd b.empty{color:rgba(255,255,255,.38)}
+.reg[data-tipo="aliado"] .mb-bd span{color:#afcfff}
+.reg[data-tipo="aliado"] .mb-tags i{background:#afcfff;color:#0d2140}
+.reg[data-tipo="aliado"] .mb-bc{background:repeating-linear-gradient(90deg,rgba(255,255,255,.78) 0 2px,transparent 2px 4px,rgba(255,255,255,.78) 4px 5px,transparent 5px 8px,rgba(255,255,255,.78) 8px 10px,transparent 10px 12px)}
+.m-tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.m-tipo-card{position:relative;display:flex;flex-direction:column;gap:6px;padding:14px 14px;box-shadow:inset 0 0 0 1.5px var(--rule-c);background:rgba(255,255,255,.04);cursor:pointer;transition:background .25s,box-shadow .25s}
+.m-tipo-card input{position:absolute;opacity:0;width:1px;height:1px}
+.m-tipo-card:has(input:checked){background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 2px #fff}
+.m-tipo-top{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.m-tipo-sw{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--b200)}
+.m-tipo-sw i{width:10px;height:10px;background:var(--sw,#fff);box-shadow:inset 0 0 0 1px rgba(0,0,0,.3)}
+.m-tipo-tag{padding:2px 6px;font-size:10px;font-weight:700;text-transform:uppercase;background:rgba(255,255,255,.12);color:#fff}
+.m-tipo-card b{font-family:var(--fd);font-size:17px;font-weight:700;line-height:1.1}
+.m-tipo-card small{font-size:11.5px;line-height:1.35;color:var(--b200)}
+.m-pon-grid{display:grid;gap:8px;margin-top:18px}
+.m-pon-card{position:relative;display:flex;align-items:center;gap:12px;padding:11px 12px;box-shadow:inset 0 0 0 1.5px var(--rule-c);background:rgba(255,255,255,.04);cursor:pointer}
+.m-pon-card input{position:absolute;opacity:0;width:1px;height:1px}
+.m-pon-card:has(input:checked){background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 2px #fff}
+.m-pon-card img{width:42px;height:42px;object-fit:cover;flex:none;background:#071329}
+.m-pon-card div{min-width:0}
+.m-pon-card b{display:block;font-family:var(--fd);font-size:15px;font-weight:700;line-height:1.15}
+.m-pon-card small{display:block;margin-top:2px;font-size:12px;color:var(--b200);line-height:1.3}
+.m-stack-in{display:grid;gap:14px;margin-top:16px}
+.m-stack-in .rin{margin-top:0;font-size:19px;padding:8px 0 10px}
+.ps-rev-box{margin-top:14px;padding:14px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--hair)}
+.ps-rev-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#194270}
+.ps-rev-steps{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px;font-size:12px}
+.ps-rev-steps li{display:flex;align-items:center;gap:8px;color:var(--n700)}
+.ps-rev-steps li i{width:7px;height:7px;background:var(--n400);flex:none}
+.ps-rev-steps li.is-ok{color:var(--ink);font-weight:600}
+.ps-rev-steps li.is-ok i{background:#0a8f5a}
+.ps-rev-steps li.is-now{color:var(--accent);font-weight:700}
+.ps-rev-steps li.is-now i{background:var(--accent);box-shadow:0 0 0 3px rgba(0,102,255,.2)}
+@keyframes mShimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+.m-shimmer{background:linear-gradient(90deg,#194270 0%,var(--accent) 45%,#6aa8ff 50%,var(--accent) 55%,#194270 100%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:mShimmer 2.8s linear infinite}
 .ps-link{justify-self:center;padding:8px;border:0;background:none;font-size:13px;font-weight:600;color:var(--b200);text-decoration:underline;text-underline-offset:3px}
 .ps-shine{position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.7) 46%,transparent 62%);background-size:260% 100%;background-position:var(--sx,130%) 0;mix-blend-mode:soft-light}
 .ps-act{display:grid;gap:8px;margin-top:auto;padding-top:10px;animation:up .8s var(--E) both 1.6s}
@@ -728,25 +774,117 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
     </div>
     <form class="rg-form" data-rg-form novalidate>
       <div class="rg-steps">
-        <fieldset class="rg-step" data-rstep aria-labelledby="q1">
+        <fieldset class="rg-step" data-rstep data-step-id="tipo" data-tipos="estudiante,exatec,ponente,aliado" data-auto aria-labelledby="q-tipo">
+          <h3 class="rg-q" id="q-tipo">¿Cómo llegas a Networking Night?</h3>
+          <p class="rg-h">Tu perfil define el color de tu gafete.</p>
+          <div class="m-tipo-grid" role="radiogroup" aria-labelledby="q-tipo">
+            <label class="m-tipo-card">
+              <input type="radio" name="tipo" value="estudiante" checked required data-req="Elige tu tipo de registro.">
+              <span class="m-tipo-top"><span class="m-tipo-sw" style="--sw:#ffffff"><i></i>Blanco</span><em class="m-tipo-tag">$70</em></span>
+              <b>Estudiante</b>
+              <small>Comunidad estudiantil del Tec.</small>
+            </label>
+            <label class="m-tipo-card">
+              <input type="radio" name="tipo" value="exatec">
+              <span class="m-tipo-top"><span class="m-tipo-sw" style="--sw:#b7bdc8"><i></i>Plata</span><em class="m-tipo-tag">Cortesía</em></span>
+              <b>Exatec</b>
+              <small>Egresados del Tec (con CV).</small>
+            </label>
+            <label class="m-tipo-card">
+              <input type="radio" name="tipo" value="ponente">
+              <span class="m-tipo-top"><span class="m-tipo-sw" style="--sw:#c2a565"><i></i>Dorado</span><em class="m-tipo-tag">Cortesía</em></span>
+              <b>Ponente</b>
+              <small>Ponentes y panelistas.</small>
+            </label>
+            <label class="m-tipo-card">
+              <input type="radio" name="tipo" value="aliado">
+              <span class="m-tipo-top"><span class="m-tipo-sw" style="--sw:#194270"><i></i>Azul</span><em class="m-tipo-tag">Cortesía</em></span>
+              <b>Aliado Alpha</b>
+              <small>Aliados en padrón Alpha.</small>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="rg-step" data-rstep data-step-id="ponente" data-tipos="ponente" data-auto aria-labelledby="q-pon">
+          <h3 class="rg-q" id="q-pon">¿Cuál es tu perfil en la agenda?</h3>
+          <p class="rg-h">Si estás en la lista oficial, tu boleto se emite al instante.</p>
+          <div class="m-pon-grid" role="radiogroup" aria-labelledby="q-pon">
+            <label class="m-pon-card">
+              <input type="radio" name="ponenteId" value="maritza-lara" data-nombre="Maritza Lara Aguillón" required data-req="Selecciona tu perfil de ponente.">
+              <img src="/n-night/assets/maritza-lara.jpg" alt="" width="42" height="42">
+              <div><b>Maritza Lara Aguillón</b><small>Head of Treasury · Mercado Libre</small></div>
+            </label>
+            <label class="m-pon-card">
+              <input type="radio" name="ponenteId" value="andrea-gutierrez" data-nombre="Andrea Gutiérrez Lomelí">
+              <img src="/n-night/assets/andrea-gutierrez.jpg" alt="" width="42" height="42">
+              <div><b>Andrea Gutiérrez Lomelí</b><small>Associate Analyst · Moody's Local</small></div>
+            </label>
+            <label class="m-pon-card">
+              <input type="radio" name="ponenteId" value="diego-ramirez" data-nombre="Diego Ramírez">
+              <img src="/n-night/assets/diego-ramirez.jpg" alt="" width="42" height="42">
+              <div><b>Diego Ramírez</b><small>Private Equity &amp; VC · GBM</small></div>
+            </label>
+            <label class="m-pon-card">
+              <input type="radio" name="ponenteId" value="alan-vazquez" data-nombre="Alan Vázquez">
+              <img src="/n-night/assets/alan-vazquez.jpg" alt="" width="42" height="42">
+              <div><b>Alan Vázquez, CFA</b><small>Asset Management / AI Fintech · Valmex</small></div>
+            </label>
+            <label class="m-pon-card">
+              <input type="radio" name="ponenteId" value="otro">
+              <div><b>No aparezco en la lista</b><small>Invitado especial (validación manual).</small></div>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="rg-step" data-rstep data-step-id="nombre" data-tipos="estudiante,exatec,ponente,aliado" aria-labelledby="q1">
           <h3 class="rg-q" id="q1">¿Cómo te llamas?</h3>
-          <p class="rg-h">Así aparece en tu gafete.</p>
+          <p class="rg-h" data-h-nombre>Así aparece en tu gafete.</p>
           <label class="sr-only" for="r-nombre">Nombre completo</label>
           <input class="rin" id="r-nombre" name="nombre" autocomplete="name" required minlength="3" placeholder="Nombre y apellido" enterkeyhint="next" data-req="Falta tu nombre." data-msg="Escribe tu nombre completo.">
         </fieldset>
-        <fieldset class="rg-step" data-rstep aria-labelledby="q2">
+
+        <fieldset class="rg-step" data-rstep data-step-id="correo" data-tipos="estudiante,exatec,ponente,aliado" aria-labelledby="q2">
           <h3 class="rg-q" id="q2">Tu correo</h3>
           <p class="rg-h">Ahí te llega tu boleto.</p>
           <label class="sr-only" for="r-correo">Correo electrónico</label>
           <input class="rin" id="r-correo" name="correo" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="nombre@correo.com" maxlength="120" required pattern="^[^@\s]+@[^@\s]+\.[^@\s]+$" enterkeyhint="next" data-req="Falta tu correo." data-msg="Escribe un correo electrónico válido.">
         </fieldset>
-        <fieldset class="rg-step" data-rstep aria-labelledby="q3">
+
+        <fieldset class="rg-step" data-rstep data-step-id="area" data-tipos="aliado" data-auto aria-labelledby="q-area">
+          <h3 class="rg-q" id="q-area">¿En qué área de Alpha estás?</h3>
+          <p class="rg-h">Confirmaremos tu registro contra el padrón de Aliados Alpha.</p>
+          <div class="chips" role="radiogroup" aria-labelledby="q-area">
+            <label><input type="radio" name="area" value="comunicacion" required data-req="Elige tu área en Alpha."><span>Comunicación</span></label>
+            <label><input type="radio" name="area" value="finanzas"><span>Finanzas</span></label>
+            <label><input type="radio" name="area" value="patrocinios"><span>Patrocinios</span></label>
+            <label><input type="radio" name="area" value="logistica"><span>Logística</span></label>
+            <label><input type="radio" name="area" value="responsabilidad"><span>Responsabilidad Social</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="rg-step" data-rstep data-step-id="generacion" data-tipos="exatec" aria-labelledby="q-gen">
+          <h3 class="rg-q" id="q-gen">¿En qué año egresaste?</h3>
+          <p class="rg-h">Escribe tu generación de egreso del Tec (ej. 2021).</p>
+          <div class="m-stack-in">
+            <div>
+              <label class="sr-only" for="r-gen">Año de egreso</label>
+              <input class="rin tab" id="r-gen" name="generacion" inputmode="numeric" autocomplete="off" placeholder="Año de egreso (ej. 2021)" required pattern="^(19[5-9][0-9]|20[0-2][0-9])$" maxlength="4" enterkeyhint="next" data-req="Indica tu año de egreso." data-msg="Escribe un año válido de 4 dígitos (ej. 2021).">
+            </div>
+            <div>
+              <label class="sr-only" for="r-mat-ex">Matrícula (opcional)</label>
+              <input class="rin tab" id="r-mat-ex" name="matricula_exatec" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Matrícula (opcional, ej. A01234567)" pattern="^$|^[AaLl]0[0-9]{7}$" maxlength="9" enterkeyhint="next" data-msg="Si incluyes matrícula, usa el formato A01234567.">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="rg-step" data-rstep data-step-id="matricula" data-tipos="estudiante,aliado" aria-labelledby="q3">
           <h3 class="rg-q" id="q3">Tu matrícula</h3>
           <p class="rg-h">Una letra y ocho dígitos.</p>
           <label class="sr-only" for="r-mat">Matrícula</label>
           <input class="rin tab" id="r-mat" name="matricula" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="A01234567" required pattern="^[AaLl]0[0-9]{7}$" maxlength="9" enterkeyhint="next" data-req="Falta tu matrícula." data-msg="La matrícula va como A01234567.">
         </fieldset>
-        <fieldset class="rg-step" data-rstep data-auto aria-labelledby="q4">
+
+        <fieldset class="rg-step" data-rstep data-step-id="semestre" data-tipos="estudiante,aliado" data-auto aria-labelledby="q4">
           <h3 class="rg-q" id="q4">¿En qué semestre vas?</h3>
           <div class="sem" role="radiogroup" aria-labelledby="q4">
             <label><input type="radio" name="semestre" value="1" required data-req="Elige tu semestre."><span>1</span></label>
@@ -760,8 +898,9 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
             <label><input type="radio" name="semestre" value="9"><span>9</span></label>
           </div>
         </fieldset>
-        <fieldset class="rg-step" data-rstep aria-labelledby="q5">
-          <h3 class="rg-q" id="q5">¿Qué estudias?</h3>
+
+        <fieldset class="rg-step" data-rstep data-step-id="carrera" data-tipos="estudiante,aliado,exatec" aria-labelledby="q5">
+          <h3 class="rg-q" id="q5" data-q-carrera>¿Qué estudias?</h3>
           <div class="chips" role="radiogroup" aria-labelledby="q5">
             <label><input type="radio" name="carrera" value="LAF" data-req="Elige tu carrera."><span>LAF</span></label>
             <label><input type="radio" name="carrera" value="LAE"><span>LAE</span></label>
@@ -773,9 +912,29 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
           </div>
           <div class="otra" data-otra hidden><label class="sr-only" for="r-otra">¿Cuál?</label><input class="rin" id="r-otra" name="carrera_otra" placeholder="¿Cuál?" maxlength="40" enterkeyhint="next"></div>
         </fieldset>
-        <fieldset class="rg-step" data-rstep data-optional aria-labelledby="q6">
+
+        <fieldset class="rg-step" data-rstep data-step-id="trayectoria" data-tipos="exatec" data-optional aria-labelledby="q-tray">
+          <h3 class="rg-q" id="q-tray">¿Dónde colaboras hoy?</h3>
+          <p class="rg-h">Opcional. Nos ayuda a conectarte con personas afines.</p>
+          <div class="m-stack-in">
+            <div>
+              <label class="sr-only" for="r-emp">Empresa u organización</label>
+              <input class="rin" id="r-emp" name="empresa" placeholder="Empresa u organización (opcional)" maxlength="80" enterkeyhint="next">
+            </div>
+            <div>
+              <label class="sr-only" for="r-pue">Rol o puesto actual</label>
+              <input class="rin" id="r-pue" name="puesto" placeholder="Puesto o área (opcional)" maxlength="80" enterkeyhint="next">
+            </div>
+            <div>
+              <label class="sr-only" for="r-lnk">Perfil de LinkedIn</label>
+              <input class="rin" id="r-lnk" name="linkedin" type="url" inputmode="url" placeholder="https://linkedin.com/in/tu-perfil (opcional)" maxlength="200" enterkeyhint="done">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="rg-step" data-rstep data-step-id="intereses" data-tipos="estudiante,aliado,exatec" data-optional aria-labelledby="q6">
           <h3 class="rg-q" id="q6">¿Qué industrias te interesan?</h3>
-          <p class="rg-h">Hasta 3. Nos ayuda a presentarte con exatecs afines.</p>
+          <p class="rg-h">Hasta 3. Nos ayuda a presentarte con personas afines.</p>
           <div class="chips" data-max="3" aria-labelledby="q6" role="group">
             <label><input type="checkbox" name="intereses" value="Banca"><span>Banca</span></label>
             <label><input type="checkbox" name="intereses" value="Asset management"><span>Asset management</span></label>
@@ -786,7 +945,8 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
             <label><input type="checkbox" name="intereses" value="Finanzas corporativas"><span>Finanzas corporativas</span></label>
           </div>
         </fieldset>
-        <fieldset class="rg-step" data-rstep data-optional aria-labelledby="q7">
+
+        <fieldset class="rg-step" data-rstep data-step-id="habilidades" data-tipos="estudiante,aliado" data-optional aria-labelledby="q7">
           <h3 class="rg-q" id="q7">Tus habilidades</h3>
           <p class="rg-h">Opcional. Marca las que ya usas.</p>
           <div class="chips" data-skills aria-labelledby="q7" role="group">
@@ -801,9 +961,10 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
           </div>
           <div class="add"><label class="sr-only" for="r-add">Agregar otra habilidad</label><input class="rin" id="r-add" placeholder="Otra habilidad" maxlength="32" enterkeyhint="done" data-add><button class="ib" type="button" data-add-btn aria-label="Agregar habilidad"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button></div>
         </fieldset>
-        <fieldset class="rg-step" data-rstep data-optional aria-labelledby="q8">
-          <h3 class="rg-q" id="q8">¿Quieres subir tu CV?</h3>
-          <p class="rg-h">Opcional. Nos ayuda a presentarte con ponentes y exatecs afines.</p>
+
+        <fieldset class="rg-step" data-rstep data-step-id="cv" data-tipos="estudiante,aliado,exatec" data-optional aria-labelledby="q8">
+          <h3 class="rg-q" id="q8" data-q-cv>¿Quieres subir tu CV?</h3>
+          <p class="rg-h" data-h-cv>Opcional. Nos ayuda a presentarte con ponentes y exatecs afines.</p>
           <label class="drop" for="r-cv" data-drop>
             <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
             <b>Elige tu CV en PDF</b><small>Máximo 5 MB</small>
@@ -811,7 +972,8 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
           <input class="sr-only" id="r-cv" name="cv" type="file" accept=".pdf,application/pdf" data-cv>
           <div class="cvf" data-cvf hidden><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg><div><b data-cv-name></b><small data-cv-size></small></div><button class="ib" type="button" data-cv-rm aria-label="Quitar CV"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
         </fieldset>
-        <fieldset class="rg-step" data-rstep aria-labelledby="q9">
+
+        <fieldset class="rg-step" data-rstep data-step-id="pago" data-tipos="estudiante" aria-labelledby="q9">
           <h3 class="rg-q" id="q9">¿Cómo vas a pagar?</h3>
           <p class="rg-h">La cuota es de $70 MXN.</p>
           <div class="pay" role="radiogroup" aria-labelledby="q9">
@@ -819,11 +981,12 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
             <label class="pay-opt is-off"><input type="radio" name="metodoPago" value="stripe" disabled><span><b>Tarjeta en línea</b><small>Pago seguro con Stripe.</small></span><em>Próximamente</em></label>
           </div>
         </fieldset>
-        <fieldset class="rg-step" data-rstep aria-labelledby="q10">
+
+        <fieldset class="rg-step" data-rstep data-step-id="resumen" data-tipos="estudiante,exatec,ponente,aliado" aria-labelledby="q10">
           <h3 class="rg-q" id="q10">Revisa y confirma</h3>
           <dl class="rev" data-rev></dl>
           <label class="consent"><input type="checkbox" name="consentimiento" required data-req="Acepta el aviso de privacidad para continuar."><span>Acepto el <a href="/terminos#datos" target="_blank" rel="noopener">aviso de privacidad</a>. Mis datos se usan solo para organizar Networking Night.</span></label>
-          <p class="rg-note">Te enviaremos tu boleto con QR a tu correo.</p>
+          <p class="rg-note" data-rev-note>Te enviaremos tu boleto con QR a tu correo.</p>
         </fieldset>
       </div>
       <div class="hp" aria-hidden="true"><label for="r-sitio">Sitio web</label><input id="r-sitio" name="sitio_web" tabindex="-1" autocomplete="off"></div>
@@ -836,17 +999,25 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
       <p class="ps-p" data-ps-p>Este es tu boleto. También te lo enviamos a tu correo.</p>
       <div class="slot" aria-hidden="true"></div>
       <div class="ps-wrap">
-        <div class="pass" data-pass role="group" aria-label="Tu boleto para Networking Night">
+        <div class="pass" data-pass role="group" aria-label="Tu pase para Networking Night">
           <div class="ps-hd"><span>Networking<br>Night</span><img src="/n-night/assets/alpha-mark-white.png" alt=""></div>
           <div class="ps-bd">
             <b class="ps-name" data-ps-name></b>
             <span class="ps-sub" data-ps-sub></span>
             <div class="ps-qr"><img data-ps-qr alt="Código QR de tu boleto"></div>
+            <div class="ps-rev-box" data-ps-revbox>
+              <div class="ps-rev-head"><span>Estado del pase</span><span class="m-shimmer">En verificación</span></div>
+              <ol class="ps-rev-steps">
+                <li class="is-ok"><i></i><span>Solicitud recibida</span></li>
+                <li class="is-now"><i></i><span class="m-shimmer" data-ps-revstep>Verificando tu perfil con el equipo Alpha</span></li>
+                <li><i></i><span>Emisión y envío de boleto QR a tu correo</span></li>
+              </ol>
+            </div>
             <dl class="ps-grid">
               <div><dt>Fecha</dt><dd>Jue 5 nov</dd></div>
               <div><dt>Hora</dt><dd class="tab">5:00 p.m.</dd></div>
               <div><dt>Lugar</dt><dd>Claustro CEDETEC</dd></div>
-              <div><dt>Cuota</dt><dd class="tab" data-ps-pago>$70 MXN</dd></div>
+              <div><dt>Acceso</dt><dd class="tab" data-ps-pago>$70 MXN</dd></div>
             </dl>
             <p class="ps-foot"><span data-ps-note></span><b class="tab" data-ps-folio></b></p>
           </div>
@@ -1258,20 +1429,98 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
   });
 
   /* ---------- Registro ---------- */
-  var reg = $("[data-reg]"), form = $("[data-rg-form]"), steps = $$("[data-rstep]", reg), R = 0;
+  var reg = $("[data-reg]"), form = $("[data-rg-form]"), allSteps = $$("[data-rstep]", reg), R = 0;
   var prog = $("[data-rg-prog]"), nEl = $("[data-rg-n]"), err = $("[data-rg-err]"), nextBtn = $("[data-rg-next]"), nextL = $("[data-rg-next-l]");
   var mrig = $("[data-mrig]"), mb = $("[data-mb]"), passScr = $("[data-pass-scr]");
   var mini = Pendulum({ el: mrig, L: function () { return 300; }, k: 9, c: 1.0, max: .3 });
-  var cv = null, MAX_MB = 5;
+  var cv = null, MAX_MB = 5, lastPonenteName = "";
+
+  var AREAS_LABEL = {
+    comunicacion: "Comunicación",
+    finanzas: "Finanzas",
+    patrocinios: "Patrocinios",
+    logistica: "Logística",
+    responsabilidad: "Responsabilidad Social",
+  };
+  var ROLES_LABEL = {
+    estudiante: "Estudiante",
+    exatec: "Exatec · Gafete Plata",
+    ponente: "Ponente · Gafete Dorado",
+    aliado: "Aliado Alpha · Gafete Azul",
+  };
+
   function val(name) { var f = form.elements[name]; if (!f) return ""; if (f instanceof RadioNodeList) return f.value; return f.value; }
+  function curTipo() { return val("tipo") || "estudiante"; }
+  function getSteps() {
+    var t = curTipo();
+    return allSteps.filter(function (s) {
+      return (s.dataset.tipos || "").split(",").indexOf(t) > -1;
+    });
+  }
   function multi(name) { return $$('input[name="' + name + '"]:checked', form).map(function (i) { return i.value; }); }
   function carrera() { var c = val("carrera"); return c === "otra" ? (val("carrera_otra").trim() || "Otra carrera") : c; }
+  function isOptionalStep(step) {
+    if (!step) return false;
+    if (step.dataset.stepId === "cv" && curTipo() === "exatec") return false;
+    return step.hasAttribute("data-optional");
+  }
+  function syncTipoTheme() {
+    var t = curTipo();
+    reg.dataset.tipo = t;
+    var qCar = $("[data-q-carrera]", reg);
+    if (qCar) qCar.textContent = t === "exatec" ? "¿De qué carrera egresaste?" : "¿Qué estudias?";
+    var qCv = $("[data-q-cv]", reg), hCv = $("[data-h-cv]", reg);
+    if (qCv && hCv) {
+      if (t === "exatec") {
+        qCv.textContent = "Sube tu CV en PDF";
+        hCv.textContent = "Obligatorio para Exatecs. Lo usamos para confirmar tu trayectoria.";
+      } else {
+        qCv.textContent = "¿Quieres subir tu CV?";
+        hCv.textContent = "Opcional. Nos ayuda a presentarte con ponentes y exatecs afines.";
+      }
+    }
+    var hNom = $("[data-h-nombre]", reg);
+    if (hNom) {
+      hNom.textContent = t === "ponente"
+        ? "Escribe tu nombre tal como aparece en la agenda."
+        : "Así aparece en tu gafete.";
+    }
+    var revNote = $("[data-rev-note]", reg);
+    if (revNote) {
+      revNote.textContent = (t === "exatec" || t === "aliado")
+        ? "Verificaremos tu perfil y te enviaremos tu boleto con QR a tu correo en cuanto quede confirmado."
+        : "Te enviaremos tu boleto con QR a tu correo.";
+    }
+  }
+  function buildSub() {
+    var t = curTipo(), parts = [ROLES_LABEL[t] || "Estudiante"];
+    if (t === "estudiante") {
+      var c = carrera(), s = val("semestre");
+      parts = [];
+      if (c) parts.push(c);
+      if (s) parts.push(s + ".º semestre");
+      if (!parts.length) parts.push("Estudiante");
+    } else if (t === "aliado") {
+      var a = AREAS_LABEL[val("area")], ca = carrera();
+      parts = ["Aliado Alpha"];
+      if (a) parts.push(a);
+      else if (ca) parts.push(ca);
+    } else if (t === "exatec") {
+      var ce = carrera(), gen = val("generacion").trim(), emp = val("empresa").trim();
+      parts = ["Exatec"];
+      if (ce) parts.push(ce);
+      if (gen) parts.push("Gen. " + gen);
+      if (emp) parts.push(emp);
+    } else if (t === "ponente") {
+      parts = ["Ponente invitado"];
+    }
+    return parts.join(" · ");
+  }
   function updateMini() {
+    syncTipoTheme();
     var n = (val("nombre") || person.name || "").trim(), b = $("[data-mb-name]");
     b.textContent = n || "Tu nombre"; b.classList.toggle("empty", !n);
-    var parts = [], c = carrera(), s = val("semestre");
-    if (c) parts.push(c); if (s) parts.push(s + ".º semestre");
-    $("[data-mb-sub]").textContent = parts.length ? parts.join(" · ") : "Estudiante";
+    $("[data-mb-sub]").textContent = buildSub();
     var host = $("[data-mb-tags]"), want = multi("intereses"), have = $$("i", host).map(function (i) { return i.textContent; });
     if (want.join("|") !== have.join("|")) { host.textContent = ""; want.forEach(function (w) { var i = document.createElement("i"); i.textContent = w; host.appendChild(i); }); }
   }
@@ -1292,32 +1541,90 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
       else if (i.minLength > 0 && v.length < i.minLength) { bad = i; msg = i.dataset.msg; }
       else if (i.pattern && !new RegExp(i.pattern).test(v)) { bad = i; msg = i.dataset.msg; }
     });
+    $$("input[pattern]:not([required])", step).forEach(function (i) {
+      if (bad) return;
+      i.removeAttribute("aria-invalid");
+      var v = i.value.trim();
+      if (v && i.pattern && !new RegExp(i.pattern).test(v)) { bad = i; msg = i.dataset.msg || "Revisa este campo."; }
+    });
     var cr = $('input[name="carrera"]', step);
     if (!bad && cr) { if (!val("carrera")) { bad = cr; msg = cr.dataset.req; } else if (val("carrera") === "otra" && !val("carrera_otra").trim()) { bad = $("#r-otra"); msg = "Escribe tu carrera."; } }
+    if (!bad && step.dataset.stepId === "cv" && curTipo() === "exatec" && !cv) {
+      say("Para el registro de Exatec es obligatorio adjuntar tu CV en PDF.");
+      return false;
+    }
     if (bad) { if (bad.type !== "radio" && bad.type !== "checkbox") bad.setAttribute("aria-invalid", "true"); say(msg); bad.focus({ preventScroll: true }); return false; }
     say(""); return true;
   }
   function label() {
-    var step = steps[R];
-    if (R === steps.length - 1) { nextL.textContent = "Apartar mi lugar"; nextBtn.classList.remove("skip"); return; }
-    var skip = step.hasAttribute("data-optional") && !filled(step);
+    var steps = getSteps(), step = steps[R];
+    if (!step) return;
+    if (R === steps.length - 1) {
+      var t = curTipo();
+      nextL.textContent = (t === "exatec" || t === "aliado") ? "Enviar para verificación" : "Apartar mi lugar";
+      nextBtn.classList.remove("skip");
+      return;
+    }
+    var skip = isOptionalStep(step) && !filled(step);
     nextL.textContent = skip ? "Omitir" : "Continuar"; nextBtn.classList.toggle("skip", skip);
   }
+  function stepIdxById(id) {
+    var steps = getSteps();
+    for (var k = 0; k < steps.length; k++) if (steps[k].dataset.stepId === id) return k;
+    return 0;
+  }
   function showStep(i, focus) {
-    steps.forEach(function (s, k) { s.classList.toggle("is-on", k === i); s.classList.toggle("is-past", k < i); s.inert = k !== i; });
+    var steps = getSteps();
+    if (i >= steps.length) i = steps.length - 1;
+    if (i < 0) i = 0;
+    var active = steps[i];
+    allSteps.forEach(function (s) {
+      var idx = steps.indexOf(s);
+      s.classList.toggle("is-on", s === active);
+      s.classList.toggle("is-past", idx > -1 && idx < i);
+      s.inert = s !== active;
+    });
     R = i; prog.style.setProperty("--p", ((i + 1) / steps.length).toFixed(3));
-    nEl.textContent = (i + 1) + " de " + steps.length; say(""); label();
+    nEl.textContent = (i + 1) + " de " + steps.length; say(""); syncTipoTheme(); label();
     if (i === steps.length - 1) review();
     $("[data-rg-back]").style.visibility = i ? "visible" : "hidden";
     if (focus !== false) setTimeout(function () {
-      var f = $(".rin[name]", steps[i]);
+      var f = $(".rin[name]", active);
       if (f && !f.closest("[hidden]")) f.focus({ preventScroll: true });
-      else { var h = $("h3", steps[i]); h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
+      else { var h = $("h3", active); h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
     }, 420);
   }
   function review() {
     var dl = $("[data-rev]"); dl.textContent = "";
-    var rows = [["Nombre", val("nombre"), 0], ["Correo", val("correo"), 1], ["Matrícula", val("matricula").toUpperCase(), 2], ["Semestre", val("semestre") ? val("semestre") + ".º" : "", 3], ["Carrera", carrera(), 4], ["Intereses", multi("intereses").join(", ") || "Sin elegir", 5], ["Habilidades", multi("habilidades").join(", ") || "Sin elegir", 6], ["CV", cv ? cv.name : "Sin CV", 7], ["Pago", "Efectivo el día del evento", 8]];
+    var t = curTipo(), rows = [];
+    rows.push(["Perfil", ROLES_LABEL[t] || "Estudiante", stepIdxById("tipo")]);
+    if (t === "ponente") {
+      var pRadio = $('input[name="ponenteId"]:checked', form);
+      var pLabel = pRadio ? (pRadio.dataset.nombre || "No listado (revisión manual)") : "—";
+      rows.push(["Ponente", pLabel, stepIdxById("ponente")]);
+    }
+    rows.push(["Nombre", val("nombre"), stepIdxById("nombre")]);
+    rows.push(["Correo", val("correo"), stepIdxById("correo")]);
+    if (t === "aliado") {
+      rows.push(["Área Alpha", AREAS_LABEL[val("area")] || "—", stepIdxById("area")]);
+    }
+    if (t === "estudiante" || t === "aliado") {
+      rows.push(["Matrícula", val("matricula").toUpperCase(), stepIdxById("matricula")]);
+      rows.push(["Semestre", val("semestre") ? val("semestre") + ".º" : "", stepIdxById("semestre")]);
+      rows.push(["Carrera", carrera(), stepIdxById("carrera")]);
+      rows.push(["Intereses", multi("intereses").join(", ") || "Sin elegir", stepIdxById("intereses")]);
+      rows.push(["Habilidades", multi("habilidades").join(", ") || "Sin elegir", stepIdxById("habilidades")]);
+      rows.push(["CV", cv ? cv.name : "Sin CV", stepIdxById("cv")]);
+    } else if (t === "exatec") {
+      rows.push(["Generación", val("generacion") + (val("matricula_exatec").trim() ? " · " + val("matricula_exatec").trim().toUpperCase() : ""), stepIdxById("generacion")]);
+      rows.push(["Carrera", carrera(), stepIdxById("carrera")]);
+      var tray = [val("empresa").trim(), val("puesto").trim()].filter(Boolean).join(" · ") || "Sin especificar";
+      rows.push(["Trayectoria", tray, stepIdxById("trayectoria")]);
+      rows.push(["Intereses", multi("intereses").join(", ") || "Sin elegir", stepIdxById("intereses")]);
+      rows.push(["CV (PDF)", cv ? cv.name : "Pendiente", stepIdxById("cv")]);
+    }
+    rows.push(["Acceso", t === "estudiante" ? "$70 MXN · Efectivo el día del evento" : "Cortesía", t === "estudiante" ? stepIdxById("pago") : stepIdxById("tipo")]);
+
     rows.forEach(function (r) {
       var d = document.createElement("div"), dt = document.createElement("dt"), dd = document.createElement("dd"), b = document.createElement("button");
       dt.textContent = r[0]; dd.textContent = r[1]; b.type = "button"; b.textContent = "Editar"; b.setAttribute("aria-label", "Editar " + r[0].toLowerCase());
@@ -1327,6 +1634,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
   }
   form.addEventListener("submit", function (e) {
     e.preventDefault();
+    var steps = getSteps();
     if (!validate(steps[R])) return;
     buzz(8);
     if (R < steps.length - 1) { showStep(R + 1); pulse(); return; }
@@ -1335,7 +1643,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
   form.addEventListener("input", function (e) {
     var t = e.target;
     if (t.name === "nombre") { t.dataset.touched = "1"; syncName(t.value, "reg"); }
-    if (t.name === "matricula") { var p = t.selectionStart; t.value = t.value.toUpperCase(); try { t.setSelectionRange(p, p); } catch (x) {} }
+    if (t.name === "matricula" || t.name === "matricula_exatec") { var p = t.selectionStart; t.value = t.value.toUpperCase(); try { t.setSelectionRange(p, p); } catch (x) {} }
     if (t.getAttribute("aria-invalid")) { t.removeAttribute("aria-invalid"); say(""); }
     updateMini(); label();
   });
@@ -1346,9 +1654,20 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
       var group = t.closest("[data-max]");
       if (group) { var max = +group.dataset.max, n = $$("input:checked", group).length; $$("input", group).forEach(function (i) { i.disabled = !i.checked && n >= max; }); }
       if (t.name === "carrera") { var o = $("[data-otra]"); o.hidden = t.value !== "otra"; if (!o.hidden) setTimeout(function () { $("#r-otra").focus(); }, 60); }
+      if (t.name === "ponenteId" && t.checked) {
+        var nomIn = $("#r-nombre"), pNom = t.dataset.nombre || "";
+        if (pNom && (!nomIn.value.trim() || nomIn.value.trim() === lastPonenteName)) {
+          nomIn.value = pNom;
+          lastPonenteName = pNom;
+          syncName(pNom, "reg");
+        }
+      }
       updateMini(); pulse(); label(); say("");
-      if (t.closest("[data-auto]") && t.checked) setTimeout(function () { if (steps[R].contains(t)) form.requestSubmit(); }, 320);
-      if (t.name === "carrera" && t.value !== "otra") setTimeout(function () { if (steps[R].contains(t)) form.requestSubmit(); }, 320);
+      var steps = getSteps(), curStep = steps[R];
+      var auto = t.closest("[data-auto]") || (t.name === "carrera" && t.value !== "otra");
+      if (auto && t.checked && curStep && curStep.contains(t)) {
+        setTimeout(function () { if (getSteps()[R] === curStep) form.requestSubmit(); }, 300);
+      }
     }
   });
   function addSkill() {
@@ -1383,19 +1702,22 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
     vv.addEventListener("resize", onVV); vv.addEventListener("scroll", onVV);
   }
 
-  var NN = window.NNRegistro, boleto = null, sending = false;
+  var NN = window.NNRegistro, boleto = null, solicitud = null, sending = false;
   $("[data-pass-cal]").href = NN.calendario;
   function fillPass(b, correo) {
-    boleto = b;
+    boleto = b; solicitud = null;
+    var t = (b && b.tipo) || curTipo();
+    reg.dataset.tipo = t;
+    passScr.classList.remove("is-rev");
     passScr.classList.toggle("is-dup", !b);
     if (!b) {
       $("[data-ps-h]").textContent = "Ya tienes lugar";
       $("[data-ps-p]").textContent = "Ese correo ya estaba registrado. Te reenviamos tu boleto a tu correo.";
       return;
     }
-    var p = NN.pago(b.pago);
+    var p = NN.pago(b.pago, b.tipo);
     $("[data-ps-name]").textContent = b.nombre;
-    $("[data-ps-sub]").textContent = b.sub || "Estudiante";
+    $("[data-ps-sub]").textContent = b.sub || ROLES_LABEL[t] || "Estudiante";
     $("[data-ps-qr]").src = b.qr;
     $("[data-ps-pago]").textContent = p.corto;
     $("[data-ps-note]").textContent = p.nota;
@@ -1405,6 +1727,31 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
       ? "Este es tu boleto. Descárgalo: con este QR entras."
       : "Este es tu boleto. También te lo enviamos a tu correo.";
   }
+  function fillSolicitud(s) {
+    solicitud = s; boleto = null;
+    var t = (s && s.tipo) || curTipo();
+    reg.dataset.tipo = t;
+    passScr.classList.remove("is-dup");
+    passScr.classList.add("is-rev");
+    var copyPorTipo = {
+      exatec: "Estamos validando tu perfil Exatec y tu CV con el comité de Alpha. En cuanto quede confirmado, recibirás tu boleto con código QR en " + (s.correo || "tu correo") + ".",
+      aliado: "Estamos confirmando tu registro en el padrón de Aliados Alpha. En cuanto quede verificado, te enviaremos tu boleto con código QR a " + (s.correo || "tu correo") + ".",
+      ponente: "Recibimos tus datos como ponente invitado. Nuestro equipo confirmará tu acreditación y te enviará tu pase Dorado con código QR a " + (s.correo || "tu correo") + ".",
+    };
+    var stepPorTipo = {
+      exatec: "Revisión de trayectoria Exatec y CV por el comité Alpha",
+      aliado: "Cruce con el padrón oficial de Aliados Alpha",
+      ponente: "Confirmación manual de acreditación de ponente",
+    };
+    $("[data-ps-h]").textContent = "Recibimos tu solicitud, " + first(s.nombre);
+    $("[data-ps-p]").textContent = copyPorTipo[t] || copyPorTipo.exatec;
+    $("[data-ps-name]").textContent = s.nombre;
+    $("[data-ps-sub]").textContent = s.sub || ROLES_LABEL[t] || "Cortesía";
+    $("[data-ps-revstep]").textContent = stepPorTipo[t] || stepPorTipo.exatec;
+    $("[data-ps-pago]").textContent = "Cortesía";
+    $("[data-ps-note]").textContent = "Tu QR se enviará por correo al aprobarse.";
+    $("[data-ps-folio]").textContent = "PENDIENTE";
+  }
   function revealPass() {
     var pass = $("[data-pass]"); pass.classList.remove("tilt"); pass.style.animation = "none"; void pass.offsetWidth; pass.style.animation = "";
     passScr.hidden = false;
@@ -1413,27 +1760,80 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
     setTimeout(function () { pass.classList.add("tilt"); }, 2200);
   }
   function resetForm() {
-    form.reset(); cv = null; cvIn.value = "";
+    form.reset(); cv = null; cvIn.value = ""; lastPonenteName = "";
     $("[data-cvf]").hidden = true; $("[data-drop]").hidden = false; $("[data-otra]").hidden = true;
     $$("[data-max] input", form).forEach(function (i) { i.disabled = false; });
     delete $("#r-nombre").dataset.touched;
     passScr.hidden = true; updateMini(); showStep(0);
   }
+  function buildPayload() {
+    var t = curTipo();
+    var base = {
+      tipo: t,
+      nombre: val("nombre").trim(),
+      correo: val("correo").trim(),
+      consentimiento: form.elements.consentimiento.checked,
+      sitio_web: val("sitio_web"),
+    };
+    if (t === "estudiante") {
+      return Object.assign(base, {
+        matricula: val("matricula").trim().toUpperCase(),
+        semestre: val("semestre"),
+        carrera: carrera(),
+        intereses: multi("intereses"),
+        habilidades: multi("habilidades"),
+        metodoPago: val("metodoPago") || "efectivo",
+      });
+    }
+    if (t === "aliado") {
+      return Object.assign(base, {
+        area: val("area"),
+        matricula: val("matricula").trim().toUpperCase(),
+        semestre: val("semestre"),
+        carrera: carrera(),
+        intereses: multi("intereses"),
+        habilidades: multi("habilidades"),
+      });
+    }
+    if (t === "exatec") {
+      var matEx = val("matricula_exatec").trim().toUpperCase();
+      var emp = val("empresa").trim(), pue = val("puesto").trim(), lnk = val("linkedin").trim();
+      return Object.assign(base, {
+        generacion: val("generacion").trim(),
+        carrera: carrera(),
+        intereses: multi("intereses"),
+        ...(matEx ? { matricula: matEx } : {}),
+        ...(emp ? { empresa: emp } : {}),
+        ...(pue ? { puesto: pue } : {}),
+        ...(lnk ? { linkedin: lnk } : {}),
+      });
+    }
+    return Object.assign(base, {
+      ponenteId: val("ponenteId") || "otro",
+    });
+  }
   function finish() {
     if (sending) return;
     sending = true; nextBtn.setAttribute("aria-busy", "true");
-    nextL.textContent = cv ? "Subiendo tu CV…" : "Apartando tu lugar…";
-    var subtitulo = ["Estudiante", carrera(), val("semestre") ? val("semestre") + ".º semestre" : ""].filter(Boolean).join(" · ");
-    NN.enviar({
-      nombre: val("nombre").trim(), correo: val("correo").trim(), matricula: val("matricula").trim().toUpperCase(),
-      carrera: carrera(), semestre: val("semestre"), intereses: multi("intereses"), habilidades: multi("habilidades"),
-      metodoPago: val("metodoPago"), consentimiento: form.elements.consentimiento.checked, sitio_web: val("sitio_web"),
-    }, cv).then(function (r) {
-      if (r.creado && r.boleto) {
+    nextL.textContent = cv ? "Subiendo tu CV…" : "Procesando tu registro…";
+    var subtitulo = buildSub();
+    var payload = buildPayload();
+    NN.enviar(payload, cv).then(function (r) {
+      if (r.resultado === "revision" && r.solicitud) {
+        var s = Object.assign({ sub: subtitulo }, r.solicitud);
+        NN.guardarSolicitud(s);
+        person.registered = true;
+        $("[data-cta]").textContent = "Ver estado de mi registro";
+        fillSolicitud(s);
+      } else if (r.creado && r.boleto) {
         var b = Object.assign({ sub: subtitulo }, r.boleto);
-        NN.guardar(b); person.registered = true; $("[data-cta]").textContent = "Ver mi pase";
+        NN.guardar(b);
+        person.registered = true;
+        $("[data-cta]").textContent = "Ver mi pase";
         fillPass(b, r.correoEnviado);
-      } else fillPass(null);
+      } else {
+        fillPass(null);
+      }
       revealPass();
     }, function (e) { say(e.message); }).then(function () {
       sending = false; nextBtn.removeAttribute("aria-busy"); label();
@@ -1441,7 +1841,9 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
   }
   (function () {
     var b = NN.leer();
+    var s = !b ? NN.leerSolicitud() : null;
     if (b) { person.registered = true; $("[data-cta]").textContent = "Ver mi pase"; fillPass(b); }
+    else if (s) { person.registered = true; $("[data-cta]").textContent = "Ver estado de mi registro"; fillSolicitud(s); }
   })();
   (function () {
     var pass = $("[data-pass]");
@@ -1463,6 +1865,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
     var rn = $("#r-nombre"); if (!rn.value && person.name) rn.value = person.name;
     updateMini();
     if (person.registered && boleto) { fillPass(boleto); passScr.hidden = false; setTimeout(function () { $("[data-ps-h]").focus({ preventScroll: true }); }, 100); }
+    else if (person.registered && solicitud) { fillSolicitud(solicitud); passScr.hidden = false; setTimeout(function () { $("[data-ps-h]").focus({ preventScroll: true }); }, 100); }
     else { NN.preparar(); passScr.hidden = true; showStep(R, true); }
     setTimeout(function () { mini.kick(.5); }, 450);
   }
@@ -1480,7 +1883,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
     NN.descargar(boleto).catch(function () {}).then(function () { btn.removeAttribute("aria-busy"); });
   });
   $("[data-pass-otro]").addEventListener("click", function () {
-    NN.olvidar(); boleto = null; person.registered = false;
+    NN.olvidar(); NN.olvidarSolicitud(); boleto = null; solicitud = null; person.registered = false;
     $("[data-cta]").textContent = "Aparta tu lugar";
     NN.preparar(); resetForm();
   });

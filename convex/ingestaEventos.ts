@@ -7,15 +7,25 @@ import { CUOTAS, consumirLimite } from "./lib/limites";
 import { CALLING_LAF, registroCallingLafDisponible } from "../lib/calling-laf";
 import { MARIO_KART_CHALLENGE } from "../lib/mario-kart";
 import {
+  AREAS_ALIADO_NETWORKING_NIGHT,
+  coincidePonenteNetworkingNight,
   INTERESES_NETWORKING_NIGHT,
   MAX_CV_BYTES_NETWORKING_NIGHT,
   MAX_HABILIDADES_NETWORKING_NIGHT,
   MAX_INTERESES_NETWORKING_NIGHT,
   NETWORKING_NIGHT,
+  OPCIONES_PONENTE_NETWORKING_NIGHT,
   SEMESTRES_NETWORKING_NIGHT,
+  type AreaAliadoNetworkingNight,
   type PagoBoleto,
+  type TipoAsistenteNetworkingNight,
 } from "../lib/networking-night";
-import { estadoPagoValidador, metodoPagoValidador } from "./lib/validadores";
+import {
+  areaAliadoValidador,
+  estadoPagoValidador,
+  metodoPagoValidador,
+  tipoAsistenteValidador,
+} from "./lib/validadores";
 import { enviarConfirmacionCallingLaf } from "./correo";
 
 const SLUG_CALLING_LAF = CALLING_LAF.slug;
@@ -331,15 +341,22 @@ export const guardar = internalMutation({
 /* ---------- Networking Night ---------- */
 
 const datosNetworkingNight = v.object({
+  tipo: v.optional(tipoAsistenteValidador),
   nombre: v.string(),
   correo: v.string(),
-  matricula: v.string(),
-  carrera: v.string(),
-  semestre: v.string(),
-  intereses: v.array(v.string()),
-  habilidades: v.array(v.string()),
+  matricula: v.optional(v.string()),
+  carrera: v.optional(v.string()),
+  semestre: v.optional(v.string()),
+  intereses: v.optional(v.array(v.string())),
+  habilidades: v.optional(v.array(v.string())),
   cvStorageId: v.optional(v.id("_storage")),
-  metodoPago: v.literal("efectivo"),
+  metodoPago: v.optional(v.literal("efectivo")),
+  area: v.optional(areaAliadoValidador),
+  generacion: v.optional(v.string()),
+  empresa: v.optional(v.string()),
+  puesto: v.optional(v.string()),
+  linkedin: v.optional(v.string()),
+  ponenteId: v.optional(v.string()),
   ipHash: v.string(),
   userAgent: v.string(),
 });
@@ -419,6 +436,68 @@ export const urlSubidaCvNetworkingNight = action({
   },
 });
 
+type DecisionVerificacion =
+  | {
+      emitirBoleto: true;
+      verificacion?: NonNullable<Doc<"eventRegistrations">["verificacion"]>;
+    }
+  | {
+      emitirBoleto: false;
+      verificacion: NonNullable<Doc<"eventRegistrations">["verificacion"]>;
+    };
+
+async function decidirVerificacionNetworkingNight(
+  ctx: MutationCtx,
+  eventId: Id<"events">,
+  tipo: TipoAsistenteNetworkingNight,
+  nombre: string,
+  ponenteId?: string,
+): Promise<DecisionVerificacion> {
+  if (tipo === "estudiante") return { emitirBoleto: true };
+  if (tipo === "exatec" || tipo === "aliado") {
+    return {
+      emitirBoleto: false,
+      verificacion: { estado: "pendiente", metodo: "manual" },
+    };
+  }
+  if (!ponenteId || ponenteId === "otro" || !coincidePonenteNetworkingNight(ponenteId, nombre)) {
+    return {
+      emitirBoleto: false,
+      verificacion: {
+        estado: "pendiente",
+        metodo: "manual",
+        motivo: "ponente-sin-coincidencia",
+      },
+    };
+  }
+  const ponentes = await ctx.db
+    .query("eventRegistrations")
+    .withIndex("by_event_and_tipo", (q) => q.eq("eventId", eventId).eq("tipoAsistente", "ponente"))
+    .take(50);
+  const reclamado = ponentes.some(
+    (r) =>
+      r.detalleTipo?.tipo === "ponente" &&
+      r.detalleTipo.ponenteId === ponenteId &&
+      r.estado !== "cancelado",
+  );
+  if (reclamado) {
+    return {
+      emitirBoleto: false,
+      verificacion: {
+        estado: "pendiente",
+        metodo: "manual",
+        motivo: "ponente-ya-reclamado",
+      },
+    };
+  }
+  return {
+    emitirBoleto: true,
+    verificacion: { estado: "aprobada", metodo: "automatica" },
+  };
+}
+
+const resultadoNetworkingNightValidador = v.union(v.literal("boleto"), v.literal("revision"));
+
 export const guardarNetworkingNight = internalMutation({
   args: { datos: datosNetworkingNight },
   returns: v.object({
@@ -428,8 +507,12 @@ export const guardarNetworkingNight = internalMutation({
     registroId: v.optional(v.id("eventRegistrations")),
     nombre: v.optional(v.string()),
     correo: v.optional(v.string()),
+    tipo: v.optional(tipoAsistenteValidador),
+    area: v.optional(areaAliadoValidador),
+    resultado: v.optional(resultadoNetworkingNightValidador),
     pago: v.optional(pagoBoletoValidador),
     enviarBoleto: v.optional(v.boolean()),
+    enviarSolicitud: v.optional(v.boolean()),
   }),
   handler: async (
     ctx,
@@ -441,8 +524,12 @@ export const guardarNetworkingNight = internalMutation({
     registroId?: Id<"eventRegistrations">;
     nombre?: string;
     correo?: string;
+    tipo?: TipoAsistenteNetworkingNight;
+    area?: AreaAliadoNetworkingNight;
+    resultado?: "boleto" | "revision";
     pago?: PagoBoleto;
     enviarBoleto?: boolean;
+    enviarSolicitud?: boolean;
   }> => {
     const descartarCv = async () => {
       if (datos.cvStorageId && (await ctx.db.system.get(datos.cvStorageId))) {
@@ -456,24 +543,77 @@ export const guardarNetworkingNight = internalMutation({
       return { ok: false, creado: false, motivo: "cerrado" };
     }
 
+    const tipo: TipoAsistenteNetworkingNight = datos.tipo ?? "estudiante";
     const correo = normalizarCorreo(datos.correo);
     const nombre = limpiarTexto(datos.nombre, 80);
-    const matricula = limpiarTexto(datos.matricula, 12).toUpperCase();
-    const carrera = limpiarTexto(datos.carrera, 60);
-    const semestre = limpiarTexto(datos.semestre, 2);
-    const intereses = listaLimpia(datos.intereses, MAX_INTERESES_NETWORKING_NIGHT, 40).filter(
+    const matricula = limpiarTexto(datos.matricula ?? "", 12).toUpperCase();
+    const carreraRaw = limpiarTexto(datos.carrera ?? "", 60);
+    const semestreRaw = limpiarTexto(datos.semestre ?? "", 2);
+    const intereses = listaLimpia(datos.intereses ?? [], MAX_INTERESES_NETWORKING_NIGHT, 40).filter(
       (interes) => (INTERESES_NETWORKING_NIGHT as readonly string[]).includes(interes),
     );
-    const habilidades = listaLimpia(datos.habilidades, MAX_HABILIDADES_NETWORKING_NIGHT, 32);
-    if (
-      nombre.length < 3 ||
-      correo.length > 120 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo) ||
-      !/^[AL]\d{8}$/.test(matricula) ||
-      carrera.length < 2 ||
-      !(SEMESTRES_NETWORKING_NIGHT as readonly string[]).includes(semestre)
-    ) {
+    const habilidades = listaLimpia(datos.habilidades ?? [], MAX_HABILIDADES_NETWORKING_NIGHT, 32);
+
+    if (nombre.length < 3 || correo.length > 120 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) {
       await descartarCv();
       return { ok: false, creado: false, motivo: "datos" };
+    }
+
+    let carrera = carreraRaw;
+    let semestre = semestreRaw;
+    let detalleTipo: Doc<"eventRegistrations">["detalleTipo"] | undefined;
+    let areaAliado: AreaAliadoNetworkingNight | undefined;
+
+    if (tipo === "estudiante" || tipo === "aliado") {
+      if (
+        !/^[AL]\d{8}$/.test(matricula) ||
+        carrera.length < 2 ||
+        !(SEMESTRES_NETWORKING_NIGHT as readonly string[]).includes(semestre)
+      ) {
+        await descartarCv();
+        return { ok: false, creado: false, motivo: "datos" };
+      }
+      if (tipo === "aliado") {
+        if (!datos.area || !(AREAS_ALIADO_NETWORKING_NIGHT as readonly string[]).includes(datos.area)) {
+          await descartarCv();
+          return { ok: false, creado: false, motivo: "datos" };
+        }
+        areaAliado = datos.area;
+        detalleTipo = { tipo: "aliado", area: datos.area };
+      }
+    } else if (tipo === "exatec") {
+      const anio = Number.parseInt(limpiarTexto(datos.generacion ?? "", 6), 10);
+      if (
+        carrera.length < 2 ||
+        !Number.isInteger(anio) ||
+        anio < 1950 ||
+        anio > new Date().getFullYear() ||
+        (matricula !== "" && !/^[AL]\d{8}$/.test(matricula)) ||
+        !datos.cvStorageId
+      ) {
+        await descartarCv();
+        return { ok: false, creado: false, motivo: !datos.cvStorageId ? "cv" : "datos" };
+      }
+      semestre = "Exatec";
+      const empresa = limpiarTexto(datos.empresa ?? "", 80);
+      const puesto = limpiarTexto(datos.puesto ?? "", 80);
+      const linkedin = limpiarTexto(datos.linkedin ?? "", 200);
+      detalleTipo = {
+        tipo: "exatec",
+        generacion: String(anio),
+        ...(empresa ? { empresa } : {}),
+        ...(puesto ? { puesto } : {}),
+        ...(linkedin ? { linkedin } : {}),
+      };
+    } else if (tipo === "ponente") {
+      const ponenteId = limpiarTexto(datos.ponenteId ?? "", 40);
+      if (!(OPCIONES_PONENTE_NETWORKING_NIGHT as readonly string[]).includes(ponenteId)) {
+        await descartarCv();
+        return { ok: false, creado: false, motivo: "datos" };
+      }
+      carrera = "Ponente";
+      semestre = "Ponente";
+      detalleTipo = { tipo: "ponente", ponenteId };
     }
 
     const limiteIp = await consumirLimite(
@@ -504,17 +644,29 @@ export const guardarNetworkingNight = internalMutation({
     if (existente !== null) {
       await descartarCv();
       const ahora = Date.now();
-      const enviarBoleto =
-        existente.boletoEnviadoEn === undefined || ahora - existente.boletoEnviadoEn >= ESPERA_REENVIO_BOLETO_MS;
-      if (enviarBoleto) await ctx.db.patch(existente._id, { boletoEnviadoEn: ahora });
+      const puedeReenviar =
+        existente.boletoEnviadoEn === undefined ||
+        ahora - existente.boletoEnviadoEn >= ESPERA_REENVIO_BOLETO_MS;
+      const tipoExistente: TipoAsistenteNetworkingNight = existente.tipoAsistente ?? "estudiante";
+      const enRevision =
+        existente.verificacion !== undefined && existente.verificacion.estado === "pendiente";
+      const rechazada =
+        existente.verificacion?.estado === "rechazada" || existente.estado === "cancelado";
+      if (puedeReenviar && !rechazada) {
+        await ctx.db.patch(existente._id, { boletoEnviadoEn: ahora });
+      }
       return {
         ok: true,
         creado: false,
         registroId: existente._id,
         nombre: existente.nombre,
         correo: existente.correo,
+        tipo: tipoExistente,
+        ...(existente.detalleTipo?.tipo === "aliado" ? { area: existente.detalleTipo.area } : {}),
+        resultado: enRevision ? "revision" : "boleto",
         ...(existente.pago ? { pago: pagoDelBoleto(existente.pago) } : {}),
-        enviarBoleto,
+        enviarBoleto: puedeReenviar && !enRevision && !rechazada,
+        enviarSolicitud: puedeReenviar && enRevision,
       };
     }
 
@@ -532,18 +684,36 @@ export const guardarNetworkingNight = internalMutation({
       cvStorageId = archivo._id;
     }
 
+    const decision = await decidirVerificacionNetworkingNight(
+      ctx,
+      evento._id,
+      tipo,
+      nombre,
+      datos.ponenteId,
+    );
+
     const ahora = Date.now();
-    const pago = { metodo: datos.metodoPago, estado: "pendiente" as const, montoMxn: NETWORKING_NIGHT.cuotaMxn };
+    const esCortesia = tipo !== "estudiante";
+    const pago = esCortesia
+      ? undefined
+      : {
+          metodo: datos.metodoPago ?? ("efectivo" as const),
+          estado: "pendiente" as const,
+          montoMxn: NETWORKING_NIGHT.cuotaMxn,
+        };
     const registroId = await ctx.db.insert("eventRegistrations", {
       eventId: evento._id,
       nombre,
       correo,
       carrera,
       semestre,
-      matricula,
+      ...(matricula ? { matricula } : {}),
       canales: { correo: true, whatsapp: false },
       perfil: { intereses, habilidades, ...(cvStorageId ? { cvStorageId } : {}) },
-      pago,
+      tipoAsistente: tipo,
+      ...(detalleTipo ? { detalleTipo } : {}),
+      ...(decision.verificacion ? { verificacion: decision.verificacion } : {}),
+      ...(pago ? { pago } : {}),
       boletoEnviadoEn: ahora,
       estado: "registrado",
       origen: `evento:${SLUG_NETWORKING_NIGHT}`,
@@ -556,7 +726,19 @@ export const guardarNetworkingNight = internalMutation({
       totalRegistros: evento.totalRegistros + 1,
       actualizadoEn: ahora,
     });
-    return { ok: true, creado: true, registroId, nombre, correo, pago, enviarBoleto: true };
+    return {
+      ok: true,
+      creado: true,
+      registroId,
+      nombre,
+      correo,
+      tipo,
+      ...(areaAliado ? { area: areaAliado } : {}),
+      resultado: decision.emitirBoleto ? "boleto" : "revision",
+      ...(pago ? { pago } : {}),
+      enviarBoleto: decision.emitirBoleto,
+      enviarSolicitud: !decision.emitirBoleto,
+    };
   },
 });
 
@@ -579,6 +761,7 @@ export const confirmarPagoEnLineaNetworkingNight = internalMutation({
       correo: registro.correo,
       registroId: registro._id,
       pago,
+      ...(registro.tipoAsistente ? { tipo: registro.tipoAsistente } : {}),
     });
     return true;
   },
@@ -607,8 +790,11 @@ export const registrarNetworkingNight = action({
     ok: v.boolean(),
     motivo: v.optional(v.string()),
     creado: v.optional(v.boolean()),
+    resultado: v.optional(resultadoNetworkingNightValidador),
     registroId: v.optional(v.id("eventRegistrations")),
     nombre: v.optional(v.string()),
+    tipo: v.optional(tipoAsistenteValidador),
+    area: v.optional(areaAliadoValidador),
     pago: v.optional(pagoBoletoValidador),
     correoEnviado: v.optional(v.boolean()),
   }),
@@ -619,8 +805,11 @@ export const registrarNetworkingNight = action({
     ok: boolean;
     motivo?: string;
     creado?: boolean;
+    resultado?: "boleto" | "revision";
     registroId?: Id<"eventRegistrations">;
     nombre?: string;
+    tipo?: TipoAsistenteNetworkingNight;
+    area?: AreaAliadoNetworkingNight;
     pago?: PagoBoleto;
     correoEnviado?: boolean;
   }> => {
@@ -632,7 +821,7 @@ export const registrarNetworkingNight = action({
       return { ok: false, ...(resultado.motivo ? { motivo: resultado.motivo } : {}) };
     }
 
-    let correoEnviado = resultado.enviarBoleto !== true;
+    let correoEnviado = resultado.enviarBoleto !== true && resultado.enviarSolicitud !== true;
     if (resultado.enviarBoleto) {
       try {
         correoEnviado = await ctx.runAction(internal.correoActions.enviarConfirmacionNetworkingNight, {
@@ -640,6 +829,7 @@ export const registrarNetworkingNight = action({
           correo: resultado.correo,
           registroId: resultado.registroId,
           ...(resultado.pago ? { pago: resultado.pago } : {}),
+          ...(resultado.tipo ? { tipo: resultado.tipo } : {}),
         });
         if (!correoEnviado) {
           console.error("No se encoló el boleto de Networking Night: correo automático no configurado.");
@@ -655,17 +845,57 @@ export const registrarNetworkingNight = action({
           registroId: resultado.registroId,
         });
       }
+    } else if (resultado.enviarSolicitud && resultado.tipo) {
+      try {
+        correoEnviado = await ctx.runAction(internal.correoActions.enviarSolicitudNetworkingNight, {
+          nombre: resultado.nombre,
+          correo: resultado.correo,
+          tipo: resultado.tipo,
+          ...(resultado.area ? { area: resultado.area } : {}),
+        });
+      } catch (error) {
+        console.error(
+          "No se pudo encolar el aviso de solicitud de Networking Night.",
+          error instanceof Error ? error.message : "Error desconocido",
+        );
+      }
+      if (!correoEnviado) {
+        await ctx.runMutation(internal.ingestaEventos.liberarEnvioBoletoNetworkingNight, {
+          registroId: resultado.registroId,
+        });
+      }
     }
 
-    return resultado.creado
-      ? {
-          ok: true,
-          creado: true,
-          registroId: resultado.registroId,
-          nombre: resultado.nombre,
-          ...(resultado.pago ? { pago: resultado.pago } : {}),
-          correoEnviado,
-        }
-      : { ok: true, creado: false, correoEnviado };
+    if (!resultado.creado) {
+      return {
+        ok: true,
+        creado: false,
+        ...(resultado.resultado ? { resultado: resultado.resultado } : {}),
+        correoEnviado,
+      };
+    }
+
+    if (resultado.resultado === "revision") {
+      return {
+        ok: true,
+        creado: true,
+        resultado: "revision",
+        nombre: resultado.nombre,
+        ...(resultado.tipo ? { tipo: resultado.tipo } : {}),
+        ...(resultado.area ? { area: resultado.area } : {}),
+        correoEnviado,
+      };
+    }
+
+    return {
+      ok: true,
+      creado: true,
+      resultado: "boleto",
+      registroId: resultado.registroId,
+      nombre: resultado.nombre,
+      ...(resultado.tipo ? { tipo: resultado.tipo } : {}),
+      ...(resultado.pago ? { pago: resultado.pago } : {}),
+      correoEnviado,
+    };
   },
 });
