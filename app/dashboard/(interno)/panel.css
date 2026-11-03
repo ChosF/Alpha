@@ -946,6 +946,7 @@ button.ui-card:hover {
   font-size: 11.5px;
   font-weight: 500;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 .ui-pill-sm {
   height: 20px;
@@ -2495,6 +2496,7 @@ button.ui-card:hover {
     position: sticky;
     top: calc(var(--top-h) + 16px);
     max-height: calc(100dvh - var(--top-h) - 32px);
+    overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-gutter: stable;
@@ -2503,6 +2505,7 @@ button.ui-card:hover {
 .ui-sheet {
   min-width: 0;
   max-width: 100%;
+  overflow-x: hidden;
   --r: 10px;
   border: 1px solid var(--line);
   background: var(--bg-2);
@@ -2541,6 +2544,7 @@ button.ui-card:hover {
     z-index: 60;
     width: auto;
     max-height: min(72dvh, 600px);
+    overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
     --r: 16px;
@@ -2548,6 +2552,11 @@ button.ui-card:hover {
     box-shadow: var(--shadow-pop);
     animation: ui-mobile-sheet-enter var(--dur) var(--ease) both;
     transform-origin: bottom center;
+  }
+  .ui-registration-sheet .ui-verif-card {
+    margin: 12px 16px 0;
+    padding: 12px 14px;
+    max-width: calc(100% - 32px);
   }
   .ui-registration-sheet-handle {
     display: block;
@@ -3363,6 +3372,9 @@ a.ui-todo:hover {
   background: color-mix(in srgb, var(--warn) 6%, var(--bg-2));
   display: grid;
   gap: 12px;
+  min-width: 0;
+  max-width: calc(100% - 40px);
+  box-sizing: border-box;
 }
 [data-panel] .ui-verif-card[data-estado="aprobada"] {
   border-color: color-mix(in srgb, var(--ok) 35%, var(--line));
@@ -3377,6 +3389,13 @@ a.ui-todo:hover {
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
+}
+[data-panel] .ui-verif-head > :first-child {
+  min-width: 0;
+}
+[data-panel] .ui-verif-head > :last-child {
+  flex-shrink: 0;
 }
 [data-panel] .ui-verif-title {
   font-size: 13px;
@@ -3395,19 +3414,22 @@ a.ui-todo:hover {
   background: var(--bg);
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 [data-panel] .ui-padron-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 4px 8px;
   font-size: 11.5px;
   font-weight: 600;
   color: var(--fg-2);
+  min-width: 0;
 }
 [data-panel] .ui-padron-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
   padding: 8px 10px;
@@ -3415,6 +3437,12 @@ a.ui-todo:hover {
   border: 1px solid var(--line);
   background: var(--bg-2);
   font-size: 12px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+[data-panel] .ui-padron-item > :last-child {
+  flex-shrink: 0;
 }
 [data-panel] .ui-padron-item[data-match="aliado"] {
   border-color: color-mix(in srgb, var(--ok) 45%, var(--line));

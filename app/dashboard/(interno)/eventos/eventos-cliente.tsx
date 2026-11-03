@@ -679,13 +679,13 @@ function FichaAsistente({
       >
         <span className="ui-registration-sheet-handle" aria-hidden="true" />
         <div className="ui-card-h ui-registration-sheet-head">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h3 id={`asistente-${registro._id}-titulo`} className="ui-h2 truncate">
                 {registro.nombre}
               </h3>
               {conTipos ? (
-                <span className="ui-gafete-pill" data-tipo={tipo}>
+                <span className="ui-gafete-pill shrink-0" data-tipo={tipo}>
                   Gafete {gafete.nombre}
                 </span>
               ) : null}
@@ -946,7 +946,7 @@ function PanelVerificacion({
   return (
     <section className="ui-verif-card" data-estado={estadoVerif} aria-label="Verificación de perfil">
       <div className="ui-verif-head">
-        <div>
+        <div className="min-w-0">
           <h4 className="ui-verif-title">
             {estadoVerif === "pendiente"
               ? `Solicitud de ${ETIQUETAS[tipo] ?? tipo} por verificar`
@@ -964,18 +964,20 @@ function PanelVerificacion({
                   : "Acceso de cortesía activo."}
           </p>
         </div>
-        <Pildora
-          tono={
-            estadoVerif === "aprobada"
-              ? "ok"
-              : estadoVerif === "rechazada"
-                ? "bad"
-                : "warn"
-          }
-          sm
-        >
-          {ETIQUETAS[estadoVerif] ?? estadoVerif}
-        </Pildora>
+        <span className="shrink-0">
+          <Pildora
+            tono={
+              estadoVerif === "aprobada"
+                ? "ok"
+                : estadoVerif === "rechazada"
+                  ? "bad"
+                  : "warn"
+            }
+            sm
+          >
+            {ETIQUETAS[estadoVerif] ?? estadoVerif}
+          </Pildora>
+        </span>
       </div>
 
       {tipo === "exatec" ? (
@@ -984,7 +986,7 @@ function PanelVerificacion({
             <span>Comprobación de Exatec</span>
             <span>Generación {detalleExatec?.generacion ?? registro.semestre}</span>
           </div>
-          <p className="text-[12px] text-[var(--fg-2)]">
+          <p className="text-[12px] text-[var(--fg-2)] break-words">
             Carrera: <strong>{registro.carrera}</strong>
             {detalleExatec?.empresa ? ` · ${detalleExatec.empresa}` : ""}
             {detalleExatec?.puesto ? ` (${detalleExatec.puesto})` : ""}
@@ -1043,22 +1045,31 @@ function PanelVerificacion({
               No se encontraron coincidencias por correo, matrícula ni nombre en el padrón de integrantes.
             </Aviso>
           ) : (
-            <div className="grid gap-1.5">
+            <div className="grid min-w-0 gap-1.5">
               {padron.map((item) => (
                 <div
                   key={item._id}
                   className="ui-padron-item"
                   data-match={item.tipo}
                 >
-                  <div className="min-w-0">
-                    <strong className="block truncate">{item.nombre}</strong>
-                    <span className="block truncate text-[11px] text-[var(--fg-3)]">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2 min-w-0">
+                      <strong className="truncate font-semibold" title={item.nombre}>
+                        {item.nombre}
+                      </strong>
+                      <span className="shrink-0">
+                        <Pildora tono={item.tipo === "aliado" ? "ok" : "warn"} sm>
+                          {item.tipo === "aliado" ? "Aliado (Cortesía)" : "Miembro (Paga $70)"}
+                        </Pildora>
+                      </span>
+                    </div>
+                    <span
+                      className="mt-0.5 block text-[11px] text-[var(--fg-3)] break-words"
+                      title={`${item.correo} · ${item.carrera}${item.semestre ? ` (${item.semestre})` : ""}${item.matricula ? ` · ${item.matricula}` : ""}`}
+                    >
                       {item.correo} · {item.carrera}{item.semestre ? ` (${item.semestre})` : ""}{item.matricula ? ` · ${item.matricula}` : ""}
                     </span>
                   </div>
-                  <Pildora tono={item.tipo === "aliado" ? "ok" : "warn"} sm>
-                    {item.tipo === "aliado" ? "Aliado (Cortesía)" : "Miembro (Paga $70)"}
-                  </Pildora>
                 </div>
               ))}
             </div>
@@ -1072,7 +1083,7 @@ function PanelVerificacion({
             <span>Verificación de ponente</span>
             <span>{ponenteSeleccionado ?? "Sin perfil"}</span>
           </div>
-          <p className="text-[12px] text-[var(--fg-2)]">
+          <p className="text-[12px] text-[var(--fg-2)] break-words">
             {registro.verificacion?.motivo === "ponente-ya-reclamado"
               ? "Este ponente ya tenía un boleto emitido previamente. Confirma si se trata de la misma persona antes de aprobar."
               : registro.verificacion?.motivo === "ponente-sin-coincidencia"
