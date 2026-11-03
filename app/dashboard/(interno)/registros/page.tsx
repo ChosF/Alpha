@@ -14,7 +14,7 @@ import {
   type TipoRegistro,
 } from "@/convex/lib/validadores";
 import { construirCsv } from "@/lib/csv";
-import { construirXlsx } from "@/lib/xlsx";
+import { construirXlsx, formatearFechaHoraExcel } from "@/lib/xlsx";
 import {
   AreaTexto,
   Aviso,
@@ -432,11 +432,24 @@ function BotonExportar({ tipo, estado }: { tipo: TipoRegistro | ""; estado: Esta
       r.aporte ?? "",
       ETIQUETAS[r.estado] ?? r.estado,
       r.notas ?? "",
-      new Date(r.creadoEn).toISOString(),
+      formatearFechaHoraExcel(r.creadoEn),
     ]);
     const blob =
       pedido.formato === "xlsx"
-        ? construirXlsx(ENCABEZADOS_EXPORTACION, datos)
+        ? construirXlsx(ENCABEZADOS_EXPORTACION, datos, {
+            nombreHoja: "Registros",
+            titulo: "Convocatoria de miembros y aliados",
+            subtitulo: "Sociedad Estudiantil Alpha · Padrón de integrantes y aliados por área · 2026–2027",
+            meta: [
+              tipo ? `Tipo: ${ETIQUETAS[tipo] ?? tipo}` : "Todos los tipos",
+              estado ? `Estado: ${ETIQUETAS[estado] ?? estado}` : "Todos los estados",
+            ].join(" · "),
+            resumen: [
+              { etiqueta: "Total exportados", valor: filas.length },
+              { etiqueta: "Miembros", valor: filas.filter((r) => r.tipo === "miembro").length },
+              { etiqueta: "Aliados", valor: filas.filter((r) => r.tipo === "aliado").length },
+            ],
+          })
         : new Blob([construirCsv(ENCABEZADOS_EXPORTACION, datos)], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -445,7 +458,7 @@ function BotonExportar({ tipo, estado }: { tipo: TipoRegistro | ""; estado: Esta
     a.click();
     URL.revokeObjectURL(url);
     void anotar({ cantidad: filas.length });
-  }, [pedido, filas, anotar]);
+  }, [pedido, filas, anotar, tipo, estado]);
 
   return (
     <Menu

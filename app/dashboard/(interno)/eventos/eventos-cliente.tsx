@@ -20,7 +20,7 @@ import {
 } from "@/convex/lib/validadores";
 import { construirCsv } from "@/lib/csv";
 import { fechaEventoEnEspanol, horarioEvento } from "@/lib/correo-evento";
-import { construirXlsx } from "@/lib/xlsx";
+import { construirXlsx, formatearFechaHoraExcel } from "@/lib/xlsx";
 import { Icono } from "@/components/panel/ui/iconos";
 import {
   AreaTexto,
@@ -349,7 +349,7 @@ function DetalleEvento({
             </>
           ) : null}
           {esAdmin ? (
-            <BotonExportar eventId={evento._id} slug={evento.slug} estado={estado} conPerfil={cuota !== undefined} />
+            <BotonExportar evento={evento} estado={estado} conPerfil={cuota !== undefined} />
           ) : null}
           {puedeEditar && modoAsistencia ? (
             <Boton variante="acento" icono="mas" onClick={() => setRegistrandoEnPuerta(true)}>
@@ -1517,12 +1517,24 @@ function FormularioEvento({
 }
 
 type Formato = "xlsx" | "csv";
-const ENCABEZADOS = ["Nombre", "Correo", "Carrera", "Semestre", "Matricula", "Correo autorizado", "WhatsApp", "Telefono", "Estado", "Notas", "Registrado"];
+const ENCABEZADOS = [
+  "Nombre",
+  "Correo",
+  "Carrera",
+  "Semestre",
+  "Matrícula",
+  "Correo autorizado",
+  "WhatsApp",
+  "Teléfono",
+  "Estado",
+  "Notas",
+  "Registrado",
+];
 const ENCABEZADOS_PERFIL = [
   "Tipo",
   "Gafete",
-  "Verificacion",
-  "Area / Generacion",
+  "Verificación",
+  "Área / Generación",
   "Empresa",
   "Puesto",
   "LinkedIn",
@@ -1530,24 +1542,25 @@ const ENCABEZADOS_PERFIL = [
   "Habilidades",
   "CV",
   "Pago",
-  "Metodo de pago",
+  "Método de pago",
   "Monto MXN",
   "Pagado en",
 ];
 
 function BotonExportar({
-  eventId,
-  slug,
+  evento,
   estado,
   conPerfil,
 }: {
-  eventId: Id<"events">;
-  slug: string;
+  evento: EventoLista;
   estado: EstadoAsistente | "";
   conPerfil: boolean;
 }) {
   const [pedido, setPedido] = useState<{ formato: Formato; id: number } | null>(null);
-  const filas = useQuery(api.eventos.paraExportar, pedido ? { eventId, ...(estado ? { estado } : {}) } : "skip");
+  const filas = useQuery(
+    api.eventos.paraExportar,
+    pedido ? { eventId: evento._id, ...(estado ? { estado } : {}) } : "skip",
+  );
   const anotar = useMutation(api.eventos.registrarExportacion);
   const secuencia = useRef(0);
   const procesado = useRef(0);
@@ -1555,6 +1568,8 @@ function BotonExportar({
   useEffect(() => {
     if (!pedido || filas === undefined || procesado.current === pedido.id) return;
     procesado.current = pedido.id;
+    const incluyeEquipo =
+      evento.slug === "mario-kart" || filas.some((r) => Boolean(r.equipoNombre));
     const datos = filas.map((r) => {
       const tipo = r.tipoAsistente ?? "estudiante";
       const gafete = GAFETES_NETWORKING_NIGHT[tipo];
@@ -1567,16 +1582,17 @@ function BotonExportar({
       const exatecDet = r.detalleTipo?.tipo === "exatec" ? r.detalleTipo : null;
       return [
         r.nombre,
+        ...(incluyeEquipo ? [r.equipoNombre ?? ""] : []),
         r.correo,
         r.carrera,
         r.semestre,
         r.matricula ?? "",
-        r.canales.correo ? "Si" : "No",
-        r.canales.whatsapp ? "Si" : "No",
+        r.canales.correo ? "Sí" : "No",
+        r.canales.whatsapp ? "Sí" : "No",
         r.telefono ?? "",
         ETIQUETAS[r.estado] ?? r.estado,
         r.notas ?? "",
-        new Date(r.creadoEn).toISOString(),
+        formatearFechaHoraExcel(r.creadoEn),
         ...(conPerfil
           ? [
               gafete.etiqueta,
@@ -1588,34 +1604,79 @@ function BotonExportar({
               exatecDet?.linkedin ?? "",
               r.perfil?.intereses.join(", ") ?? "",
               r.perfil?.habilidades.join(", ") ?? "",
-              r.perfil?.cvStorageId ? "Si" : "No",
+              r.perfil?.cvStorageId ? "Sí" : "No",
               r.pago
                 ? r.pago.estado === "pagado"
                   ? "Pagado"
                   : "Pendiente"
                 : tipo !== "estudiante"
-                  ? "Cortesia"
+                  ? "Cortesía"
                   : "",
-              r.pago ? (r.pago.metodo === "stripe" ? "En linea" : "Efectivo") : tipo !== "estudiante" ? "Cortesia" : "",
-              r.pago ? String(r.pago.montoMxn) : tipo !== "estudiante" ? "0" : "",
-              r.pago?.pagadoEn ? new Date(r.pago.pagadoEn).toISOString() : "",
+              r.pago ? (r.pago.metodo === "stripe" ? "En línea" : "Efectivo") : tipo !== "estudiante" ? "Cortesía" : "",
+              r.pago ? r.pago.montoMxn : tipo !== "estudiante" ? 0 : "",
+              r.pago?.pagadoEn ? formatearFechaHoraExcel(r.pago.pagadoEn) : "",
             ]
           : []),
       ];
     });
-    const encabezados = conPerfil ? [...ENCABEZADOS, ...ENCABEZADOS_PERFIL] : ENCABEZADOS;
+    const baseEncabezados = incluyeEquipo
+      ? [ENCABEZADOS[0]!, "Equipo", ...ENCABEZADOS.slice(1)]
+      : ENCABEZADOS;
+    const encabezados = conPerfil ? [...baseEncabezados, ...ENCABEZADOS_PERFIL] : baseEncabezados;
+
+    const asistieron = filas.filter((r) => r.estado === "asistio").length;
+    const activos = filas.filter(
+      (r) =>
+        r.estado === "registrado" ||
+        r.estado === "confirmado" ||
+        r.estado === "contactado",
+    ).length;
+    const bajas = filas.filter((r) => r.estado === "cancelado").length;
+    const recaudadoMxn = filas.reduce(
+      (acc, r) =>
+        r.pago && r.pago.estado === "pagado" && r.estado !== "cancelado"
+          ? acc + r.pago.montoMxn
+          : acc,
+      0,
+    );
+
+    const detallesSubtitulo = [
+      evento.fechaEvento ? fechaEventoEnEspanol(evento.fechaEvento) : "Fecha por definir",
+      evento.horaInicio ? horarioEvento(evento.horaInicio, evento.horaFin) : null,
+      evento.sede?.trim() ? evento.sede.trim() : null,
+      `Pilar: ${ETIQUETAS[evento.pilar] ?? evento.pilar}`,
+    ]
+      .filter(Boolean)
+      .join("   ·   ");
+
+    const resumen = [
+      { etiqueta: "Total exportados", valor: filas.length },
+      { etiqueta: "Asistieron", valor: asistieron },
+      { etiqueta: "Registrados", valor: activos },
+      ...(bajas > 0 ? [{ etiqueta: "Cancelados / No asistió", valor: bajas }] : []),
+      ...(conPerfil ? [{ etiqueta: "Recaudado", valor: `$${recaudadoMxn} MXN` }] : []),
+    ];
+
     const blob =
       pedido.formato === "xlsx"
-        ? construirXlsx(encabezados, datos)
+        ? construirXlsx(encabezados, datos, {
+            nombreHoja: evento.titulo,
+            titulo: `${evento.titulo} — Registro de asistentes`,
+            subtitulo: detallesSubtitulo,
+            meta: estado
+              ? `Filtro: ${ETIQUETAS[estado] ?? estado}`
+              : "Filtro: Todos los estados",
+            resumen,
+          })
         : new Blob([construirCsv(encabezados, datos)], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const enlace = document.createElement("a");
     enlace.href = url;
-    enlace.download = `${slug}-registros-${new Date().toISOString().slice(0, 10)}.${pedido.formato}`;
+    enlace.download = `${evento.slug}-registros-${new Date().toISOString().slice(0, 10)}.${pedido.formato}`;
     enlace.click();
     URL.revokeObjectURL(url);
-    void anotar({ eventId, cantidad: filas.length });
-  }, [pedido, filas, anotar, eventId, slug, conPerfil]);
+    void anotar({ eventId: evento._id, cantidad: filas.length });
+  }, [pedido, filas, anotar, evento, estado, conPerfil]);
 
   return (
     <Menu
@@ -1626,10 +1687,10 @@ function BotonExportar({
       )}
     >
       <MenuItem icono="descargar" onClick={() => { secuencia.current += 1; setPedido({ formato: "xlsx", id: secuencia.current }); }}>
-        Excel
+        Excel (.xlsx)
       </MenuItem>
       <MenuItem icono="archivo" onClick={() => { secuencia.current += 1; setPedido({ formato: "csv", id: secuencia.current }); }}>
-        CSV
+        CSV (.csv)
       </MenuItem>
     </Menu>
   );
