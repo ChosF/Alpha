@@ -404,19 +404,19 @@ dialog.rgd[open]{display:grid;grid-template-columns:minmax(360px,42%) 1fr;animat
 .rgd-hang{position:relative;flex:1;display:flex;justify-content:center;align-items:flex-start;padding-top:12vh}
 .rgd-rig{--w:clamp(230px,23vw,320px);position:relative;width:var(--w);transform-origin:50% -70vh;transform:rotate(var(--sw,0deg))}
 .rgd-strap{position:absolute;left:50%;bottom:100%;width:17%;height:100vh;transform:translateX(-50%);background:var(--accent);box-shadow:inset 3px 0 0 rgba(4,14,36,.18),inset -3px 0 0 rgba(4,14,36,.18),0 0 30px rgba(0,102,255,.35)}
-.rgd-badge{position:relative;display:flex;flex-direction:column;aspect-ratio:5/7;font-size:calc(var(--w) / 15);background:linear-gradient(165deg,#fff 0%,#eef2f8 70%,#dfe6f1 100%);color:var(--ink);box-shadow:inset 0 1px 0 #fff,0 50px 80px -30px rgba(2,8,24,.8),0 14px 28px -14px rgba(2,8,24,.55)}
+.rgd-badge{position:relative;display:flex;flex-direction:column;min-height:calc(var(--w) * 1.38);height:auto;font-size:calc(var(--w) / 15);background:linear-gradient(165deg,#fff 0%,#eef2f8 70%,#dfe6f1 100%);color:var(--ink);box-shadow:inset 0 1px 0 #fff,0 50px 80px -30px rgba(2,8,24,.8),0 14px 28px -14px rgba(2,8,24,.55);transition:background .35s var(--E),color .35s var(--E),box-shadow .35s var(--E)}
 .rgd-badge::before{content:"";position:absolute;z-index:2;left:50%;top:-1.25em;width:2.4em;height:2.1em;transform:translateX(-50%);background:linear-gradient(90deg,#7f8899,#eef1f6 45%,#9aa3b2);box-shadow:0 3px 5px rgba(0,0,0,.35)}
 .rgd-badge.tick{animation:rgdTick .5s var(--E)}
 @keyframes rgdTick{40%{transform:scale(1.025)}}
-.rgd-bd{flex:1;display:flex;flex-direction:column;padding:1em 1em .95em}
-.rgd-bd small{font-family:var(--fd);font-weight:700;font-size:1.1em;line-height:1;text-transform:uppercase;color:var(--accent)}
-.rgd-bd b{display:block;margin-top:.35em;padding-bottom:.15em;box-shadow:inset 0 -2px 0 var(--ink);font-family:var(--fd);font-weight:700;font-size:1.75em;line-height:1.1;letter-spacing:-.02em;overflow-wrap:anywhere}
+.rgd-bd{flex:1;display:flex;flex-direction:column;padding:1.05em 1.08em 1.05em}
+.rgd-bd small{font-family:"Montserrat",system-ui,sans-serif;font-weight:700;font-size:.68em;line-height:1;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+.rgd-bd b{display:block;margin-top:.34em;padding-bottom:.28em;box-shadow:inset 0 -1.5px 0 rgba(13,33,64,.22);font-family:var(--fd);font-weight:600;font-size:var(--name-fs,1.68em);line-height:1.08;letter-spacing:-.028em;overflow-wrap:break-word;transition:font-size .2s var(--E)}
 .rgd-bd b.empty{color:rgba(13,33,64,.3)}
 .rgd-bd>span{display:block;margin-top:.55em;font-size:.82em;font-weight:600;color:var(--n700)}
 .rgd-tags{display:flex;flex-wrap:wrap;gap:.3em;margin-top:.7em}
 .rgd-tags i{padding:.25em .55em;background:var(--ink);color:#fff;font-size:.66em;font-style:normal;font-weight:600;animation:rgdPop .4s var(--E) both}
 @keyframes rgdPop{from{opacity:0;transform:scale(.8)}}
-.rgd-bft{margin-top:auto;font-size:.72em;font-weight:700;line-height:1.35;letter-spacing:.1em;text-transform:uppercase}
+.rgd-bft{margin-top:auto;padding-top:1.05em;font-size:.72em;font-weight:700;line-height:1.35;letter-spacing:.1em;text-transform:uppercase}
 .rgd-bft span{display:block;font-weight:500;letter-spacing:.02em;text-transform:none;color:var(--n700)}
 .rgd-done{position:absolute;right:-.6em;top:2.6em;padding:.35em .7em;background:#0a8f5a;color:#fff;font-size:.7em;font-weight:700;letter-spacing:.08em;text-transform:uppercase;transform:rotate(6deg)}
 
@@ -506,7 +506,7 @@ dialog.rgd[open]{display:grid;grid-template-columns:minmax(360px,42%) 1fr;animat
 .rgd-ticket .badge-hd{font-size:15px;padding:16px 18px}
 .rgd-ticket .badge-hd::before{display:none}
 .rgd-tk-bd{padding:20px}
-.rgd-tk-bd>b{display:block;font-family:var(--fd);font-size:28px;font-weight:700;line-height:1;letter-spacing:-.03em;text-transform:uppercase;overflow-wrap:anywhere}
+.rgd-tk-bd>b{display:block;font-family:var(--fd);font-size:26px;font-weight:600;line-height:1.06;letter-spacing:-.025em;overflow-wrap:break-word}
 .rgd-tk-bd>span{display:block;margin-top:6px;font-size:13px;font-weight:600;color:var(--n700)}
 .rgd-qr{display:flex;justify-content:center;margin-top:16px}
 .rgd-qr img{width:220px;height:220px;image-rendering:pixelated}
@@ -531,7 +531,7 @@ dialog.rgd[data-tipo="aliado"] .rgd-strap{background:#0066ff}
 dialog.rgd[data-tipo="aliado"] .rgd-badge{background:linear-gradient(165deg,#1f4f88 0%,#194270 65%,#0d2140 100%);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 50px 80px -30px rgba(2,8,24,.85)}
 dialog.rgd[data-tipo="aliado"] .rgd-badge .badge-hd,dialog.rgd[data-tipo="aliado"] .rgd-ticket .badge-hd{background:#0066ff}
 dialog.rgd[data-tipo="aliado"] .rgd-bd small{color:#afcfff}
-dialog.rgd[data-tipo="aliado"] .rgd-bd b{box-shadow:inset 0 -2px 0 rgba(255,255,255,.55)}
+dialog.rgd[data-tipo="aliado"] .rgd-bd b{box-shadow:inset 0 -1.5px 0 rgba(175,207,255,.38)}
 dialog.rgd[data-tipo="aliado"] .rgd-bd b.empty{color:rgba(255,255,255,.38)}
 dialog.rgd[data-tipo="aliado"] .rgd-bd>span,dialog.rgd[data-tipo="aliado"] .rgd-bft span{color:#afcfff}
 dialog.rgd[data-tipo="aliado"] .rgd-tags i{background:#afcfff;color:#0d2140}
@@ -544,7 +544,8 @@ dialog.rgd[data-tipo="aliado"] .rgd-tags i{background:#afcfff;color:#0d2140}
 .rgd-tipo-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .rgd-tipo-sw{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--n700)}
 .rgd-tipo-sw i{width:12px;height:12px;background:var(--sw,#fff);box-shadow:inset 0 0 0 1px rgba(13,33,64,.28)}
-.rgd-tipo-tag{padding:3px 8px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--hair);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink)}
+.rgd-tipo-tag{padding:4px 9px;background:rgba(13,33,64,.045);box-shadow:inset 0 0 0 1px rgba(13,33,64,.14);font-family:"Montserrat",system-ui,sans-serif;font-size:10.5px;font-style:normal;font-weight:600;letter-spacing:.11em;font-variant-numeric:tabular-nums;text-transform:uppercase;color:var(--b800)}
+.rgd-tipo-card:has(input:checked) .rgd-tipo-tag{background:#fff;box-shadow:inset 0 0 0 1px rgba(25,66,112,.24);color:var(--ink)}
 .rgd-tipo-card b{font-family:var(--fd);font-size:21px;font-weight:700;line-height:1.1;letter-spacing:-.02em}
 .rgd-tipo-card small{font-size:13px;line-height:1.4;color:var(--n700)}
 .rgd-pon-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:24px}
@@ -1229,12 +1230,20 @@ dialog.rgd[data-tipo="aliado"] .rgd-tags i{background:#afcfff;color:#0d2140}
     return parts.join(" · ");
   }
 
+  function applyBadgeName(el, raw) {
+    var rawTrim = (raw || "").trim();
+    var cNom = rawTrim ? (NN.compactarNombre ? NN.compactarNombre(rawTrim) : rawTrim) : "";
+    el.textContent = cNom || "Tu nombre";
+    el.title = rawTrim || "";
+    el.style.setProperty("--name-fs", NN.escalaNombre ? NN.escalaNombre(cNom, "escritorio") : "1.68em");
+    el.classList.toggle("empty", !rawTrim);
+  }
   function updateMini() {
     syncTipoTheme();
     var n = val("nombre").trim(), b = $("[data-mb-name]", dlg);
-    b.textContent = n || "Tu nombre"; b.classList.toggle("empty", !n);
+    applyBadgeName(b, n);
     $("[data-mb-sub]", dlg).textContent = buildSub();
-    var host = $("[data-mb-tags]", dlg), want = multi("intereses"), have = $$("i", host).map(function (i) { return i.textContent; });
+    var host = $("[data-mb-tags]", dlg), want = multi("intereses"), have = $("i", host).map(function (i) { return i.textContent; });
     if (want.join("|") !== have.join("|")) { host.textContent = ""; want.forEach(function (w) { var i = document.createElement("i"); i.textContent = w; host.appendChild(i); }); }
   }
   function say(msg) { err.textContent = msg; err.hidden = !msg; }
@@ -1426,8 +1435,10 @@ dialog.rgd[data-tipo="aliado"] .rgd-tags i{background:#afcfff;color:#0d2140}
       return;
     }
     var p = NN.pago(b.pago, b.tipo);
+    var cNom = NN.compactarNombre ? NN.compactarNombre(b.nombre) : b.nombre;
     $("[data-ps-kick]", dlg).textContent = "Registro confirmado";
-    $("[data-ps-name]", dlg).textContent = b.nombre;
+    $("[data-ps-name]", dlg).textContent = cNom;
+    $("[data-ps-name]", dlg).title = b.nombre || "";
     $("[data-ps-sub]", dlg).textContent = b.sub || ROLES_LABEL[t] || "Estudiante";
     $("[data-ps-qr]", dlg).src = b.qr;
     $("[data-ps-pago]", dlg).textContent = p.corto;
@@ -1437,7 +1448,7 @@ dialog.rgd[data-tipo="aliado"] .rgd-tags i{background:#afcfff;color:#0d2140}
     $("[data-ps-p]", dlg).textContent = correo === false
       ? "Este es tu boleto. Descárgalo: con este QR entras."
       : "Este es tu boleto. También te lo enviamos a tu correo.";
-    $("[data-mb-name]", dlg).textContent = b.nombre; $("[data-mb-name]", dlg).classList.remove("empty");
+    applyBadgeName($("[data-mb-name]", dlg), b.nombre);
     if (b.sub) $("[data-mb-sub]", dlg).textContent = b.sub;
   }
 
@@ -1461,16 +1472,18 @@ dialog.rgd[data-tipo="aliado"] .rgd-tags i{background:#afcfff;color:#0d2140}
       aliado: "Cruce con el padrón oficial de Aliados Alpha",
       ponente: "Confirmación manual de acreditación de ponente",
     };
+    var cNom = NN.compactarNombre ? NN.compactarNombre(s.nombre) : s.nombre;
     $("[data-ps-kick]", dlg).textContent = "Verificación en curso · Cortesía";
     $("[data-ps-h]", dlg).textContent = "Recibimos tu solicitud, " + first(s.nombre);
     $("[data-ps-p]", dlg).textContent = copyPorTipo[t] || copyPorTipo.exatec;
-    $("[data-ps-name]", dlg).textContent = s.nombre;
+    $("[data-ps-name]", dlg).textContent = cNom;
+    $("[data-ps-name]", dlg).title = s.nombre || "";
     $("[data-ps-sub]", dlg).textContent = s.sub || ROLES_LABEL[t] || "Cortesía";
     $("[data-ps-revstep]", dlg).textContent = stepPorTipo[t] || stepPorTipo.exatec;
     $("[data-ps-pago]", dlg).textContent = "Cortesía";
     $("[data-ps-note]", dlg).textContent = "Tu QR se enviará por correo al aprobarse.";
     $("[data-ps-folio]", dlg).textContent = "PENDIENTE";
-    $("[data-mb-name]", dlg).textContent = s.nombre; $("[data-mb-name]", dlg).classList.remove("empty");
+    applyBadgeName($("[data-mb-name]", dlg), s.nombre);
     if (s.sub) $("[data-mb-sub]", dlg).textContent = s.sub;
   }
 
