@@ -1243,7 +1243,7 @@ dialog.rgd[data-tipo="aliado"] .rgd-tags i{background:#afcfff;color:#0d2140}
     var n = val("nombre").trim(), b = $("[data-mb-name]", dlg);
     applyBadgeName(b, n);
     $("[data-mb-sub]", dlg).textContent = buildSub();
-    var host = $("[data-mb-tags]", dlg), want = multi("intereses"), have = $("i", host).map(function (i) { return i.textContent; });
+    var host = $("[data-mb-tags]", dlg), want = multi("intereses"), have = $$("i", host).map(function (i) { return i.textContent; });
     if (want.join("|") !== have.join("|")) { host.textContent = ""; want.forEach(function (w) { var i = document.createElement("i"); i.textContent = w; host.appendChild(i); }); }
   }
   function say(msg) { err.textContent = msg; err.hidden = !msg; }

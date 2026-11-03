@@ -1137,7 +1137,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
     person.name = v;
     if (from !== "reg") { var rn = $("#r-nombre"); if (rn && !rn.dataset.touched) rn.value = v; }
     var cGaf = (window.NNRegistro && window.NNRegistro.compactarNombre) ? window.NNRegistro.compactarNombre(v) : first(v);
-    $("[data-gaf-name]").forEach(function (el) { el.textContent = cGaf || "Tu nombre"; });
+    $$("[data-gaf-name]").forEach(function (el) { el.textContent = cGaf || "Tu nombre"; });
     updateMini();
   }
 
@@ -1533,7 +1533,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
     var n = (val("nombre") || person.name || "").trim(), b = $("[data-mb-name]");
     applyMobileBadgeName(b, n);
     $("[data-mb-sub]").textContent = buildSub();
-    var host = $("[data-mb-tags]"), want = multi("intereses"), have = $("i", host).map(function (i) { return i.textContent; });
+    var host = $("[data-mb-tags]"), want = multi("intereses"), have = $$("i", host).map(function (i) { return i.textContent; });
     if (want.join("|") !== have.join("|")) { host.textContent = ""; want.forEach(function (w) { var i = document.createElement("i"); i.textContent = w; host.appendChild(i); }); }
   }
   function pulse() { mb.classList.remove("tick"); void mb.offsetWidth; mb.classList.add("tick"); mini.kick(.35); }
