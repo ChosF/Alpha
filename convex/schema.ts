@@ -12,6 +12,7 @@ import {
   detalleTipoValidador,
   verificacionValidador,
   pagoRegistroValidador,
+  personaInvitadaValidador,
   perfilRegistroValidador,
   estadoEventoValidador,
   estadoMensajeCorreoValidador,
@@ -162,6 +163,8 @@ export default defineSchema({
     detalleTipo: v.optional(detalleTipoValidador),
     verificacion: v.optional(verificacionValidador),
     pago: v.optional(pagoRegistroValidador),
+    /** Si llegó acompañada y, en ese caso, el nombre de la persona invitada. */
+    personaInvitada: v.optional(personaInvitadaValidador),
     boletoEnviadoEn: v.optional(v.number()),
     estado: estadoAsistenteValidador,
     boletoUtilizadoEn: v.optional(v.number()),

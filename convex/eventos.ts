@@ -8,6 +8,7 @@ import {
   detalleTipoValidador,
   estadoAsistenteValidador,
   pagoRegistroValidador,
+  personaInvitadaValidador,
   perfilRegistroValidador,
   estadoEventoValidador,
   estadoProgramaValidador,
@@ -30,6 +31,24 @@ function cobroAlLlegar(registro: Doc<"eventRegistrations">, ahora: number) {
   return registro.pago?.estado === "pendiente"
     ? { metodo: "efectivo" as const, estado: "pagado" as const, montoMxn: registro.pago.montoMxn, pagadoEn: ahora }
     : undefined;
+}
+
+type PersonaInvitadaArgs =
+  | { trae: false }
+  | { trae: true; nombre: string };
+
+/** Normaliza la respuesta de puerta. Un sí sin nombre no se guarda. */
+function personaInvitadaGuardada(valor: PersonaInvitadaArgs): PersonaInvitadaArgs {
+  if (!valor.trae) return { trae: false };
+  const nombre = limpiarTexto(valor.nombre, 80);
+  if (nombre.length < 2) {
+    throw new ConvexError("Escribe el nombre de la persona invitada.");
+  }
+  return { trae: true, nombre };
+}
+
+function detallePersonaInvitada(persona: PersonaInvitadaArgs): string {
+  return persona.trae ? `persona invitada: ${persona.nombre}` : "sin persona invitada";
 }
 
 const eventoValidador = v.object({
@@ -97,6 +116,7 @@ const asistenteValidador = v.object({
   verificacion: v.optional(verificacionValidador),
   perfil: v.optional(perfilRegistroValidador),
   pago: v.optional(pagoRegistroValidador),
+  personaInvitada: v.optional(personaInvitadaValidador),
   estado: estadoAsistenteValidador,
   boletoEnviadoEn: v.optional(v.number()),
   boletoUtilizadoEn: v.optional(v.number()),
@@ -535,13 +555,19 @@ export const listarRegistros = query({
         r.correo.toLowerCase().includes(termino) ||
         r.carrera.toLowerCase().includes(termino) ||
         r.semestre.toLowerCase().includes(termino) ||
-        (r.matricula?.toLowerCase().includes(termino) ?? false),
+        (r.matricula?.toLowerCase().includes(termino) ?? false) ||
+        (r.personaInvitada?.trae === true &&
+          r.personaInvitada.nombre.toLowerCase().includes(termino)),
     );
   },
 });
 
 export const cambiarEstadoRegistro = mutation({
-  args: { id: v.id("eventRegistrations"), estado: estadoAsistenteValidador },
+  args: {
+    id: v.id("eventRegistrations"),
+    estado: estadoAsistenteValidador,
+    personaInvitada: v.optional(personaInvitadaValidador),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     const actor = await requiereRol(ctx, "editor");
@@ -550,16 +576,29 @@ export const cambiarEstadoRegistro = mutation({
     if (args.estado === "asistio" && registro.verificacion && registro.verificacion.estado !== "aprobada") {
       throw new ConvexError("Primero aprueba la verificación del registro antes de marcar asistencia.");
     }
-    if (registro.estado === args.estado) return null;
+    const evento = await ctx.db.get(registro.eventId);
+    if (args.personaInvitada && evento?.slug !== NETWORKING_NIGHT.slug) {
+      throw new ConvexError("La persona invitada solo se registra en Networking Night.");
+    }
+    const persona =
+      args.estado === "asistio" && args.personaInvitada
+        ? personaInvitadaGuardada(args.personaInvitada)
+        : undefined;
+    if (registro.estado === args.estado && !persona) return null;
     const ahora = Date.now();
-    const cobro = args.estado === "asistio" ? cobroAlLlegar(registro, ahora) : undefined;
-    await ctx.db.patch(args.id, { estado: args.estado, actualizadoEn: ahora, ...(cobro ? { pago: cobro } : {}) });
+    const cobro = args.estado === "asistio" && registro.estado !== "asistio" ? cobroAlLlegar(registro, ahora) : undefined;
+    await ctx.db.patch(args.id, {
+      estado: args.estado,
+      actualizadoEn: ahora,
+      ...(cobro ? { pago: cobro } : {}),
+      ...(persona ? { personaInvitada: persona } : {}),
+    });
     await registrarEnBitacora(ctx, {
       actor,
       accion: "evento.registro.estado",
       entidad: "eventRegistrations",
       entidadId: args.id,
-      detalle: `${registro.estado} -> ${args.estado}${cobro ? `; cobro en efectivo de $${cobro.montoMxn} MXN` : ""}`,
+      detalle: `${registro.estado} -> ${args.estado}${cobro ? `; cobro en efectivo de $${cobro.montoMxn} MXN` : ""}${persona ? `; ${detallePersonaInvitada(persona)}` : ""}`,
     });
     return null;
   },
@@ -647,6 +686,7 @@ export const registrarAsistenteEnPuerta = mutation({
     semestre: v.string(),
     carrera: v.string(),
     tipo: v.optional(tipoAsistenteValidador),
+    personaInvitada: v.optional(personaInvitadaValidador),
   },
   returns: v.object({
     id: v.id("eventRegistrations"),
@@ -663,6 +703,14 @@ export const registrarAsistenteEnPuerta = mutation({
     const semestre = limpiarTexto(args.semestre, 30);
     const carrera = limpiarTexto(args.carrera, 80);
     const ahora = Date.now();
+    const esNetworkingNight = evento.slug === NETWORKING_NIGHT.slug;
+    if (esNetworkingNight && !args.personaInvitada) {
+      throw new ConvexError("Indica si trae persona invitada.");
+    }
+    if (args.personaInvitada && !esNetworkingNight) {
+      throw new ConvexError("La persona invitada solo se registra en Networking Night.");
+    }
+    const persona = args.personaInvitada ? personaInvitadaGuardada(args.personaInvitada) : undefined;
 
     if (correo) {
       const existente = await ctx.db
@@ -672,15 +720,27 @@ export const registrarAsistenteEnPuerta = mutation({
         )
         .unique();
       if (existente !== null) {
-        if (existente.estado !== "asistio") {
-          const cobro = cobroAlLlegar(existente, ahora);
-          await ctx.db.patch(existente._id, { estado: "asistio", actualizadoEn: ahora, ...(cobro ? { pago: cobro } : {}) });
+        const yaAsistio = existente.estado === "asistio";
+        const cobro = yaAsistio ? undefined : cobroAlLlegar(existente, ahora);
+        if (!yaAsistio || persona) {
+          await ctx.db.patch(existente._id, {
+            estado: "asistio",
+            actualizadoEn: ahora,
+            ...(cobro ? { pago: cobro } : {}),
+            ...(persona ? { personaInvitada: persona } : {}),
+          });
           await registrarEnBitacora(ctx, {
             actor,
             accion: "evento.registro.asistencia_puerta",
             entidad: "eventRegistrations",
             entidadId: existente._id,
-            detalle: cobro ? `Registro existente; cobro en efectivo de $${cobro.montoMxn} MXN` : "Registro existente",
+            detalle: [
+              "Registro existente",
+              cobro ? `cobro en efectivo de $${cobro.montoMxn} MXN` : "",
+              persona ? detallePersonaInvitada(persona) : "",
+            ]
+              .filter(Boolean)
+              .join("; "),
           });
         }
         return { id: existente._id, creado: false };
@@ -712,6 +772,7 @@ export const registrarAsistenteEnPuerta = mutation({
       ...(cobraEnPuerta
         ? { pago: { metodo: "efectivo" as const, estado: "pagado" as const, montoMxn: cuota, pagadoEn: ahora } }
         : {}),
+      ...(persona ? { personaInvitada: persona } : {}),
       estado: "asistio",
       origen: "panel:asistencia",
       ipHash: "no-aplica",
@@ -728,7 +789,9 @@ export const registrarAsistenteEnPuerta = mutation({
       accion: "evento.registro.creado_en_puerta",
       entidad: "eventRegistrations",
       entidadId: id,
-      detalle: nombre || correo || matricula || "Sin datos",
+      detalle: [nombre || correo || matricula || "Sin datos", persona ? detallePersonaInvitada(persona) : ""]
+        .filter(Boolean)
+        .join("; "),
     });
     return { id, creado: true };
   },

@@ -206,9 +206,14 @@ function DetalleEvento({
   const [procesandoAsistencia, setProcesandoAsistencia] = useState<Id<"eventRegistrations"> | null>(null);
   const [registrandoEnPuerta, setRegistrandoEnPuerta] = useState(false);
   const [avisoAsistencia, setAvisoAsistencia] = useState<{ tono: "error" | "exito"; texto: string } | null>(null);
+  const [respuestaInvitado, setRespuestaInvitado] = useState<{ trae: boolean | null; nombre: string }>({
+    trae: null,
+    nombre: "",
+  });
   const cambiarRegistro = useMutation(api.eventos.cambiarRegistroAbierto);
   const cambiarEstadoRegistro = useMutation(api.eventos.cambiarEstadoRegistro);
   const cuota = cuotaDe(evento.slug);
+  const preguntaInvitado = evento.slug === NETWORKING_NIGHT.slug;
   const pagos = useQuery(api.eventos.resumenPagos, cuota !== undefined ? { eventId: evento._id } : "skip");
   const resumenVerif = useQuery(api.verificaciones.resumen, cuota !== undefined ? { eventId: evento._id } : "skip");
   const registros = useQuery(api.eventos.listarRegistros, {
@@ -253,7 +258,64 @@ function DetalleEvento({
     });
     setAbierto(null);
     setConfirmandoAsistencia(null);
+    setRespuestaInvitado({ trae: null, nombre: "" });
     setAvisoAsistencia(null);
+  };
+
+  const registrarAsistenciaConfirmada = async (
+    registro: Registro,
+    personaInvitada?: { trae: false } | { trae: true; nombre: string },
+  ) => {
+    if (procesandoAsistencia !== null) return;
+    if (preguntaInvitado && !personaInvitada) {
+      setAvisoAsistencia({
+        tono: "error",
+        texto: "Indica si trae persona invitada antes de confirmar.",
+      });
+      return;
+    }
+    if (personaInvitada?.trae && personaInvitada.nombre.trim().length < 2) {
+      setAvisoAsistencia({ tono: "error", texto: "Escribe el nombre de la persona invitada." });
+      return;
+    }
+
+    const respuesta = personaInvitada?.trae
+      ? { trae: true as const, nombre: personaInvitada.nombre.trim() }
+      : personaInvitada
+        ? { trae: false as const }
+        : undefined;
+
+    setProcesandoAsistencia(registro._id);
+    setAvisoAsistencia(null);
+    try {
+      await cambiarEstadoRegistro({
+        id: registro._id,
+        estado: "asistio",
+        ...(respuesta ? { personaInvitada: respuesta } : {}),
+      });
+      const cobro =
+        registro.pago?.estado === "pendiente"
+          ? ` Cobro de $${registro.pago.montoMxn} MXN en efectivo registrado.`
+          : "";
+      const invitado = respuesta?.trae
+        ? ` Persona invitada: ${respuesta.nombre}.`
+        : respuesta
+          ? " Sin persona invitada."
+          : "";
+      setAvisoAsistencia({
+        tono: "exito",
+        texto: `Asistencia registrada${registro.nombre ? `: ${registro.nombre}.` : "."}${cobro}${invitado}`,
+      });
+      setConfirmandoAsistencia(null);
+      setRespuestaInvitado({ trae: null, nombre: "" });
+    } catch (error) {
+      setAvisoAsistencia({
+        tono: "error",
+        texto: error instanceof Error ? error.message : "No se pudo registrar la asistencia.",
+      });
+    } finally {
+      setProcesandoAsistencia(null);
+    }
   };
 
   const prepararORegistrarAsistencia = async (registro: Registro) => {
@@ -261,6 +323,7 @@ function DetalleEvento({
     setAvisoAsistencia(null);
     if (registro.verificacion && registro.verificacion.estado !== "aprobada") {
       setConfirmandoAsistencia(null);
+      setRespuestaInvitado({ trae: null, nombre: "" });
       setAvisoAsistencia({
         tono: "error",
         texto:
@@ -272,31 +335,33 @@ function DetalleEvento({
     }
     if (registro.estado === "asistio") {
       setConfirmandoAsistencia(null);
-      setAvisoAsistencia({ tono: "exito", texto: `${registro.nombre || "Esta persona"} ya tiene asistencia.` });
+      setRespuestaInvitado({ trae: null, nombre: "" });
+      const invitado = registro.personaInvitada?.trae
+        ? ` Persona invitada: ${registro.personaInvitada.nombre}.`
+        : registro.personaInvitada
+          ? " Sin persona invitada."
+          : "";
+      setAvisoAsistencia({
+        tono: "exito",
+        texto: `${registro.nombre || "Esta persona"} ya tiene asistencia.${invitado}`,
+      });
       return;
     }
     if (confirmandoAsistencia !== registro._id) {
       setConfirmandoAsistencia(registro._id);
+      setRespuestaInvitado({ trae: null, nombre: "" });
       return;
     }
 
-    setProcesandoAsistencia(registro._id);
-    try {
-      await cambiarEstadoRegistro({ id: registro._id, estado: "asistio" });
-      const cobro = registro.pago?.estado === "pendiente" ? ` Cobro de $${registro.pago.montoMxn} MXN en efectivo registrado.` : "";
-      setAvisoAsistencia({
-        tono: "exito",
-        texto: `Asistencia registrada${registro.nombre ? `: ${registro.nombre}.` : "."}${cobro}`,
-      });
-    } catch (error) {
-      setAvisoAsistencia({
-        tono: "error",
-        texto: error instanceof Error ? error.message : "No se pudo registrar la asistencia.",
-      });
-    } finally {
-      setConfirmandoAsistencia(null);
-      setProcesandoAsistencia(null);
-    }
+    const respuesta =
+      !preguntaInvitado
+        ? undefined
+        : respuestaInvitado.trae === true
+          ? { trae: true as const, nombre: respuestaInvitado.nombre }
+          : respuestaInvitado.trae === false
+            ? { trae: false as const }
+            : undefined;
+    await registrarAsistenciaConfirmada(registro, respuesta);
   };
 
   return (
@@ -409,6 +474,7 @@ function DetalleEvento({
             <div className="evento-asistencia-guia" role="status">
               <span>
                 Busca a una persona y selecciónala dos veces. Con un solo resultado también puedes presionar <Kbd>Enter</Kbd> dos veces.
+                {preguntaInvitado ? " Antes de confirmar, indica si trae persona invitada." : null}
               </span>
               <strong>Orden A–Z</strong>
             </div>
@@ -436,6 +502,7 @@ function DetalleEvento({
                   onClick={() => {
                     setFiltroTipo(tab.id);
                     setConfirmandoAsistencia(null);
+                    setRespuestaInvitado({ trae: null, nombre: "" });
                     setAvisoAsistencia(null);
                   }}
                 >
@@ -452,6 +519,7 @@ function DetalleEvento({
               onChange={(e) => {
                 setBusqueda(e.target.value);
                 setConfirmandoAsistencia(null);
+                setRespuestaInvitado({ trae: null, nombre: "" });
                 setAvisoAsistencia(null);
               }}
               onKeyDown={(e) => {
@@ -475,6 +543,7 @@ function DetalleEvento({
               onChange={(e) => {
                 setEstado(e.target.value as EstadoAsistente | "");
                 setConfirmandoAsistencia(null);
+                setRespuestaInvitado({ trae: null, nombre: "" });
                 setAvisoAsistencia(null);
               }}
               className="max-w-[180px]"
@@ -538,12 +607,88 @@ function DetalleEvento({
                         <td className="font-medium">
                           {registro.nombre || "Sin nombre"}
                           {registro.equipoNombre ? <span className="block text-xs ui-faint">{registro.equipoNombre}</span> : null}
+                          {registro.personaInvitada?.trae ? (
+                            <span className="block text-xs ui-faint">Con {registro.personaInvitada.nombre}</span>
+                          ) : registro.personaInvitada ? (
+                            <span className="block text-xs ui-faint">Sin persona invitada</span>
+                          ) : null}
                           {modoAsistencia && confirmandoAsistencia === registro._id ? (
-                            <span className="evento-asistencia-confirmacion">
-                              {registro.pago?.estado === "pendiente"
-                                ? `Cobra $${registro.pago.montoMxn} MXN y haz clic de nuevo para confirmar`
-                                : `Entrega ${`gafete ${gafete.nombre.toLowerCase()}`} y haz clic de nuevo para confirmar`}
-                            </span>
+                            <div className="evento-asistencia-confirmacion">
+                              <span>
+                                {registro.pago?.estado === "pendiente"
+                                  ? `Cobra $${registro.pago.montoMxn} MXN${preguntaInvitado ? " y confirma" : " y haz clic de nuevo para confirmar"}`
+                                  : `Entrega gafete ${gafete.nombre.toLowerCase()}${preguntaInvitado ? " y confirma" : " y haz clic de nuevo para confirmar"}`}
+                              </span>
+                              {preguntaInvitado ? (
+                                <div
+                                  className="evento-asistencia-invitado"
+                                  onClick={(event) => event.stopPropagation()}
+                                  onKeyDown={(event) => event.stopPropagation()}
+                                >
+                                  <p id={`invitada-${registro._id}`}>¿Trae a una persona invitada?</p>
+                                  <div className="evento-asistencia-invitado-opciones" role="group" aria-labelledby={`invitada-${registro._id}`}>
+                                    <Boton
+                                      variante={respuestaInvitado.trae === false ? "acento" : "base"}
+                                      aria-pressed={respuestaInvitado.trae === false}
+                                      disabled={procesandoAsistencia !== null}
+                                      onClick={() => void registrarAsistenciaConfirmada(registro, { trae: false })}
+                                    >
+                                      No
+                                    </Boton>
+                                    <Boton
+                                      variante={respuestaInvitado.trae === true ? "acento" : "base"}
+                                      aria-pressed={respuestaInvitado.trae === true}
+                                      disabled={procesandoAsistencia !== null}
+                                      onClick={() =>
+                                        setRespuestaInvitado((actual) => ({
+                                          trae: true,
+                                          nombre: actual.nombre,
+                                        }))
+                                      }
+                                    >
+                                      Sí
+                                    </Boton>
+                                  </div>
+                                  {respuestaInvitado.trae === true ? (
+                                    <div className="evento-asistencia-invitado-nombre">
+                                      <Entrada
+                                        aria-label="Nombre de la persona invitada"
+                                        placeholder="Nombre de la persona invitada"
+                                        value={respuestaInvitado.nombre}
+                                        maxLength={80}
+                                        autoComplete="off"
+                                        autoFocus
+                                        disabled={procesandoAsistencia !== null}
+                                        onChange={(event) =>
+                                          setRespuestaInvitado({ trae: true, nombre: event.target.value })
+                                        }
+                                        onKeyDown={(event) => {
+                                          if (event.key !== "Enter") return;
+                                          event.preventDefault();
+                                          void registrarAsistenciaConfirmada(registro, {
+                                            trae: true,
+                                            nombre: event.currentTarget.value,
+                                          });
+                                        }}
+                                      />
+                                      <Boton
+                                        variante="acento"
+                                        icono="check"
+                                        disabled={procesandoAsistencia !== null}
+                                        onClick={() =>
+                                          void registrarAsistenciaConfirmada(registro, {
+                                            trae: true,
+                                            nombre: respuestaInvitado.nombre,
+                                          })
+                                        }
+                                      >
+                                        Confirmar
+                                      </Boton>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              ) : null}
+                            </div>
                           ) : null}
                         </td>
                         <td className="ui-faint">{registro.correo || "—"}</td>
@@ -621,6 +766,7 @@ function DetalleEvento({
         <FormularioAsistenteEnPuerta
           eventId={evento._id}
           conTipos={cuota !== undefined}
+          preguntaInvitado={preguntaInvitado}
           alCerrar={() => setRegistrandoEnPuerta(false)}
           alListo={(texto) => {
             setRegistrandoEnPuerta(false);
@@ -723,6 +869,12 @@ function FichaAsistente({
           <dd>{registro.semestre}</dd>
           <dt>Matrícula</dt>
           <dd>{registro.matricula ?? "—"}</dd>
+          {registro.personaInvitada ? (
+            <>
+              <dt>Persona invitada</dt>
+              <dd>{registro.personaInvitada.trae ? registro.personaInvitada.nombre : "No"}</dd>
+            </>
+          ) : null}
           {registro.detalleTipo?.tipo === "aliado" ? (
             <>
               <dt>Área en Alpha</dt>
@@ -1172,11 +1324,13 @@ function PanelVerificacion({
 function FormularioAsistenteEnPuerta({
   eventId,
   conTipos,
+  preguntaInvitado,
   alListo,
   alCerrar,
 }: {
   eventId: Id<"events">;
   conTipos: boolean;
+  preguntaInvitado: boolean;
   alListo: (mensaje: string) => void;
   alCerrar: () => void;
 }) {
@@ -1189,6 +1343,8 @@ function FormularioAsistenteEnPuerta({
     semestre: "",
     carrera: "",
   });
+  const [traeInvitado, setTraeInvitado] = useState<boolean | null>(null);
+  const [nombreInvitado, setNombreInvitado] = useState("");
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -1198,18 +1354,39 @@ function FormularioAsistenteEnPuerta({
 
   const guardar = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setOcupado(true);
     setError(null);
+    const personaInvitada = !preguntaInvitado
+      ? undefined
+      : traeInvitado === true
+        ? { trae: true as const, nombre: nombreInvitado.trim() }
+        : traeInvitado === false
+          ? { trae: false as const }
+          : undefined;
+    if (preguntaInvitado && !personaInvitada) {
+      setError("Indica si trae persona invitada.");
+      return;
+    }
+    if (personaInvitada?.trae && personaInvitada.nombre.length < 2) {
+      setError("Escribe el nombre de la persona invitada.");
+      return;
+    }
+    setOcupado(true);
     try {
       const resultado = await registrar({
         eventId,
         ...datos,
         ...(conTipos ? { tipo } : {}),
+        ...(personaInvitada ? { personaInvitada } : {}),
       });
+      const invitado = personaInvitada?.trae
+        ? ` Persona invitada: ${personaInvitada.nombre}.`
+        : personaInvitada
+          ? " Sin persona invitada."
+          : "";
       alListo(
-        resultado.creado
+        (resultado.creado
           ? "Persona registrada y marcada como asistió."
-          : "La persona ya estaba registrada; se marcó como asistió.",
+          : "La persona ya estaba registrada; se marcó como asistió.") + invitado,
       );
     } catch (excepcion) {
       setError(excepcion instanceof Error ? excepcion.message : "No se pudo registrar a la persona.");
@@ -1229,7 +1406,11 @@ function FormularioAsistenteEnPuerta({
         <div className="ui-card-h evento-asistencia-dialog-head">
           <div>
             <h2 id="asistente-puerta-titulo" className="ui-h2">Registrar asistencia</h2>
-            <p className="ui-faint mt-1 text-[12.5px]">Todos los campos son opcionales.</p>
+            <p className="ui-faint mt-1 text-[12.5px]">
+              {preguntaInvitado
+                ? "Los datos de la persona son opcionales. Indica si trae persona invitada."
+                : "Todos los campos son opcionales."}
+            </p>
           </div>
           <Boton
             tamano="sm"
@@ -1305,6 +1486,42 @@ function FormularioAsistenteEnPuerta({
               onChange={(e) => actualizar("carrera", e.target.value)}
             />
           </Campo>
+          {preguntaInvitado ? (
+            <div className="evento-asistencia-invitado sm:col-span-2">
+              <p id="puerta-invitada">¿Trae a una persona invitada?</p>
+              <div className="evento-asistencia-invitado-opciones" role="group" aria-labelledby="puerta-invitada">
+                <Boton
+                  variante={traeInvitado === false ? "acento" : "base"}
+                  aria-pressed={traeInvitado === false}
+                  disabled={ocupado}
+                  onClick={() => setTraeInvitado(false)}
+                >
+                  No
+                </Boton>
+                <Boton
+                  variante={traeInvitado === true ? "acento" : "base"}
+                  aria-pressed={traeInvitado === true}
+                  disabled={ocupado}
+                  onClick={() => setTraeInvitado(true)}
+                >
+                  Sí
+                </Boton>
+              </div>
+              {traeInvitado === true ? (
+                <Campo etiqueta="Nombre de la persona invitada" htmlFor="puerta-invitada-nombre">
+                  <Entrada
+                    id="puerta-invitada-nombre"
+                    value={nombreInvitado}
+                    maxLength={80}
+                    autoComplete="off"
+                    autoFocus
+                    disabled={ocupado}
+                    onChange={(e) => setNombreInvitado(e.target.value)}
+                  />
+                </Campo>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         {error ? (
           <div className="mt-4">
@@ -1556,6 +1773,7 @@ const ENCABEZADOS_PERFIL = [
   "Método de pago",
   "Monto MXN",
   "Pagado en",
+  "Persona invitada",
 ];
 
 function BotonExportar({
@@ -1626,6 +1844,7 @@ function BotonExportar({
               r.pago ? (r.pago.metodo === "stripe" ? "En línea" : "Efectivo") : tipo !== "estudiante" ? "Cortesía" : "",
               r.pago ? r.pago.montoMxn : tipo !== "estudiante" ? 0 : "",
               r.pago?.pagadoEn ? formatearFechaHoraExcel(r.pago.pagadoEn) : "",
+              r.personaInvitada?.trae ? r.personaInvitada.nombre : r.personaInvitada ? "No" : "",
             ]
           : []),
       ];

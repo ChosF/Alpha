@@ -215,7 +215,13 @@ describe("Networking Night", () => {
     expect((await t.run((ctx) => ctx.db.get(dos.registroId!)))?.pago).toEqual({ metodo: "efectivo", estado: "pendiente", montoMxn: 70 });
 
     const puerta = await sesion.mutation(api.eventos.registrarAsistenteEnPuerta, {
-      eventId: evento._id, nombre: "Sin registro", matricula: "", correo: "a09999999@tec.mx", semestre: "", carrera: "",
+      eventId: evento._id,
+      nombre: "Sin registro",
+      matricula: "",
+      correo: "a09999999@tec.mx",
+      semestre: "",
+      carrera: "",
+      personaInvitada: { trae: false },
     });
     expect((await t.run((ctx) => ctx.db.get(puerta.id)))?.pago).toMatchObject({ metodo: "efectivo", estado: "pagado", montoMxn: 70 });
 
@@ -226,6 +232,70 @@ describe("Networking Night", () => {
 
     await t.mutation(internal.ingestaEventos.confirmarPagoEnLineaNetworkingNight, { registroId: dos.registroId!, montoMxn: 70 });
     await expect(sesion.mutation(api.eventos.cambiarPagoRegistro, { id: dos.registroId!, pagado: false })).rejects.toThrow(/Stripe/);
+  });
+
+  it("en asistencia pide y guarda a la persona invitada", async () => {
+    const t = preparar();
+    const uno = await t.action(api.ingestaEventos.registrarNetworkingNight, { secreto: SECRETO, datos });
+    const evento = (await eventoNetworkingNight(t))!;
+    const sesion = await staff(t);
+
+    await expect(
+      sesion.mutation(api.eventos.cambiarEstadoRegistro, {
+        id: uno.registroId!,
+        estado: "asistio",
+        personaInvitada: { trae: true, nombre: "  " },
+      }),
+    ).rejects.toThrow(/nombre de la persona invitada/);
+
+    await sesion.mutation(api.eventos.cambiarEstadoRegistro, {
+      id: uno.registroId!,
+      estado: "asistio",
+      personaInvitada: { trae: true, nombre: "  Luis García  " },
+    });
+    expect((await t.run((ctx) => ctx.db.get(uno.registroId!)))?.personaInvitada).toEqual({
+      trae: true,
+      nombre: "Luis García",
+    });
+
+    const filas = await sesion.query(api.eventos.listarRegistros, { eventId: evento._id, busqueda: "Luis" });
+    expect(filas.map((fila) => fila._id)).toEqual([uno.registroId]);
+
+    await expect(
+      sesion.mutation(api.eventos.registrarAsistenteEnPuerta, {
+        eventId: evento._id,
+        nombre: "Walk-in",
+        matricula: "",
+        correo: "",
+        semestre: "",
+        carrera: "",
+      }),
+    ).rejects.toThrow(/persona invitada/);
+
+    const puerta = await sesion.mutation(api.eventos.registrarAsistenteEnPuerta, {
+      eventId: evento._id,
+      nombre: "Walk-in",
+      matricula: "",
+      correo: "a08888888@tec.mx",
+      semestre: "3",
+      carrera: "LAF",
+      personaInvitada: { trae: true, nombre: "María López" },
+    });
+    expect((await t.run((ctx) => ctx.db.get(puerta.id)))?.personaInvitada).toEqual({
+      trae: true,
+      nombre: "María López",
+    });
+
+    const otra = await sesion.mutation(api.eventos.registrarAsistenteEnPuerta, {
+      eventId: evento._id,
+      nombre: "Sola",
+      matricula: "",
+      correo: "a07777777@tec.mx",
+      semestre: "",
+      carrera: "",
+      personaInvitada: { trae: false },
+    });
+    expect((await t.run((ctx) => ctx.db.get(otra.id)))?.personaInvitada).toEqual({ trae: false });
   });
 
   it("valida ponentes en el servidor: emite boleto al primer reclamo y manda a revisión duplicados o no listados", async () => {

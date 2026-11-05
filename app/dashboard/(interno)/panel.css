@@ -2438,13 +2438,45 @@ button.ui-card:hover {
   opacity: 0.62;
 }
 .evento-asistencia-confirmacion {
-  display: block;
-  margin-top: 3px;
+  display: grid;
+  gap: 8px;
+  margin-top: 6px;
   color: var(--accent);
   font-size: 11.5px;
   font-weight: 500;
   line-height: 1.35;
   white-space: normal;
+}
+.evento-asistencia-invitado {
+  display: grid;
+  gap: 8px;
+  max-width: 420px;
+  color: var(--fg);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.evento-asistencia-invitado p {
+  margin: 0;
+  color: var(--fg);
+}
+.evento-asistencia-invitado-opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.evento-asistencia-invitado-opciones .ui-btn {
+  min-width: 88px;
+  height: 36px;
+}
+.evento-asistencia-invitado-nombre {
+  display: grid;
+  gap: 8px;
+}
+@media (min-width: 640px) {
+  .evento-asistencia-invitado-nombre {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
 }
 .evento-asistencia-modal {
   align-items: center;

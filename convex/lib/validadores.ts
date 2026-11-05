@@ -112,6 +112,11 @@ export const pagoRegistroValidador = v.object({
   montoMxn: v.number(),
   pagadoEn: v.optional(v.number()),
 });
+/** Respuesta de la puerta en Networking Night: si llegó con alguien invitado. */
+export const personaInvitadaValidador = v.union(
+  v.object({ trae: v.literal(false) }),
+  v.object({ trae: v.literal(true), nombre: v.string() }),
+);
 export const perfilRegistroValidador = v.object({
   intereses: v.array(v.string()),
   habilidades: v.array(v.string()),
